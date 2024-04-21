@@ -1,0 +1,6 @@
+*.o
+*.sw?
+*.trc
+*.tdb
+*/build
+disk.rx2

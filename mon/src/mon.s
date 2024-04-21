@@ -1,0 +1,953 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MCP MONITOR                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; THIS IS THE CORE IMAGE OF THE MCP MONITOR. IT IS LOADED BY THE
+;; SECONDARY BOOTSTRAP LOADER INTO THE TOP 1KW RAM.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CONFIGURATION
+RCSR		= #177560
+RBUF		= #177562
+XCSR		= #177564
+XBUF		= #177566
+RX2CS		= #177170
+RX2DB		= #177172
+WDCNT		= #200
+MASK		= #100240	; BIT 15=ERR, 7=XFER-RQST, 5=DONE
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; VECTORS
+VECTO		= #004		; VECTOR 004: TIME OUT & OTHER ERRORS
+VECILL		= #010		; VECTOR 010: ILLEGAL/RESERVED INSN
+VECBPT		= #014		; VECTOR 014: BPT INSN / T BIT
+VECIOT		= #020		; VECTOR 020: IOT INSTRUCTION
+VECPWR		= #024		; VECTOR 024: POWER FAIL
+VECEMT		= #030		; VECTOR 030: EMT INSTRUCTION
+VECTRP		= #034		; VECTOR 034: TRAP INSTRUCTION
+VECTTI		= #060		; VECTOR 060: CONSOLE INPUT DEVICE
+VECTTO		= #064		; VECTOR 064: CONSOLE OUTPUT DEVICE
+VECEVT		= #100		; VECTOR 100: EXTERNAL EVENT LINE INT
+
+		.ORG	0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+_START:		; TRANSFER DATA FROM BOOT LOADER
+		MOV	@#40,	MEMSIZE
+		MOV	@#42,	MONBASE
+		MOV	@#50,	RXUNIT
+
+		; STORE NULL (HALT) AT ADDRESS 000000
+		CLR	@#0
+
+		MOV	MONBASE,R0
+
+		; COMPUTE BLOCK BUFFER ADDRESS
+		SUB	#1000,	R0		; BUF = MONBASE - 512
+		MOV	R0,	BUF
+
+		; COMPUTE TT OUTPUT RING BUFFER ADDRESS
+		SUB	#400,	R0		; TTOBUF = BUF - 256
+		MOV	R0,	TTOBUF
+
+		; COMPUTE TT INPUT RING BUFFER ADDRESS
+		SUB	#400,	R0		; TTIBUF = TTOBUF - 256
+		MOV	R0,	TTIBUF
+
+		MOV	R0,	TOP
+
+		; SAVE EFS INFO
+		MOV	#1020,	R0
+		MOV	(R0)+,	VTOCSZ
+		MOV	(R0)+,	VTOCBLK
+		MOV	(R0)+,	BITMAP
+
+		; SETUP STACK
+		MOV	#1000,	SP
+
+		; RELOCATE EMT TABLE
+		JSR	PC,	EMTRELOC
+
+		; INITIALIZE VECTOR TABLE
+		MOV	#VECTBL,R0
+		MOV	MONBASE,R1
+		ADD	R1,	R0
+		MOV	(R0)+,	R2
+
+VECINITL:	MOV	(R0)+,	R3		; VECTOR
+		MOV	(R0)+,	(R3)		; HANDLER
+		ADD	R1,	(R3)
+		MOV	(R0)+,	2(R3)		; PRIORITY
+		SOB	R2,	VECINITL
+
+		; LOAD MAIN PROGRAM
+		JSR	R5,	PUTS
+		.WORD	LOADMSG
+
+		; FIND FILE
+		MOV	#NUCLEUS,R0
+		ADD	MONBASE,R0
+		JSR	PC,	FINDFILE
+
+		; NOW R0 = VTOCIX, R1 = START BLOCK, R2 = COUNT
+
+		CMP	#177777,R0
+		BEQ	EXECFAIL
+
+		; COMPUTE NUCLEUS BASE ADDRESS
+		MOV	R2,	R3
+		SWAB	R3
+		ASL	R3
+		CLRB	R3
+		NEG	R3
+		ADD	TOP,	R3
+
+		MOV	R3,	-(SP)		; 6(SP) = BUF
+		MOV	R3,	-(SP)		; 4(SP) = PTR = BUF
+		MOV	R2,	-(SP)		; 2(SP) = COUNT
+		MOV	R1,	-(SP)		; 0(SP) = BLOCK
+
+		; LOAD THE FILE INTO MEMORY
+LOADLOOP:	TST	2(SP)
+		BEQ	LOADEND
+		MOV	(SP),	R0
+		INC	(SP)
+		DEC	2(SP)
+		MOV	4(SP),	R1
+		ADD	#1000,	4(SP)
+		EMT	3			; READBLOCK(BLOCK, BUF)
+		BR	LOADLOOP
+
+LOADEND:	ADD	#6,	SP
+
+		; ENABLE SIGTTIN AND SIGTTOU
+		BIS	#100,	@#RCSR		; RCSR |= INT
+		BIS	#100,	@#XCSR		; XCSR |= INT
+
+		; CHECK FOR LTC AVAILABILITY, ACTIVATE IT IF AVAILABLE
+		MOV	#VECTO,	R1
+		MOV	(R1),	R2		; SAVE LTC VECTOR
+		MOV	#LTCTST,(R1)
+		ADD	MONBASE,(R1)
+
+		MOV	#100,	@#177546	; ENABLE LTC
+		BR	LTCFOUND
+
+LTCTST:		RTI				; IGNORE LACK OF LTC CSR
+
+LTCFOUND:	MOV	R2,	(R1)		; RESTORE LTC VECTOR
+
+		; ENABLE INTERRUPTS
+		MFPS	R1			; CLEAR PRIORITY BIT
+		BIC	#300,	R1
+		MTPS	R1
+
+		; EXECUTE MAIN PROGRAM
+		MOV	BUF,	R0
+		MOV	#SCHEDULE,R1
+		ADD	MONBASE,R1
+		JMP	@(SP)+
+
+END:		BR	END
+		HALT
+
+EXECFAIL:	JSR	R5,	PUTERR
+		.WORD	NOTFOUNDERR
+		JSR	R5,	PUTS
+		.WORD	EXECFAILMSG
+		HALT
+		BR	END
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TIMEOUT HANDLER
+SIGBUS:		JSR	R5,	PUTERR
+		.WORD	TOERR
+SIGBUS0:	WAIT
+		BR	SIGBUS0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ILLEGAL INSTRUCTION HANDLER
+SIGILL:		JSR	R5,	PUTERR
+		.WORD	ILLERR
+SIGILL0:	WAIT
+		BR	SIGILL0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SIGPWR: POWER FAILURE
+SIGPWR:		JSR	R5,	PUTERR
+		.WORD	PWRERR
+		HALT
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMT HANDLER RELOCATION
+EMTRELOC:	MOV	#EMTTBL,R0
+		ADD	MONBASE,R0
+EMTRELOCL:	TST	(R0)
+		BEQ	EMTRELOCE
+		ADD	MONBASE,(R0)+
+		BR	EMTRELOCL
+EMTRELOCE:	RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMT HANDLER
+SIGEMT:		MOV	R0,	-(SP)
+		MOV	2(SP),	R0
+		CMPB	-1(R0), #210
+		BNE	EMTNOEMT
+		MOVB	-2(R0), R0		; R0 = -2(R0)
+		CMP	R0,	#20
+		BGE	EMTHALT
+		ASL	R0
+		ADD	MONBASE,R0
+		MOV	EMTTBL(R0),R0
+		TST	R0
+		BEQ	EMTHALT
+		MOV	R0,	-2(SP)
+		MOV	(SP)+,	R0
+		JMP	@-4(SP)
+		BR	EMTHALT
+
+EMTREADBLOCK:	MOV	R0,	-(SP)
+		MOV	R1,	-(SP)
+		MOV	R2,	-(SP)
+		MOV	R3,	-(SP)
+		MOV	R4,	-(SP)
+		MOV	R5,	-(SP)
+
+		ASL	R0			; SECT = 2 * BLOCK
+		MOV	R0,	-(SP)
+		MOV	R1,	-(SP)
+		JSR	PC,	GETTRACKSECT
+		MOV	(SP),	R2
+		JSR	PC,	READRX02
+		MOV	2(SP),	R0
+		INC	R0			; SECT++
+		JSR	PC,	GETTRACKSECT
+		MOV	(SP)+,	R2
+		ADD	#400,	R2
+		JSR	PC,	READRX02
+		TST	(SP)+
+
+		MOV	(SP)+,	R5
+		MOV	(SP)+,	R4
+		MOV	(SP)+,	R3
+		MOV	(SP)+,	R2
+		MOV	(SP)+,	R1
+		MOV	(SP)+,	R0
+
+		RTI
+
+EMTPRINT:	MOV	R0,	-(SP)
+		JSR	PC,	PRINT
+		MOV	(SP)+,	R0
+		RTI
+
+EMTHALT:	MOV	R0,	-(SP)
+
+		JSR	R5,	PUTS		; PUTS('\r\n')
+		.WORD	NEWLINE
+
+		JSR	R5,	PUTS		; PUTS(EMTERR)
+		.WORD	EMTERR
+
+		MOV	(SP)+,	R0
+		JSR	PC,	PUTN		; PUTN(EMTNO)
+
+		JSR	R5,	PUTS		; PUTS('\r\n')
+		.WORD	NEWLINE
+
+		HALT
+
+		CLR	(SP)+
+		RTI
+
+EMTNOEMT:	JSR	R5,	PUTERR
+		.WORD	EMTERRINS
+
+		HALT
+
+		MOV	(SP)+,	R0
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRINT NUL-TERMINATED ERROR MESSAGE FOLLOWED BY NEWLINE
+PUTERR:		JSR	R5,	PUTS
+		.WORD	NEWLINE
+
+		MOV	(R5)+,	R0
+		ADD	MONBASE,R0
+		JSR	PC,	PRINT
+
+		JSR	R5,	PUTS
+		.WORD	NEWLINE
+
+		RTS	R5
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRINT NUL-TERMINATED MONITOR STRING POINTED TO BY INLINE ARGUMENT
+PUTS:		MOV	(R5)+,	R0
+		ADD	MONBASE,R0
+		JSR	PC,	PRINT
+		RTS	R5
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRINT NUL-TERMINATED STRING POINTED TO BY R0
+PRINT:		TSTB	(R0)
+		BEQ	PREND
+PRWAIT:		TSTB	@#XCSR
+		BPL	PRWAIT
+		CMPB	#12,	(R0)
+		BNE	PRDO
+		MOVB	#15,	@#XBUF
+PRWAIT2:	TSTB	@#XCSR
+		BPL	PRWAIT2
+PRDO:		MOVB	(R0)+,	@#XBUF
+		BR	PRINT
+PREND:		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRINT CHARACTER IN R0
+PUTC:		TSTB	@#XCSR
+		BPL	PUTC
+		MOVB	R0,	@#XBUF
+		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; PRINT NUMBER IN R0 AS DECIMAL
+PUTN:		MOV	R0,	R1
+		MOV	#5,	R2
+PUTNL:		CLR	R0
+		DIV	R0,	#12
+		MOV	R1,	-(SP)		; N % 10D
+		MOV	R0,	R1
+		SOB	R2,	PUTNL
+
+		; PRINT DIGITS
+		MOV	#6,	R3
+		CLR	R1
+PUTN1:		DEC	R3			; LEADING ZEROS
+		BEQ	PUTNZERO
+		MOV	(SP)+,	R0		; LOAD DIGIT
+		BEQ	PUTN1
+
+		; PRINT NUMBER
+PUTN2:		ADD	#60,	R0
+		JSR	PC,	PUTC
+
+		DEC	R3
+		BEQ	PUTNEND
+		MOV	(SP)+,	R0
+		BR	PUTN2
+
+PUTNEND:	RTS	PC
+
+PUTNZERO:	MOV	#60,	R0
+		JMP	PUTC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; INPUT:  R0 = LOGICAL SECTOR
+;; OUTPUT: R0 = TRACK, R1 = SECTOR
+GETTRACKSECT:	MOV	R0,	R1
+		CLR	R0
+		DIV	R0,	#32		; R0 = LSN / 26
+		MOV	R1,	R3		; R1 = LSN % 26
+		ASL	R3			; R3 = R1 * 2
+		CMP	R1,	#15		; IF(R1 >= 13) THEN
+		BLT	GETTRACKSECT1
+		INC	R3			;     R3++;
+GETTRACKSECT1:	CLR	R2
+		DIV	R2,	#32		; R3 %= 26
+		MOV	R0,	R1
+		ASL	R1
+		MOV	R1,	R2		; R2 = TRACK * 2
+		ASL	R1			; R1 = TRACK * 4
+		ADD	R2,	R1		; R1 = TRACK * 6
+		ADD	R1,	R3		; R3 += R1
+		CLR	R2
+		DIV	R2,	#32		; R3 %= 26
+		MOV	R3,	R1
+		INC	R1			; SECTOR = 1 + R5
+		INC	R0			; TRACK++
+		CMP	R0,	#115		; IF(TRACK >= 77) THEN
+		BLT	GETTRACKSECT2
+		CLR	R0			;     TRACK = 0
+GETTRACKSECT2:	RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; READ SECTOR FROM RX02
+;; R0 = TRACK, R1 = SECTOR, R2 = BUS ADDRESS
+READRX02:	; LOAD CONSTANTS INTO REGISTERS TO SAVE SPACE
+		MOV	#MASK,	R4
+		MOV	#RX2CS,	R5
+
+		; CHECK THAT RXV21 IS READY
+		BIT	R4,	@R5		; APPLY MASK TO RX2CS
+		BEQ	READRX02		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; INITIATE A READ-SECTOR COMMAND
+		MOV	#407,	R3		; DEN=DDEN, UNIT=0,
+						; FN=RD-SECTOR, GO
+		BIS	RXUNIT,	R3		; SET UNIT TO BOOT UNIT
+		MOV	R3,	@R5		; DEN=DDEN, UNIT=BOOT,
+						; FN=RD-SECTOR, GO
+READRX02L0:	BIT	R4,	@R5		; APPLY MASK TO RX2CS
+		BEQ	READRX02L0		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; CODE ASSUMES THAT XFER-RQST IS NOW SET (IGNORES DONE)
+		MOVB	R1,	@#RX2DB		; WRITE SECTOR NUMBER
+READRX02L1:	BIT	R4,	@R5		; APPLY MASK
+		BEQ	READRX02L1		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; CODE ASSUMES THAT XFER-RQST IS NOW SET (IGNORES DONE)
+		MOVB	R0,	@#RX2DB		; WRITE TRACK NUMBER
+
+		; RXV21 IS NOW READING SECTOR DATA INTO ITS OWN BUFFER
+READRX02L2:	BIT	R4,	@R5		; APPLY MASK
+		BEQ	READRX02L2		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; CODE ASSUMES THAT XFER-RQST IS NOW SET (IGNORES DONE)
+
+		; THE SECTOR DATA IS NOW IN RXV21'S DATA BUFFER.
+		; PREPARE TO TRANSFER SECTOR DATA FROM RXV21 TO RAM BY DMA
+		MOV	#403,	@R5		; DEN=DDEN, UNIT=0,
+						; FN=EMPTY-BUF, GO
+READRX02L3:	BIT	R4,	@R5		; APPLY MASK
+		BEQ	READRX02L3		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; CODE ASSUMES THAT XFER-RQST IS NOW SET (IGNORES DONE)
+		MOV	#WDCNT,	@#RX2DB		; LD WORD COUNT INTO RX2WC
+READRX02L4:	BIT	R4,	@R5		; APPLY MASK
+		BEQ	READRX02L4		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+
+		; CODE ASSUMES THAT XFER-RQST IS NOW SET (IGNORES DONE)
+		MOV	R2,	@#RX2DB		; LD BUS ADDR INTO RX2BA
+
+		; DATA (256 BYTES) IS NOW BEING COPIED TO RAM VIA DMA
+READRX02L5:	BIT	R4,	@R5		; APPLY MASK
+		BEQ	READRX02L5		; LOOP UNTIL ERR,
+						; XFER-RQST OR DONE
+		BMI	READRX02ERR		; HALT IF ERR IS SET
+		RTS	PC
+
+READRX02ERR:	JSR	R5,	PUTERR
+		.WORD	RX02ERR
+		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; COMPUTE CHECKSUM OF BLOCK AT R0
+CHECKSUM:	CLR	R1
+		MOV	#377,	R2
+CHECKSUM0:	ADD	(R0)+,	R1
+		SOB	R2,	CHECKSUM0
+		MOV	R1,	R0
+		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ENCODE STRING AT R0 TO BUFFER IN R1
+;; INPUT:  R0 = ASCII STRING
+;; OUTPUT: R1 = RAD50 STRING
+;; TEMP:   R2 = IN PTR, R3 = CURRENT WORD BUF
+RAD50ENCODE:	MOV	R2,	-(SP)
+		MOV	R3,	-(SP)
+		MOV	R0,	R2
+
+RAD50ENCL:	MOVB	(R2)+,	R0		; C = *(S++)
+		TST	R0			; IF(C == 0)
+		BEQ	RAD50ENCODEE		;     RETURN
+
+		JSR	PC,	RAD50ENCIDX	; R0 = R4ENC(C)
+		MOV	R0,	R3		; TMP = R0
+
+		MOVB	(R2)+,	R0		; C = *(S++)
+		TST	R0			; IF(C == 0)
+		BEQ	RAD50ENCODEQ		;     RETURN
+
+		JSR	PC,	RAD50ENCIDX	; R0 = R4ENC(C)
+		MOV	R1,	-(SP)
+		MUL	R0,	#050
+		ADD	R1,	R3		; TMP += R0 * 050
+		MOV	(SP)+,	R1
+
+		MOVB	(R2)+,	R0		; C = *(S++)
+		TST	R0			; IF(C == 0)
+		BEQ	RAD50ENCODEQ		;     RETURN
+
+		JSR	PC,	RAD50ENCIDX	; R0 = R4ENC(C)
+		MOV	R1,	-(SP)
+		MUL	R0,	#3100
+		ADD	R1,	R3		; TMP += R0 * 050 * 050
+		MOV	(SP)+,	R1
+
+		MOV	R3,	(R1)+		; *(OUT++) = TMP
+		BR	RAD50ENCL		; GOTO LOOP
+
+RAD50ENCODEQ:	MOV	R3,	(R1)+		; *(OUT++) = TMP
+RAD50ENCODEE:	MOV	(SP)+,	R3
+		MOV	(SP)+,	R2
+		RTS	PC
+
+RAD50ENCIDX:	CMP	R0,	#056		; IF(C == '.')
+		BNE	RAD50ENCIDX1		; THEN
+		CLR	R0			;     RETURN 0
+		RTS	PC			; ELSE
+RAD50ENCIDX1:	CMP	R0,	#043		; IF(C == '#')
+		BNE	RAD50ENCIDX2		; THEN
+		MOV	#1,	R0		;     RETURN 1
+		RTS	PC			; ELSE
+RAD50ENCIDX2:	CMP	R0,	#100		; IF(C == '@')
+		BNE	RAD50ENCIDX3		; THEN
+		MOV	#2,	R0		;     RETURN 2
+		RTS	PC			; ELSE
+RAD50ENCIDX3:	CMP	R0,	#044		; IF(C == '$')
+		BNE	RAD50ENCIDX4		; THEN
+		MOV	#3,	R0		;     RETURN 3
+		RTS	PC			; ELSE
+RAD50ENCIDX4:	CMP	R0,	#060		; IF(C >= '0')
+		BLT	RAD50ENCIDX5		;     AND
+		CMP	R0,	#072		;   (C <= '9')
+		BGE	RAD50ENCIDX5		; THEN
+		SUB	#054,	R0		;     RETURN C - '0' + 4
+		RTS	PC			; ELSE
+RAD50ENCIDX5:	CMP	R0,	#101		; IF(C >= 'A')
+		BLT	RAD50ENCIDX6		;     AND
+		CMP	R0,	#133		;   (C <= 'Z')
+		BGE	RAD50ENCIDX6		; THEN
+		SUB	#063,	R0		;     RETURN C - 'A' +14
+		RTS	PC			; ELSE
+RAD50ENCIDX6:	CMP	R0,	#141		; IF(C >= 'a')
+		BLT	RAD50ENCIDX7		;     AND
+		CMP	R0,	#173		;   (C <= 'z')
+		BGE	RAD50ENCIDX7		; THEN
+		SUB	#123,	R0		;     RETURN C - 'a' +14
+		RTS	PC			; ELSE
+RAD50ENCIDX7:	CLR	R0
+		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; COPY MEMORY FROM R0 TO R1, R2 WORDS
+MEMCPY:		TST	R2
+		BEQ	MEMCPYE
+MEMCPYL:	MOV	(R0)+,	(R1)+
+		SOB	R2,	MEMCPYL
+MEMCPYE:	RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SET MEMORY AT R1 TO R0, R2 WORDS
+MEMSET:		TST	R2
+		BEQ	MEMSETE
+MEMSETL:	MOV	R0,	(R1)+
+		SOB	R2,	MEMSETL
+MEMSETE:	RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; FIND FILE IN VTOC WITH FILENAME IN R0
+FINDFILE:	SUB	#24,	SP		; TMP = NEW U16[10]
+		MOV	R0,	-(SP)
+		CLR	R0
+		MOV	SP,	R1		; R1 = TMP
+		ADD	#2,	R1
+		MOV	#12,	R2
+		JSR	PC,	MEMSET
+		MOV	(SP)+,	R0
+
+		MOV	SP,	R1
+		JSR	PC,	RAD50ENCODE	; TMP = R4ENC(NAME)
+
+		CLR	-(SP)			; 4(SP) = VTOCIX
+		MOV	VTOCSZ,	-(SP)		; 2(SP) = SIZE
+		MOV	VTOCBLK,-(SP)		; 0(SP) = BLOCK
+
+FINDFILEBL:	TST	2(SP)			; IF(!SIZE)
+		BEQ	FINDFILENF		;     RETURN
+
+		MOV	(SP),	R0
+		MOV	BUF,	R1
+		EMT	3			; READBLOCK(BLOCK, BUF)
+
+		MOV	#20,	R4		; CNT = 16
+		MOV	BUF,	R0
+FINDFILEVL:	CMPB	#2,	37(R0)		; IF(VTOC->TYPE != 2)
+		BNE	FINDFILEVLN		;     CONTINUE
+		MOV	#12,	R1
+		MOV	SP,	R2		; R2 = TMP
+		ADD	#6,	R2
+FINDFILEVNL:	CMP	(R0)+,	(R2)+
+		BNE	FINDFILEVLN
+		SOB	R1,	FINDFILEVNL
+
+		; FILE FOUND
+		BIC	#37,	R0
+		MOV	24(R0),	R1		; R1 = START BLOCK
+		MOV	26(R0),	R2		; R2 = SIZE
+		MOV	4(SP),	R0		; R0 = VTOCIX
+		ADD	#32,	SP
+		RTS	PC
+
+FINDFILEVLN:	INC	4(SP)			; VTOCIX++
+		BIC	#37,	R0
+		ADD	#40,	R0
+		SOB	R4,	FINDFILEVL
+
+		; READ NEXT BLOCK
+		DEC	2(SP)
+		INC	(SP)
+		BR	FINDFILEBL
+
+FINDFILENF:	ADD	#32,	SP
+		MOV	#177777,R0
+		RTS	PC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTLOCATE: CALL FINDFILE
+EMTLOCATE:	MOV	R3,	-(SP)
+		MOV	R4,	-(SP)
+		MOV	R5,	-(SP)
+
+		JSR	PC,	FINDFILE
+
+		MOV	(SP)+,	R5
+		MOV	(SP)+,	R4
+		MOV	(SP)+,	R3
+
+		RTI
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TTY INPUT / OUTPUT ROUTINES                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTTTO: WRITE DATA INTO TT OUTPUT RING BUFFER
+;; R0: BUFFER, R1: SIZE
+EMTTTO:		TST	R1			; IF(SIZE == 0)
+		BEQ	EMTTTORTI		;     RETURN
+
+		TST	TTOSZ
+		BNE	EMTTTOINIT
+
+		MOVB	(R0)+,	@#XBUF
+		DEC	R1
+		BEQ	EMTTTORTI
+
+EMTTTOINIT:	MOV	R1,	-(SP)
+		MOV	R2,	-(SP)
+		MOV	R3,	-(SP)
+
+
+EMTTONEXT:	CMP	TTOSZ,	#400		; IF(TTOSZ < 256)
+		BLT	EMTTTOWR
+		
+		MFPS	R3			; CLEAR PRIORITY BIT
+		BIC	#300,	R3
+		MTPS	R3
+
+		EMT	7			; WAIT FOR IRQ (YIED)
+
+		BIS	#300,	R3		; SET PRIORITY BIT
+		MTPS	R3
+
+		BR	EMTTONEXT
+
+EMTTTOWR:	MOV	TTOWR,	R2
+		MOV	R2,	R3
+		ADD	TTOBUF,	R3
+		MOVB	(R0)+,	(R3)
+		INC	R2
+		BIC	#177400,R2
+		MOV	R2,	TTOWR
+		INC	TTOSZ
+		SOB	R1,	EMTTONEXT
+
+		MOV	(SP)+,	R3
+		MOV	(SP)+,	R2
+		MOV	(SP)+,	R1
+
+EMTTTORTI:	RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTTTI: READ DATA FROM TT INPUT RING BUFFER
+;; R0: BUFFER, R1: SIZE
+EMTTTI:		TST	TTISZ			; IF(TTISZ == 0)
+		BEQ	EMTTTIZ			;     RETURN 0
+
+		TST	R1			; IF(SIZE == 0)
+		BEQ	EMTTTIZ			;     RETURN 0
+
+		MOV	R1,	-(SP)
+		MOV	R2,	-(SP)
+		MOV	R3,	-(SP)
+		MOV	R4,	-(SP)
+		MOV	R5,	-(SP)
+
+		CLR	R2			; CNT = 0
+		MOV	TTIBUF,	R3		; R3 = TTIBUF
+		MOV	TTIRD,	R4		; R4 = RD
+
+EMTTTIL:	TST	TTISZ			; IF(TTISZ == 0)
+		BEQ	EMTTTIE			;     RETURN CNT
+
+		MOV	R3,	R5
+		ADD	R4,	R5		; C = &TTIBUF[RD]
+		MOVB	(R5),	(R0)+		; *(BUF++) = *C
+		INC	R2			; CNT++
+		INC	R4
+		BIC	#177400,R4		; RD = (RD + 1) % BUFSZ
+		DEC	TTISZ			; TTISZ--
+
+		SOB	R1,	EMTTTIL
+
+EMTTTIE:	MOV	R4,	TTIRD		; SAVE TTIRD POINTER
+
+		MOV	R2,	R0		; RETURN CNT
+		MOV	(SP)+,	R5
+		MOV	(SP)+,	R4
+		MOV	(SP)+,	R3
+		MOV	(SP)+,	R2
+		MOV	(SP)+,	R1
+		RTI
+
+EMTTTIZ:	CLR	R0			; RETURN 0
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SIGTTIN: SERIAL CONSOLE INPUT INTERRUPT
+SIGTTIN:	BIT	#200,	@#RCSR
+		BEQ	SIGTTINRTI
+
+		MOV	R0,	-(SP)
+		MOV	R1,	-(SP)
+
+		CMP	TTISZ,	#400
+		BGE	SIGTTINE
+
+		MOV	TTIBUF,	R0
+		MOV	TTIWR,	R1
+		ADD	R1,	R0
+		MOVB	@#RBUF,	(R0)
+		INC	R1
+		BIC	#177400,R1
+		MOV	R1,	TTIWR
+		INC	TTISZ
+
+SIGTTINE:	MOV	(SP)+,	R1
+		MOV	(SP)+,	R0
+
+SIGTTINRTI:	RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SIGTTOU: SERIAL CONSOLE OUTPUT INTERRUPT
+SIGTTOU:	TST	TTOSZ
+		BEQ	SIGTTOE
+
+		MOV	R0,	-(SP)
+		MOV	R1,	-(SP)
+
+		DEC	TTOSZ
+		MOV	TTORD,	R0
+		MOV	R0,	R1
+		ADD	TTOBUF,	R1
+		MOVB	(R1),	@#XBUF
+		INC	R0
+		BIC	#177400,R0
+		MOV	R0,	TTORD
+
+		MOV	(SP)+,	R1
+		MOV	(SP)+,	R0
+
+SIGTTOE:	RTI
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; TASK HANDLING AND CONTEXT SWITCHING ROUTINES                       ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SIGEVT: LTC INTERRUPT
+SIGEVT:		MOV	R0,	-(SP)
+		MOV	R1,	-(SP)
+		MOV	R2,	-(SP)
+		MOV	R3,	-(SP)
+		MOV	R4,	-(SP)
+		MOV	R5,	-(SP)
+
+		; GET NEXT TASK
+		TST	SCHEDULE
+		BEQ	SIGEVTE
+
+		; C CALL TO SCHEDULE(SP)
+		MOV	SP,	-(SP)
+		JSR	PC,	@SCHEDULE
+		CLR	(SP)+
+		MOV	R0,	SP
+
+		; RESTORE CONTEXT
+SIGEVTE:	MOV	(SP)+,	R5
+		MOV	(SP)+,	R4
+		MOV	(SP)+,	R3
+		MOV	(SP)+,	R2
+		MOV	(SP)+,	R1
+		MOV	(SP)+,	R0
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTSPAWN: CREATE NEW TASK
+;; R0: STACK, R1: TARGET PROGRAM COUNTER
+EMTSPAWN:	CLR	-(R0)			; PSW
+		MOV	R1,	-(R0)		; PC
+		CLR	-(R0)			; R0
+		CLR	-(R0)			; R1
+		CLR	-(R0)			; R2
+		CLR	-(R0)			; R3
+		CLR	-(R0)			; R4
+		CLR	-(R0)			; R5
+
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTSETEMT: SET EMT VECTOR
+;; R0: ADDRESS, R1: ID
+EMTSETEMT:	CMP	R1,	#10
+		BLE	SETEMTE
+		MOV	R1,	-(SP)
+		ASL	R1			; R1 = ID * 2
+		ADD	#EMTTBL,R1
+		ADD	MONBASE,R1
+		MOV	R0,	(R1)		; EMTTBL[ID] = R0
+		MOV	(SP)+,	R1
+SETEMTE:	RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTHALTSYS: FLUSH TTO BUFFER AND HALT
+EMTHALTSYS:	CLR	SCHEDULE		; DISABLE SCHEDULING
+
+		MFPS	R0			; ALLOW IRQS
+		BIC	#200,	R0
+		MTPS	R0
+
+EMTHALTL:	TST	TTOSZ			; WAIT UNTIL TTO BUF
+		BNE	EMTHALTL		; IS EMPTY
+
+EMTHALTE:	JSR	R5,	PUTS		; PRINT FINAL MESSAGE
+		.WORD	HALTMSG
+		JSR	R5,	PUTS
+		.WORD	NEWLINE
+
+		HALT				; HALT CPU
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; DATA AREA                                                          ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMT HANDLER TABLE: SPACE FOR 16 HANDLERS
+EMTTBL:		.WORD	EMTHALTSYS		; EMT  0: HALT
+		.WORD	EMTTTO			; EMT  1: TTO
+		.WORD	EMTTTI			; EMT  2: TTI
+		.WORD	EMTREADBLOCK		; EMT  3: READBLOCK
+		.WORD	EMTLOCATE		; EMT  4: LOCATE
+		.WORD	EMTSETEMT		; EMT  5: SETEMT
+		.WORD	EMTSPAWN		; EMT  6: SPAWN
+		.WORD	SIGEVT			; EMT  7: YIELD
+		.WORD	0			; EMT 10
+		.WORD	0			; EMT 11
+		.WORD	0			; EMT 12
+		.WORD	0			; EMT 13
+		.WORD	0			; EMT 14
+		.WORD	0			; EMT 15
+		.WORD	0			; EMT 16
+		.WORD	0			; EMT 17
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GLOBAL CONSTANTS
+MEMSIZE:	.WORD	0			; MEMORY SIZE
+MONBASE:	.WORD	0			; MONITOR BASE
+TOP:		.WORD	0			; FIRST USED ADDRESS
+BUF:		.WORD	0			; IO BUFFER
+RXUNIT:		.WORD	0			; BOOT RX02 UNIT
+
+; FILE SYSTEM VALUES
+VTOCBLK:	.WORD	0			; VTOC BLOCK
+VTOCSZ:		.WORD	0			; VTOC SIZE (BLOCKS)
+BITMAP:		.WORD	0			; BITMAP BLOCK
+
+; HIGH PERFORMANCE RING BUFFER: TTY INPUT
+TTIBUF:		.WORD	0			; INPUT BUFFER
+TTIRD:		.WORD	0			; READ POINTER
+TTIWR:		.WORD	0			; WRITE POINTER
+TTISZ:		.WORD	0			; CURRENTLY USED SIZE
+
+; HIGH PERFORMANCE RING BUFFER: TTY OUTPUT
+TTOBUF:		.WORD	0			; OUTPUT BUFFER
+TTORD:		.WORD	0			; READ POINTER
+TTOWR:		.WORD	0			; WRITE POINTER
+TTOSZ:		.WORD	0			; CURRENTLY USED SIZE
+
+; SCHEDULING FUNCTION (C CALLING CONVENTION: VOID* SCHED(VOID* SP))
+SCHEDULE:	.WORD	0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; VECTOR TABLE
+VECTBL:		.WORD	7			; VECTOR COUNT
+
+		.WORD	VECTO			; TIME OUT & OTHER ERROR
+		.WORD	SIGBUS
+		.WORD	300
+
+		.WORD	VECILL			; ILLEGAL/RESERVED INSN
+		.WORD	SIGILL
+		.WORD	300
+
+		.WORD	VECEMT			; EMT INSTRUCTION
+		.WORD	SIGEMT
+		.WORD	300
+
+		.WORD	VECTTI			; CONSOLE INPUT DEVICE
+		.WORD	SIGTTIN
+		.WORD	300
+
+		.WORD	VECTTO			; CONSOLE OUTPUT DEVICE
+		.WORD	SIGTTOU
+		.WORD	300
+
+		.WORD	VECEVT			; EXTERNAL EVENT LINE
+		.WORD	SIGEVT
+		.WORD	300
+
+		.WORD	VECPWR			; POWER FAILURE
+		.WORD	SIGPWR
+		.WORD	300
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; MISC STRINGS
+NEWLINE:	"\r\n"
+NUCLEUS:	"SYS1.NUCLEUS"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ERROR MESSAGES
+EMTERR:		"MON001C UNKNOWN EMT CALL "
+EMTERRINS:	"MON002C EMT HANDLER NOT CALLED VIA EMT"
+TOERR:		"MON003C BUS TIMEOUT"
+ILLERR:		"MON004C ILLEGAL INSTRUCTION"
+PWRERR:		"MON005C POWER FAILURE"
+NOTFOUNDERR:	"MON006C FILE NOT FOUND"
+RX02ERR:	"RX2001E DEVICE ERROR"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; INFO MESSAGES
+LOADMSG:	"MON100I LOADING NUCLEUS\n"
+EXECFAILMSG:	"MON101C FAILED TO LOAD NUCLEUS\n"
+HALTMSG:	"MON102I SYSTEM HALTED"
