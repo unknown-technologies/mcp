@@ -34,13 +34,13 @@ VECEVT		= #100		; VECTOR 100: EXTERNAL EVENT LINE INT
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 _START:		; TRANSFER DATA FROM BOOT LOADER
 		MOV	@#40,	MEMSIZE
-		MOV	@#42,	MONBASE
+		MOV	@#42,	R0
 		MOV	@#50,	RXUNIT
 
 		; STORE NULL (HALT) AT ADDRESS 000000
 		CLR	@#0
 
-		MOV	MONBASE,R0
+		MOV	R0,	MONBASE
 
 		; COMPUTE BLOCK BUFFER ADDRESS
 		SUB	#1000,	R0		; BUF = MONBASE - 512
@@ -846,6 +846,7 @@ EMTHALTE:	JSR	R5,	PUTS		; PRINT FINAL MESSAGE
 		.WORD	NEWLINE
 
 		HALT				; HALT CPU
+EMTHALTLOCK:	BR	EMTHALTLOCK
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
