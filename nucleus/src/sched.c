@@ -13,7 +13,8 @@ static OSTask tasks[MAX_TASKS] = { 0 };
 static void* OSSchedule(void* sp)
 {
 	tasks[taskid].sp = sp;
-	for(unsigned int i = 0, j = (taskid + 1) % MAX_TASKS; i < MAX_TASKS; i++, j = (j + 1) % MAX_TASKS) {
+	for(unsigned int i = 0, j = (taskid + 1) % MAX_TASKS; i < MAX_TASKS;
+			i++, j = (j + 1) % MAX_TASKS) {
 		if(tasks[j].state == TASK_RUNNING) {
 			taskid = j;
 			break;

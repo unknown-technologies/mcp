@@ -16,13 +16,6 @@ void SITransmitBlocking(const void* s, unsigned int len)
 	}
 }
 
-BOOL SITransmit(const void* s, unsigned int len)
-{
-	MONTTO(s, len);
-	// SITransmitBlocking(s, len);
-	return TRUE;
-}
-
 BOOL SIReceiveByte(u8* c)
 {
 	if(!(DL11_RCSR & DL11_RCSR_DONE)) {

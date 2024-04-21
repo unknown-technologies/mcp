@@ -20,6 +20,10 @@ OPTFLAGS	:=	-Os
 CFLAGS		:=	$(OPTFLAGS) -Wall -std=c99 \
 			-fwrapv -fwrapv-pointer -fzero-initialized-in-bss \
 			$(ARCHFLAGS) -nostdlib -ffreestanding \
+			-DREVISION=\"$(REVISION)\" \
+			-DCOMMIT=\"$(COMMIT)\" \
+			-DBUILDDATE=\"$(BUILDDATE)\" \
+			-DBUILDTIME=\"$(BUILDTIME)\" \
 			$(INCLUDE)
 
 LDFLAGS		:=	$(OPTFLAGS) -Wl,-x -Wl,--gc-sections \
@@ -38,6 +42,11 @@ export	OFILES	:=	$(SFILES:.s=.o) $(CFILES:.c=.o)
 export	VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) $(CURDIR)
 export	INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 				-I$(CURDIR)/$(BUILD)
+
+export	REVISION :=	$(shell git rev-list --count HEAD)
+export	COMMIT   :=	$(shell git rev-parse --short HEAD)
+export	BUILDDATE:=	$(shell date -u +"%Y-%m-%d")
+export	BUILDTIME:=	$(shell date -u +"%H:%M:%S")
 
 .PHONY: $(BUILD) clean all
 

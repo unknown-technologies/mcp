@@ -5,8 +5,6 @@
 
 extern u8*	__sector_buffer;
 extern void*	__relbase;
-extern void*	__tasks;
-extern void*	__emttbl;
 
 static inline void MONHalt(void)
 {
@@ -36,7 +34,8 @@ static inline void MONReadBlock(void* buf, unsigned int block)
 	asm volatile ("emt 3" : "=r"(r0) : "r"(r0), "r"(r1));
 }
 
-static inline BOOL MONLocate(const char* name, unsigned int* vtocix, unsigned int* block, unsigned int* size)
+static inline BOOL MONLocate(const char* name, unsigned int* vtocix,
+		unsigned int* block, unsigned int* size)
 {
 	register unsigned int r0 asm("r0") = (unsigned int) name;
 	register unsigned int r1 asm("r1");

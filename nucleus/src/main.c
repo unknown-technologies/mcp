@@ -12,7 +12,9 @@ void print_readme(void)
 	unsigned int size;
 
 	if(MONLocate("SYS1.README", &vtocix, &block, &size)) {
-		OSLog(MSGID_NUC, 10, LOG_INFO, "SYS1.README HAS VTOCIX=%d, BLOCK=%d, SIZE=%d", vtocix, block, size);
+		OSLog(MSGID_NUC, 10, LOG_INFO,
+				"SYS1.README HAS VTOCIX=%d, BLOCK=%d, SIZE=%d",
+				vtocix, block, size);
 
 		for(unsigned int i = 0; i < size; i++) {
 			MONReadBlock(__sector_buffer, block + i);
@@ -30,7 +32,8 @@ static void io_task(void)
 	while(1) {
 		char c;
 		if(MONTTI(&c, 1)) {
-			OSLog(MSGID_NUC, 11, LOG_INFO, "RX: %02X", (unsigned int) (unsigned char) c);
+			OSLog(MSGID_NUC, 11, LOG_INFO, "RX: %02X",
+					(unsigned int) (unsigned char) c);
 
 			if(c == 'q' || c == 'Q') {
 				return;
@@ -44,6 +47,8 @@ static void io_task(void)
 void nucleus(void)
 {
 	OSLogInit();
+	OSLog(NUC_START, "THIS IS NUCLEUS R" REVISION " (COMMIT " COMMIT
+			") BUILT ON " BUILDDATE " " BUILDTIME);
 	OSSchedInit();
 	RLInit();
 
