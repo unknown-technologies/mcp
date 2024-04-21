@@ -122,6 +122,14 @@ BOOL AOUTIsShortSymtab(AOUT* aout)
 
 void AOUTGetSymtab(AOUT* aout, SYMTAB* symtab)
 {
+	if(U16L(aout->symbols) == 0) {
+		symtab->namelen = 0;
+		symtab->names = NULL;
+		symtab->sym = NULL;
+		symtab->is_shortsym = FALSE;
+		return;
+	}
+
 	memset(symtab, 0, sizeof(SYMTAB));
 	void* tab = AOUTGetSymbolTable(aout);
 	symtab->is_shortsym = *((u8*) symtab) != 0;

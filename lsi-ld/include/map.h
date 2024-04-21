@@ -13,11 +13,14 @@ struct MAPENTRY {
 
 typedef struct {
 	MAPENTRY*	buckets[MAP_BUCKETS];
+	unsigned int	size;
 } MAP;
 
 void	MAPInit(MAP* map);
 void	MAPDestroy(MAP* map);
 BOOL	MAPPut(MAP* map, const char* key, void* value);
 void*	MAPGet(MAP* map, const char* key);
+unsigned int MAPGetSize(MAP* map);
+void	MAPIterate(MAP* map, void (*iterator)(const char* key, void* value, void* user), void* user);
 
 #endif

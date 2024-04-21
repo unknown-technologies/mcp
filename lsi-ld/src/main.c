@@ -14,6 +14,8 @@ void print_help(const char* self)
 			"\n"
 			"OPTIONS\n"
 			"  -h              Show this help text\n"
+			"  -m symbol.map   Print symbol map to file, - is stdout\n"
+			"  -o output.bin   Write output to file\n"
 			"\n"
 			"The last argument FILE is a list of object files to process\n", self);
 }
@@ -50,11 +52,11 @@ int print_symbol_list(char** ofiles, int ofilecnt)
 	return 0;
 }
 
-int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out)
+int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out, int type)
 {
 	LINKER ld;
 
-	LDInit(&ld);
+	LDInit(&ld, type);
 
 	for(int i = 0; i < ofilecnt; i++) {
 		if(!LDLoad(&ld, ofiles[i])) {
@@ -63,13 +65,9 @@ int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out)
 		}
 	}
 
-	if(!LDCollect(&ld, "_start")) {
-		LDDestroy(&ld);
-		return 1;
-	}
-
 	size_t memsz;
 	void* out = LDLink(&ld, &memsz);
+
 	if(out) {
 		FILE* f = fopen(outfile, "wb");
 		if(!f) {
@@ -107,6 +105,7 @@ int main(int argc, char** argv)
 	int print_symbols = 0;
 	char* outfile = NULL;
 	char* mapfile = NULL;
+	unsigned int type = LD_TYPE_EXEC;
 
 	argc--;
 	argv++;
@@ -117,6 +116,12 @@ int main(int argc, char** argv)
 			return 0;
 		} else if(!strcmp(*argv, "-p")) {
 			print_symbols = 1;
+		} else if(!strcmp(*argv, "-e")) {
+			type = LD_TYPE_EXEC;
+		} else if(!strcmp(*argv, "-l")) {
+			type = LD_TYPE_LIB;
+		} else if(!strcmp(*argv, "-d")) {
+			type = LD_TYPE_DYN;
 		} else if(!strcmp(*argv, "-o") && argc > 1) {
 			outfile = argv[1];
 			argv++;
@@ -142,14 +147,20 @@ int main(int argc, char** argv)
 			symbols_out = stdout;
 		}
 		if(mapfile) {
-			symbols_out = fopen(mapfile, "wt");
-			if(!symbols_out) {
-				printf("Failed to open map file %s: %s\n", mapfile, strerror(errno));
-				return 1;
+			if(!strcmp(mapfile, "-")) {
+				symbols_out = stdout;
+			} else {
+				symbols_out = fopen(mapfile, "wt");
+				if(!symbols_out) {
+					printf("Failed to open map file %s: %s\n", mapfile, strerror(errno));
+					return 1;
+				}
 			}
 		}
-		int result = link(outfile, ofiles, ofilecnt, symbols_out);
-		fclose(symbols_out);
+		int result = link(outfile, ofiles, ofilecnt, symbols_out, type);
+		if(symbols_out) {
+			fclose(symbols_out);
+		}
 		return result;
 	}
 

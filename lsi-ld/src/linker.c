@@ -6,6 +6,9 @@
 
 #include "linker.h"
 
+static const char* symtab_name = "___symtab";
+static const char* reltab_name = "___reltab";
+
 void* LDLoadFile(const char* filename)
 {
 	struct stat buf;
@@ -37,9 +40,10 @@ void* LDLoadFile(const char* filename)
 	return data;
 }
 
-void LDInit(LINKER* linker)
+void LDInit(LINKER* linker, unsigned int type)
 {
 	memset(linker, 0, sizeof(LINKER));
+	linker->type = type;
 
 	MAPInit(&linker->symbols);
 }
@@ -135,6 +139,8 @@ void LDCollectRecursive(LINKER* linker, MODULE* module)
 	SYMTAB symtab;
 	AOUTGetSymtab(aout, &symtab);
 
+	BOOL allow_unresolved = linker->type != LD_TYPE_EXEC;
+
 	SYM* sym = symtab.sym;
 	for(unsigned int i = 0; i < U16L(aout->symbols); i += 8, sym++) {
 		const char* symname = &symtab.names[sym->offset];
@@ -144,10 +150,12 @@ void LDCollectRecursive(LINKER* linker, MODULE* module)
 			SYMBOL* symbol = MAPGet(&linker->symbols, symname);
 			if(symbol) {
 				LDCollectRecursive(linker, symbol->module);
-			} else if(strcmp(symname, "_reltab") && strcmp(symname, "_relcnt")) {
+			} else if(strcmp(symname, reltab_name) && strcmp(symname, symtab_name)) {
 				linker->unresolved = TRUE;
-				printf("Unresolved reference: %s required by %s\n",
-						symname, module->name);
+				if(!allow_unresolved) {
+					printf("Unresolved reference: %s required by %s\n",
+							symname, module->name);
+				}
 			}
 		}
 	}
@@ -172,7 +180,7 @@ BOOL LDCollect(LINKER* linker, const char* entry)
 	main->keep = TRUE;
 	LDCollectRecursive(linker, main);
 
-	if(linker->unresolved) {
+	if(linker->unresolved && linker->type == LD_TYPE_EXEC) {
 		return FALSE;
 	}
 
@@ -187,10 +195,44 @@ BOOL LDCollect(LINKER* linker, const char* entry)
 	return TRUE;
 }
 
+BOOL LDCollectLibrary(LINKER* linker)
+{
+	linker->unresolved = FALSE;
+
+	for(MODULE* module = linker->modules; module; module = module->next) {
+		module->keep = TRUE;
+		module->visited = TRUE;
+
+		AOUT* aout = module->aout;
+		SYMTAB symtab;
+		AOUTGetSymtab(aout, &symtab);
+
+		SYM* sym = symtab.sym;
+		for(unsigned int i = 0; i < U16L(aout->symbols); i += 8, sym++) {
+			const char* symname = &symtab.names[sym->offset];
+
+			if(sym->type == 000 || sym->type == 040) {
+				/* external symbol */
+				SYMBOL* symbol = MAPGet(&linker->symbols, symname);
+				if(symbol) {
+					LDCollectRecursive(linker, symbol->module);
+				} else {
+					linker->unresolved = TRUE;
+				}
+			}
+		}
+	}
+
+	return TRUE;
+}
+
 MODULE* LDCreateRelocModule(LINKER* linker, size_t relocs)
 {
 	size_t reloc_size = (relocs + 1) * 2;
-	size_t relocsym_size = sizeof(SYM) + 4 + strlen("_reltab") + 1;
+	size_t relocsym_size = sizeof(SYM) + 4 + strlen(reltab_name) + 1;
+	if(relocsym_size & 1) {
+		relocsym_size++;
+	}
 
 	MODULE* relmod = (MODULE*) malloc(sizeof(MODULE));
 	relmod->name = "<relocations>";
@@ -200,7 +242,7 @@ MODULE* LDCreateRelocModule(LINKER* linker, size_t relocs)
 	relmod->symbols = (SYMBOL*) malloc(sizeof(SYMBOL));
 	relmod->symbols->next = NULL;
 	relmod->symbols->module = relmod;
-	relmod->symbols->name = "_reltab";
+	relmod->symbols->name = reltab_name;
 	relmod->symbols->type = 043;
 	relmod->symbols->value = 0;
 
@@ -219,22 +261,138 @@ MODULE* LDCreateRelocModule(LINKER* linker, size_t relocs)
 	sym->type = 043;
 	sym->value = 0;
 
-	size_t namelen = strlen("_reltab") + 1;
+	size_t namelen = strlen(reltab_name) + 1;
 	u16* names = (u16*) ((uintptr_t) sym + U16L(relmod->aout->symbols));
 	names[0] = U16L((u16) (namelen >> 16));
 	names[1] = U16L((u16) namelen);
-	strcpy((char*) &names[2], "_reltab");
+	strcpy((char*) &names[2], reltab_name);
 
 	return relmod;
 }
 
-void* LDLink(LINKER* linker, size_t* size)
+static void symtab_export_counter(const char* key, void* value, void* attachment)
+{
+	SYMINFO* info = (SYMINFO*) attachment;
+	SYMBOL* sym = (SYMBOL*) value;
+	if(sym->type > 040 && strcmp(key, reltab_name) && strcmp(key, symtab_name)) {
+		info->symbols++;
+		info->namelen += strlen(key) + 1;
+	}
+}
+
+static void symtab_export_collector(const char* key, void* value, void* attachment)
+{
+	SYMINFO* info = (SYMINFO*) attachment;
+	SYMBOL* sym = (SYMBOL*) value;
+	if(sym->type > 040 && strcmp(key, reltab_name) && strcmp(key, symtab_name)) {
+		info->symptr->name = info->stroff;
+		info->symptr->type = sym->type;
+		info->symptr->value = sym->value;
+		strcpy(info->strptr, key);
+		info->strptr += strlen(key) + 1;
+		info->stroff += strlen(key) + 1;
+		info->symptr++;
+	}
+}
+
+MODULE* LDCreateSymtabModule(LINKER* linker, size_t* symcnt)
+{
+	SYMINFO exports = { 0 };
+
+	MAPIterate(&linker->symbols, symtab_export_counter, &exports);
+
+	size_t size = exports.symbols * sizeof(PROGSYM) + exports.namelen;
+	size_t sym_size = sizeof(SYM) + 4 + strlen(symtab_name) + 1;
+
+	if(size & 1) {
+		size++;
+	}
+	if(sym_size & 1) {
+		sym_size++;
+	}
+
+	MODULE* mod = (MODULE*) malloc(sizeof(MODULE));
+	mod->name = "<symbols>";
+	mod->next = NULL;
+	mod->keep = TRUE;
+	mod->visited = TRUE;
+	mod->symbols = NULL;
+
+	mod->aout = (AOUT*) malloc(sizeof(AOUT) + size + sym_size);
+	memset(mod->aout, 0, sizeof(AOUT) + size + sym_size);
+	mod->aout->text = U16L(0);
+	mod->aout->data = U16L(size);
+	mod->aout->bss = U16L(0);
+	mod->aout->symbols = U16L(sizeof(SYM));
+	mod->aout->flags = U16L(1);
+
+	mod->symbols = (SYMBOL*) malloc(sizeof(SYMBOL));
+	mod->symbols->next = NULL;
+	mod->symbols->module = mod;
+	mod->symbols->name = symtab_name;
+	mod->symbols->type = 043;
+	mod->symbols->value = 0;
+
+	exports.symptr = AOUTGetData(mod->aout);
+	exports.stroff = exports.symbols * sizeof(PROGSYM);
+	exports.strptr = (char*) (((uintptr_t) exports.symptr)
+			+ exports.stroff);
+	MAPIterate(&linker->symbols, symtab_export_collector, &exports);
+
+	SYM* sym = (SYM*) AOUTGetSymbolTable(mod->aout);
+	memset(sym, 0, sizeof(SYM));
+	sym->module = 0;
+	sym->offset = 4;
+	sym->type = 043;
+	sym->value = 0;
+
+	size_t namelen = strlen(symtab_name) + 1;
+	u16* names = (u16*) ((uintptr_t) sym + U16L(mod->aout->symbols));
+	names[0] = U16L((u16) (namelen >> 16));
+	names[1] = U16L((u16) namelen);
+	strcpy((char*) &names[2], symtab_name);
+
+	*symcnt = exports.symbols;
+
+	return mod;
+}
+
+int export_symtab_sorter(const void* a, const void* b, void* arg)
+{
+	const PROGSYM* sym_a = (const PROGSYM*) a;
+	const PROGSYM* sym_b = (const PROGSYM*) b;
+	const char* names = (const char*) arg;
+
+	const char* name_a = names + sym_a->name;
+	const char* name_b = names + sym_b->name;
+
+	return strcmp(name_a, name_b);
+}
+
+void LDUpdateSymtabModule(LINKER* linker, MODULE* mod, size_t symcnt)
+{
+	SYMINFO exports = { 0 };
+
+	exports.symptr = AOUTGetData(mod->aout);
+	exports.stroff = symcnt * sizeof(PROGSYM);
+	exports.strptr = (char*) (((uintptr_t) exports.symptr)
+			+ exports.stroff);
+	MAPIterate(&linker->symbols, symtab_export_collector, &exports);
+
+	/* sort table */
+	qsort_r(AOUTGetData(mod->aout), symcnt, sizeof(PROGSYM),
+			export_symtab_sorter, AOUTGetData(mod->aout));
+}
+
+void* LDLinkBinary(LINKER* linker, size_t* size)
 {
 	size_t text_size = 0;
 	size_t data_size = 0;
 	size_t bss_size  = 0;
 
-	if(!linker->entry) {
+	BOOL is_library = linker->type == LD_TYPE_LIB;
+
+	if(!is_library && !linker->entry) {
 		printf("Entry point not defined, aborting\n");
 		return NULL;
 	}
@@ -254,7 +412,7 @@ void* LDLink(LINKER* linker, size_t* size)
 
 		AOUT* aout = module->aout;
 
-		if(module == linker->entry->module) {
+		if(!is_library && module == linker->entry->module) {
 			continue;
 		}
 
@@ -306,6 +464,17 @@ void* LDLink(LINKER* linker, size_t* size)
 	printf("text: %06lo, data: %06lo, bss: %06lo, total: %06lo; relocs: %d\n",
 			text_size, data_size, bss_size, total, relocs);
 
+	/* create synthetic symbol table module */
+	size_t symcnt = 0;
+	MODULE* symmod = NULL;
+	if(linker->type != LD_TYPE_EXEC) {
+		symmod = LDCreateSymtabModule(linker, &symcnt);
+		last_module->next = symmod;
+		symmod->next = NULL;
+		last_module = symmod;
+		data_size += U16L(symmod->aout->data);
+	}
+
 	/* create synthetic reloc module */
 	MODULE* relmod = LDCreateRelocModule(linker, relocs);
 	last_module->next = relmod;
@@ -313,20 +482,22 @@ void* LDLink(LINKER* linker, size_t* size)
 	MAPPut(&linker->symbols, relmod->symbols->name, relmod->symbols);
 
 	data_size += U16L(relmod->aout->data);
-	*size = text_size + data_size;
+	*size = sizeof(PROGRAM) + text_size + data_size;
 
-	u16 text = 0;
-	u16 data = (u16) text_size;
+	u16 text = sizeof(PROGRAM);
+	u16 data = text + (u16) text_size;
 	u16 bss = data + (u16) data_size;
 
 	/* layout modules in memory, entry point at 0 */
-	linker->entry->module->textptr = text;
-	linker->entry->module->dataptr = data;
-	linker->entry->module->bssptr  = bss;
+	if(!is_library) {
+		linker->entry->module->textptr = text;
+		linker->entry->module->dataptr = data;
+		linker->entry->module->bssptr  = bss;
 
-	text += U16L(linker->entry->module->aout->text);
-	data += U16L(linker->entry->module->aout->data);
-	bss  += U16L(linker->entry->module->aout->bss);
+		text += U16L(linker->entry->module->aout->text);
+		data += U16L(linker->entry->module->aout->data);
+		bss  += U16L(linker->entry->module->aout->bss);
+	}
 
 	u16* reloc = (u16*) AOUTGetData(relmod->aout);
 
@@ -339,7 +510,7 @@ void* LDLink(LINKER* linker, size_t* size)
 		}
 
 		/* skip entrypoint module */
-		if(module == linker->entry->module) {
+		if(!is_library && module == linker->entry->module) {
 			continue;
 		}
 
@@ -435,19 +606,40 @@ void* LDLink(LINKER* linker, size_t* size)
 			if(sym->type == 000 || sym->type == 040) {
 				SYMBOL* s = MAPGet(&linker->symbols, symname);
 				if(!s) {
-					printf("Error: failed to get external symbol '%s', this should not happen\n", symname);
-					return NULL;
+					if(linker->type == LD_TYPE_EXEC) {
+						printf("Error: failed to get external symbol '%s', this should not happen\n", symname);
+						return NULL;
+					} else {
+						sym->value = 0;
+					}
+				} else {
+					sym->value = s->value;
 				}
-				sym->value = s->value;
 			}
 		}
 	}
 
-	u8* image = (u8*) malloc(text_size + data_size);
+	/* update export symbol table with new symbol values */
+	if(symmod) {
+		LDUpdateSymtabModule(linker, symmod, symcnt);
+	}
+
+	u8* image = (u8*) malloc(*size);
 	if(!image) {
 		printf("Failed to allocate memory: %s\n", strerror(errno));
 		return NULL;
 	}
+
+	PROGRAM* prog = (PROGRAM*) image;
+	prog->magic = U16B(PROG_MAGIC);
+	if(symmod) {
+		prog->image_size = U16L(symmod->dataptr) - sizeof(PROGRAM);
+	} else {
+		/* prog->image_size = U16L(text_size + data_size); */
+		prog->image_size = U16L(relmod->dataptr) - sizeof(PROGRAM);
+	}
+	prog->symbols = U16L((u16) symcnt);
+	prog->relocs = U16L(relmod->dataptr);
 
 	/* copy code and data to memory and process relocations */
 	for(MODULE* module = linker->modules; module; module = module->next) {
@@ -549,9 +741,91 @@ void* LDLink(LINKER* linker, size_t* size)
 			}
 		}
 
+		for(unsigned int i = 0; i < U16L(aout->data) / 2; i++) {
+			u16* text = &dataptr[i];
+			u16 rel = datarels[i];
+
+			if(rel == 0) {
+				continue;
+			}
+
+			BOOL pcrel = rel & 1;
+			u16 type = (rel >> 1) & 7;
+			u16 id = rel >> 4;
+
+			SYM* sym = &syms[id];
+
+#ifdef _DEBUG
+			u16 pc = module->dataptr + (i << 1);
+			const char* symname = &symtab.names[sym->offset];
+			char t = '?';
+			switch(type) {
+				case 0:
+					t = 'A';
+					break;
+				case 1:
+					t = 'T';
+					break;
+				case 2:
+					t = 'D';
+					break;
+				case 3:
+					t = 'B';
+					break;
+				case 4:
+					t = 'U';
+					break;
+			}
+
+			printf("PC=%06o [%06o] REL=%06o %06o => %c %s = %06o\n", pc, i << 1, rel, *text, t, symname, sym->value);
+#endif
+
+			/* perform relocation */
+			switch(type) {
+				case 0: /* absolute */
+					*text = sym->value;
+					break;
+				case 1: /* text */
+					*text += module->textptr;
+					break;
+				case 2: /* data */
+					*text += module->dataptr - U16L(aout->text);
+					break;
+				case 3: /* bss */
+					*text += module->bssptr - U16L(aout->text) - U16L(aout->data);
+					break;
+				case 4: /* external */
+					*text += sym->value;
+					break;
+			}
+
+			if(pcrel) {
+				*text -= module->textptr;
+			}
+		}
+
 	}
 
 	return image;
+}
+
+void* LDLink(LINKER* linker, size_t* size)
+{
+	switch(linker->type) {
+		case LD_TYPE_EXEC:
+		case LD_TYPE_DYN:
+			if(!LDCollect(linker, "_start")) {
+				return NULL;
+			}
+			return LDLinkBinary(linker, size);
+		case LD_TYPE_LIB:
+			if(!LDCollectLibrary(linker)) {
+				return NULL;
+			}
+			return LDLinkBinary(linker, size);
+		default:
+			return NULL;
+	}
 }
 
 static int symsort(const void* a, const void* b)
@@ -563,10 +837,21 @@ static int symsort(const void* a, const void* b)
 
 void LDPrintMap(LINKER* linker, FILE* out)
 {
+	BOOL gc;
+	switch(linker->type) {
+		case LD_TYPE_EXEC:
+		case LD_TYPE_DYN:
+			gc = TRUE;
+			break;
+		case LD_TYPE_LIB:
+		default:
+			gc = FALSE;
+	}
+
 	/* print symbols */
 	unsigned int symcnt = 0;
 	for(MODULE* module = linker->modules; module; module = module->next) {
-		if(!module->visited || !module->keep) {
+		if(gc && (!module->visited || !module->keep)) {
 			continue;
 		}
 
@@ -578,7 +863,7 @@ void LDPrintMap(LINKER* linker, FILE* out)
 	SYMBOL** symbols = (SYMBOL**) malloc(symcnt * sizeof(SYMBOL*));
 	unsigned int i = 0;
 	for(MODULE* module = linker->modules; module; module = module->next) {
-		if(!module->visited || !module->keep) {
+		if(gc && (!module->visited || !module->keep)) {
 			continue;
 		}
 

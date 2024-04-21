@@ -18,12 +18,14 @@ $(DISK): modules
 modules:
 	@$(MAKE) -C mkdisk all --no-print-directory
 	@$(MAKE) -C lsi-ld all --no-print-directory
+	@$(MAKE) -C lsi-nm all --no-print-directory
 	@$(MAKE) -C mon all --no-print-directory
 	@$(MAKE) -C nucleus all --no-print-directory
 
 clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
 	@$(MAKE) -C lsi-ld clean --no-print-directory
+	@$(MAKE) -C lsi-nm clean --no-print-directory
 	@$(MAKE) -C mon clean --no-print-directory
 	@$(MAKE) -C nucleus clean --no-print-directory
 	@rm -f $(DISK)

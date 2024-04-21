@@ -56,6 +56,7 @@ BOOL MAPPut(MAP* map, const char* key, void* value)
 	entry->key = key;
 	entry->value = value;
 	entry->next = NULL;
+	map->size++;
 
 	return TRUE;
 }
@@ -75,4 +76,20 @@ void* MAPGet(MAP* map, const char* key)
 	}
 
 	return NULL;
+}
+
+unsigned int MAPGetSize(MAP* map)
+{
+	return map->size;
+}
+
+void MAPIterate(MAP* map, void (*iterator)(const char* key, void* value, void* user), void* user)
+{
+	for(unsigned int i = 0; i < MAP_BUCKETS; i++) {
+		MAPENTRY* entry = map->buckets[i];
+		while(entry) {
+			iterator(entry->key, entry->value, user);
+			entry = entry->next;
+		}
+	}
 }

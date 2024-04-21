@@ -19,7 +19,7 @@ ASAN		:=	-fsanitize=address
 CFLAGS		:=	-O3 -g -Wall -std=c99 \
 			-ffunction-sections -fdata-sections \
 			$(INCLUDE) -DUNIX \
-			-D_XOPEN_SOURCE=500 -D_DEFAULT_SOURCE \
+			-D_XOPEN_SOURCE=500 -D_DEFAULT_SOURCE -D_GNU_SOURCE \
 			$(ASAN)
 
 LDFLAGS		:=	-Wl,-x -Wl,--gc-sections $(ASAN)
