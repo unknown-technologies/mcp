@@ -35,15 +35,6 @@ struct SYMBOL {
 };
 
 typedef struct {
-	MAP		symbols;
-	MODULE*		modules;
-	SYMBOL*		entry;
-	unsigned int	module_count;
-	unsigned int	type;
-	BOOL		unresolved;
-} LINKER;
-
-typedef struct {
 	u16		magic;
 	u16		image_size;
 	u16		symbols;
@@ -69,6 +60,29 @@ typedef struct {
 	u16		relocs;
 	u16		reloc_cnt;
 } IMPORT;
+
+typedef struct {
+	MAP		undefined;
+	MAP		defined;
+	IMPORT*		import;
+	IMPORT*		impptr;
+	unsigned int	stroff;
+	char*		strptr;
+	u16*		rels;
+	u16		relbase;
+	u16		reloff;
+	u16*		reloffs;
+} IMPORTTAB;
+
+typedef struct {
+	MAP		symbols;
+	MODULE*		modules;
+	SYMBOL*		entry;
+	unsigned int	module_count;
+	unsigned int	type;
+	BOOL		unresolved;
+	IMPORTTAB	import;
+} LINKER;
 
 void*	LDLoadFile(const char* filename);
 

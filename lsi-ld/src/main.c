@@ -91,6 +91,9 @@ int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out, int type
 		if(symbols_out) {
 			LDPrintMap(&ld, symbols_out);
 		}
+	} else {
+		LDDestroy(&ld);
+		return 1;
 	}
 
 	LDDestroy(&ld);
