@@ -386,43 +386,45 @@ void LDUpdateSymtabModule(LINKER* linker, MODULE* mod, size_t symcnt)
 			export_symtab_sorter, AOUTGetData(mod->aout));
 }
 
-static void LDAddImport(LINKER* linker, const char* symname)
+static void imptab_add_collector(const char* key, void* value, void* attachment)
 {
+	LINKER* linker = (LINKER*) attachment;
 	IMPORTTAB* tab = &linker->import;
-	IMPORT* imp = MAPGet(&tab->defined, symname);
-	unsigned int idx;
 
-	if(!imp) {
-		imp = tab->impptr++;
-		idx = imp - tab->import;
-		imp->name = tab->stroff;
-		imp->relocs = tab->reloff;
-		imp->reloc_cnt = (u16) (uintptr_t) MAPGet(&tab->undefined, symname) - 1;
-		MAPPut(&tab->defined, symname, imp);
-
-		tab->reloffs[idx] = tab->reloff;
-
-		strcpy(tab->strptr, symname);
-		tab->strptr += strlen(symname) + 1;
-		tab->stroff += strlen(symname) + 1;
-		tab->reloff += imp->reloc_cnt * 2;
+	unsigned int relocs = (unsigned int) ((uintptr_t) value) - 1;
+	size_t namelen = strlen(key) + 1;
+	if(namelen & 1) {
+		namelen++;
 	}
+
+	void* ptr = tab->ptr;
+	IMPORT* imp = (IMPORT*) ptr;
+	imp->name = (u16) namelen;
+	imp->relocs = (u16) relocs;
+
+	size_t size = sizeof(IMPORT) + namelen + relocs * sizeof(u16);
+
+	tab->ptr += size;
+
+	strcpy((char*) (imp + 1), key);
+	ptr = ptr + sizeof(IMPORT) + namelen;
+
+	MAPPut(&tab->defined, key, ptr);
 }
 
 static void LDUpdateImport(LINKER* linker, const char* symname, u16 pc, BOOL pcrel)
 {
 	IMPORTTAB* tab = &linker->import;
-	IMPORT* imp = MAPGet(&tab->defined, symname);
+	u16* imp = MAPGet(&tab->defined, symname);
 
 	if(imp) {
-		unsigned int idx = imp - tab->import;
-		unsigned int rel = (tab->reloffs[idx] - tab->relbase) / 2;
-		tab->reloffs[idx] += 2;
+		/* add import */
 		u16 value = pc;
 		if(pcrel) {
 			value |= 1;
 		}
-		tab->rels[rel] = value;
+		*imp = value;
+		MAPPut(&tab->defined, symname, imp + 1);
 	} else {
 		printf("Error: import not found: %s\n", symname);
 	}
@@ -458,9 +460,15 @@ MODULE* LDCreateImportModule(LINKER* linker)
 			if(sym->type == 000 || sym->type == 040) {
 				SYMBOL* s = MAPGet(&linker->symbols, symname);
 				if(!s) {
-					if(MAPPut(undefined, symname, (void*) 1)) {
+					void* val = MAPGet(undefined, symname);
+					if(!val) {
+						MAPPut(undefined, symname, (void*) 1);
+						size_t len = strlen(symname) + 1;
+						if(len & 1) {
+							len++;
+						}
 						symbols++;
-						strings += strlen(symname) + 1;
+						strings += len;
 					}
 				}
 			}
@@ -548,81 +556,11 @@ MODULE* LDCreateImportModule(LINKER* linker)
 	u16* data = AOUTGetData(impmod->aout);
 	*data = symbols;
 	tab->import = (IMPORT*) (data + 1);
-	tab->stroff = 2 + symbols * sizeof(IMPORT) + relocs * sizeof(u16);
-	tab->reloff = 2 + symbols * sizeof(IMPORT);
-	tab->relbase = tab->reloff;
-	tab->reloffs = (u16*) malloc(symbols * sizeof(u16));
-	tab->impptr = tab->import;
-	tab->strptr = (char*) ((uintptr_t) data + tab->stroff);
-	tab->rels = (u16*) &tab->import[symbols];
+	tab->ptr = tab->import;
 	MAPInit(&tab->defined);
-	memset(tab->reloffs, 0, symbols * sizeof(u16));
 
-	for(MODULE* module = linker->modules; module; module = module->next) {
-		if(!module->visited || !module->keep) {
-			continue;
-		}
-
-		AOUT* aout = module->aout;
-
-		u16* textrels = AOUTGetTextRels(aout);
-		u16* datarels = AOUTGetDataRels(aout);
-
-		SYMTAB symtab;
-		AOUTGetSymtab(aout, &symtab);
-
-		SYM* syms = symtab.sym;
-
-		if(textrels) {
-			for(unsigned int i = 0; i < U16L(aout->text) / 2; i++) {
-				u16 rel = textrels[i];
-
-				if(rel == 0) {
-					continue;
-				}
-
-				/* BOOL pcrel = rel & 1; */
-				u16 type = (rel >> 1) & 7;
-				u16 id = rel >> 4;
-
-				SYM* sym = &syms[id];
-				const char* symname = &symtab.names[sym->offset];
-
-				BOOL unresolved = type == 4
-					&& (sym->type == 000 || sym->type == 040)
-					&& MAPGet(&linker->symbols, symname) == NULL;
-
-				if(unresolved) {
-					LDAddImport(linker, symname);
-				}
-			}
-		}
-
-		if(datarels) {
-			for(unsigned int i = 0; i < U16L(aout->data) / 2; i++) {
-				u16 rel = datarels[i];
-
-				if(rel == 0) {
-					continue;
-				}
-
-				/* BOOL pcrel = rel & 1; */
-				u16 type = (rel >> 1) & 7;
-				u16 id = rel >> 4;
-
-				SYM* sym = &syms[id];
-				const char* symname = &symtab.names[sym->offset];
-
-				BOOL unresolved = type == 4
-					&& (sym->type == 000 || sym->type == 040)
-					&& MAPGet(&linker->symbols, symname) == NULL;
-
-				if(unresolved) {
-					LDAddImport(linker, symname);
-				}
-			}
-		}
-	}
+	/* layout import symbols */
+	MAPIterate(&tab->undefined, imptab_add_collector, linker);
 
 	return impmod;
 }
@@ -697,7 +635,6 @@ void LDUpdateImportModule(LINKER* linker)
 		}
 	}
 
-	free(linker->import.reloffs);
 	MAPDestroy(&linker->import.defined);
 	MAPDestroy(&linker->import.undefined);
 }

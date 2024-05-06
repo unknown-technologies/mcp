@@ -58,20 +58,13 @@ typedef struct {
 typedef struct {
 	u16		name;
 	u16		relocs;
-	u16		reloc_cnt;
 } IMPORT;
 
 typedef struct {
 	MAP		undefined;
 	MAP		defined;
 	IMPORT*		import;
-	IMPORT*		impptr;
-	unsigned int	stroff;
-	char*		strptr;
-	u16*		rels;
-	u16		relbase;
-	u16		reloff;
-	u16*		reloffs;
+	void*		ptr;
 } IMPORTTAB;
 
 typedef struct {

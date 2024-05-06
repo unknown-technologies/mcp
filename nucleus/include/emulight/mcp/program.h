@@ -21,7 +21,6 @@ typedef struct {
 typedef struct {
 	unsigned int	name;
 	unsigned int	relocs;
-	unsigned int	reloc_cnt;
 } OSImportSymbol;
 
 typedef struct {

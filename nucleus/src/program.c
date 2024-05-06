@@ -46,6 +46,22 @@ void OSInitLibrary(void)
 	}
 }
 
+void* OSGetSymbol(const char* name)
+{
+	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
+		OSLibrary* lib = &libraries[i];
+		if(lib->library && lib->symbols) {
+			OSSymbol* sym = lib->symbols;
+			for(unsigned int j = 0; j < lib->library->symbols; j++, sym++) {
+				if(!strcmp(sym->name, name)) {
+					return sym->value;
+				}
+			}
+		}
+	}
+	return NULL;
+}
+
 BOOL OSLoadLibrary(const char* name, const char* dsn)
 {
 	OSProgram header;
@@ -128,8 +144,12 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	return TRUE;
 }
 
+#define	MAX_SYMBOL_LEN	32
+
 void* OSLoadProgram(const char* name, const char* dsn)
 {
+	char name_buffer[MAX_SYMBOL_LEN];
+
 	DS ds;
 	if(!DSOpen(&ds, dsn)) {
 		OSLog(NUC_PROGRAM_NOT_FOUND, "PROGRAM %s NOT FOUND AT DSN %s", name, dsn);
@@ -182,7 +202,9 @@ void* OSLoadProgram(const char* name, const char* dsn)
 
 		unsigned int* p = base + reloc;
 
+#ifdef DEBUG
 		OSLog(MSGID_NUC, 999, LOG_DEBUG, "RELOC %u: %04X (%04X)", i, reloc, (unsigned int) p);
+#endif
 
 		*p += (unsigned int) base;
 	}
@@ -204,14 +226,52 @@ void* OSLoadProgram(const char* name, const char* dsn)
 			return NULL;
 		}
 
-		const char* name = import.name;
-		OSLog(MSGID_NUC, 999, LOG_DEBUG, "IMPORT %u: %04X (RELOCS: %u)", i, name, import.reloc_cnt);
+		bzero(name_buffer, MAX_SYMBOL_LEN);
+		if(DSRead(&ds, name_buffer, import.name) != import.name) {
+			MEMFree(prog);
+			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+			return NULL;
+		}
+
+		void* addr = OSGetSymbol(name_buffer);
+
+#ifdef DEBUG
+		OSLog(MSGID_NUC, 999, LOG_DEBUG, "IMPORT %u: %s (RELOCS: %u) = %04X", i, name_buffer, import.relocs, (unsigned int) addr);
+#endif
+
+		if(!addr) {
+			MEMFree(prog);
+			OSLog(NUC_PROGRAM_NOSYM, "LOADING PROGRAM %s FAILED: SYMBOL %s NOT FOUND", name, name_buffer);
+			return NULL;
+		}
+
+		for(unsigned int j = 0; j < import.relocs; j++) {
+			unsigned int reloc;
+			if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
+				MEMFree(prog);
+				OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+				return NULL;
+			}
+
+			BOOL pcrel = reloc & 1;
+			unsigned int rel = reloc & ~1;
+			unsigned int* pc = rel + base;
+			unsigned int value = (unsigned int) addr;
+
+#ifdef DEBUG
+			OSLog(MSGID_NUC, 999, LOG_DEBUG, "RELOC %u: %04X (%04X)", j, reloc, (unsigned int) pc);
+#endif
+
+			if(pcrel) {
+				*pc += (value - (unsigned int) base);
+			} else {
+				*pc += value;
+			}
+		}
 	}
 
 	OSLog(NUC_PROGRAM_LOADED, "PROGRAM %s LOADED AT %04X WITH %u EXTERNAL SYMBOLS",
 			name, (unsigned int) prog, externals);
-
-	return NULL;
 
 	return prog;
 }
