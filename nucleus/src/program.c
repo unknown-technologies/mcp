@@ -33,7 +33,9 @@ void OSInitLibrary(void)
 	self->library = (OSProgram*) __relbase;
 	self->symbols = (OSSymbol*) ((uintptr_t) self->library + self->library->image_size + sizeof(OSProgram));
 
+#ifdef DEBUG
 	OSLog(NUC_SYMBOLS, "NUCLEUS CONTAINS %u SYMBOLS", self->library->symbols);
+#endif
 
 	/* relocate symbols */
 	OSSymbol* sym = self->symbols;
@@ -41,7 +43,9 @@ void OSInitLibrary(void)
 	for(unsigned int i = 0; i < self->library->symbols; i++) {
 		sym->name += (uintptr_t) names;
 		sym->value += (uintptr_t) self->library;
-		OSLog(NUC_LIBRARY_SYMBOL, "SYMBOL: %s", sym->name);
+#ifdef DEBUG
+		OSLog(NUC_LIBRARY_SYMBOL, "SYMBOL: %s = %04X", sym->name, (unsigned int) sym->value);
+#endif
 		sym++;
 	}
 }
@@ -52,6 +56,7 @@ void* OSGetSymbol(const char* name)
 		OSLibrary* lib = &libraries[i];
 		if(lib->library && lib->symbols) {
 			OSSymbol* sym = lib->symbols;
+			/* TODO: use binary search instead of linear search here */
 			for(unsigned int j = 0; j < lib->library->symbols; j++, sym++) {
 				if(!strcmp(sym->name, name)) {
 					return sym->value;
@@ -114,7 +119,9 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 		return FALSE;
 	}
 
+#ifdef DEBUG
 	OSLog(NUC_LIBRARY_RELOCS, "%u RELOCS", relocs);
+#endif
 	for(unsigned int i = 0; i < relocs; i++) {
 		unsigned int reloc;
 
@@ -134,12 +141,16 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	for(unsigned int i = 0; i < header.symbols; i++) {
 		sym->name += (uintptr_t) names;
 		sym->value += (uintptr_t) lib;
+#ifdef DEBUG
 		OSLog(NUC_LIBRARY_SYMBOL, "SYMBOL: %s = %04X", sym->name, (unsigned int) sym->value);
+#endif
 		sym++;
 	}
 
+#ifdef DEBUG
 	OSLog(NUC_LIBRARY_LOADED, "LIBRARY %s LOADED AT %04X WITH %u SYMBOLS", name,
 			(unsigned int) oslib->library, oslib->library->symbols);
+#endif
 
 	return TRUE;
 }
@@ -190,7 +201,9 @@ void* OSLoadProgram(const char* name, const char* dsn)
 	}
 
 	void* base = prog - sizeof(OSProgram);
+#ifdef DEBUG
 	OSLog(NUC_PROGRAM_RELOCS, "%u RELOCS @ %04X", relocs, header.relocs);
+#endif
 	for(unsigned int i = 0; i < relocs; i++) {
 		unsigned int reloc;
 
@@ -270,8 +283,10 @@ void* OSLoadProgram(const char* name, const char* dsn)
 		}
 	}
 
+#ifdef DEBUG
 	OSLog(NUC_PROGRAM_LOADED, "PROGRAM %s LOADED AT %04X WITH %u EXTERNAL SYMBOLS",
 			name, (unsigned int) prog, externals);
+#endif
 
 	return prog;
 }

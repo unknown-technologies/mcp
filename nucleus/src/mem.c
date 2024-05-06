@@ -17,7 +17,9 @@ void MEMInit(void* start, void* end)
 
 void* MEMAlloc(size_t size)
 {
+#ifdef DEBUG
 	OSLog(NUC_MALLOC, "ALLOCATING %u BYTES", (unsigned int) size);
+#endif
 
 	if(size & 1) {
 		size++;
@@ -37,7 +39,9 @@ void* MEMAlloc(size_t size)
 
 void MEMFree(void* ptr)
 {
-	OSLog(NUC_MALLOC, "FREEING MEMORY AT %04X", (unsigned int) ptr);
+#ifdef DEBUG
+	OSLog(NUC_MFREE, "FREEING MEMORY AT %04X", (unsigned int) ptr);
+#endif
 
 	unsigned int* area = (unsigned int*) ptr - 1;
 	unsigned int size = *area;

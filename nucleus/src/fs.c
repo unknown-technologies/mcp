@@ -6,7 +6,9 @@
 
 BOOL DSOpen(DS* ds, const char* dsn)
 {
+#ifdef DEBUG
 	OSLog(NUC_FILE_OPEN, "OPENING DATASET WITH DSN %s", dsn);
+#endif
 	BOOL result = MONLocate(dsn, &ds->vtocix, &ds->block, &ds->size);
 	ds->current_block = ds->block;
 	ds->current_size = ds->size;
