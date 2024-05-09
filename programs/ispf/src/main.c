@@ -5,8 +5,7 @@
 #include <emulight/ds.h>
 #include <emulight/ispf.h>
 
-void ISPFInit(void);
-void ISPFProcess(void);
+#include "ispf.h"
 
 void start(void)
 {

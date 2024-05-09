@@ -5,6 +5,8 @@
 #include <emulight/ds.h>
 #include <emulight/ispf.h>
 
+#include "ispf.h"
+
 #define	SOFTWARE_VERSION		"r" REVISION "~" COMMIT
 
 #define	UI_ACTION_SYSINFO		0
