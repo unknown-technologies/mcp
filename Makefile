@@ -37,3 +37,6 @@ clean:
 	@$(MAKE) -C syslib clean --no-print-directory
 	@$(MAKE) -C programs/ispf clean --no-print-directory
 	@rm -f $(DISK)
+	@rm -f $(DISKROOT)/SYS1.NUCLEUS
+	@rm -f $(DISKROOT)/SYS1.SYSLIB
+	@rm -f $(DISKROOT)/SYS1.ISPF
