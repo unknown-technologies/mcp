@@ -24,10 +24,9 @@ void SPFDrawStatusBar(SPF* spf)
 		pos++;
 	}
 
-	size_t len = sprintf(spf->buf, "%02d.%02d.%04d %02d:%02d ",
+	VTPrintf("%02d.%02d.%04d %02d:%02d ",
 			now->date.day, now->date.month, now->date.year,
 			now->time.hour, now->time.minute);
-	VTWrite(spf->buf, len);
 
 	if(spf->status.draw) {
 		const char* msg = spf->status.draw(spf);
@@ -53,14 +52,11 @@ void SPFUpdateTime(SPF* spf)
 	/* did anything change? */
 	if(spf->clock.time.hour != now.hour
 			|| spf->clock.time.minute != now.minute) {
-		size_t len = sprintf(spf->buf, "%02d:%02d", now.hour,
-				now.minute);
-
 		VTPrint(ESC "7"		/* store cursor position */
 			CSI "?25l"	/* hide cursor */
 			CSI "24;75H"	/* go to (75, 24) */
 			CSI "0;7m");	/* reverse video */
-		VTWrite(spf->buf, len);
+		VTPrintf("%02d:%02d", now.hour, now.minute);
 		VTPrint(CSI "0m"	/* normal video */
 			ESC "8");	/* restore cursor position */
 
@@ -85,9 +81,7 @@ void SPFUpdateStatusBar(SPF* spf)
 				CSI "?25l"	/* hide cursor */
 				CSI "24;2H"	/* go to (2, 24) */
 				CSI "0;7m");	/* reverse video */
-
 			VTPrint(msg);
-
 			VTPrint(CSI "0m"	/* normal video */
 				ESC "8");	/* restore cursor position */
 

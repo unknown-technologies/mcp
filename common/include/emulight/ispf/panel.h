@@ -69,7 +69,6 @@ struct SPF {
 	BOOL			error_active;
 	BOOL			dirty;
 	OSDateTime		clock;
-	char			buf[32];
 };
 
 /******************************************************************************/
