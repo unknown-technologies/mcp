@@ -71,9 +71,8 @@ void SPFProcess(SPF* spf)
 		if(key != VT_KEY_NONE) {
 			spf->error_active = FALSE;
 			SPFRepaint(spf);
-		} else {
-			return;
 		}
+		return;
 	}
 
 	switch(key) {
