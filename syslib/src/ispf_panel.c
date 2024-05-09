@@ -10,11 +10,15 @@ void SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 		return;
 	}
 
+	SPFPanel* current = SPFCurrentPanel(spf);
+	void* program = current ? SPFGetPanelProgram(current) : NULL;
+
 	SPFPanel* panel = &spf->panels[++spf->current_panel];
 	bzero(panel, sizeof(SPFPanel));
 
 	panel->proto = dlg;
 	panel->spf = spf;
+	panel->program = program;
 
 	if(panel->proto->init) {
 		panel->proto->init(panel);
@@ -76,12 +80,27 @@ void SPFDestroyPanel(SPFPanel* panel)
 	}
 
 	SPF* spf = panel->spf;
+	void* program = SPFGetPanelProgram(panel);
 
 	if(panel->proto->destroy) {
 		panel->proto->destroy(panel);
 	}
 
+	/* TODO: check if this panel is really the topmost one */
 	spf->current_panel--;
+
+	if(spf->delete_handler) {
+		BOOL delete = TRUE;
+		for(int i = 0; i <= spf->current_panel; i++) {
+			if(spf->panels[i].program == program) {
+				delete = FALSE;
+			}
+		}
+
+		if(delete) {
+			spf->delete_handler(spf, program);
+		}
+	}
 
 	SPFRepaint(spf);
 }

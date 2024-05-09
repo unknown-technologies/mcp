@@ -13,8 +13,9 @@ struct SPFPanel;
 typedef struct SPF SPF;
 typedef struct SPFPanel SPFPanel;
 
-typedef void		(*SPFMenuHandler)(SPF* spf, int action);
-typedef const char*	(*SPFStatusBarHandler)(SPF* spef);
+typedef void			(*SPFMenuHandler)(SPF* spf, int action);
+typedef const char*		(*SPFStatusBarHandler)(SPF* spef);
+typedef void			(*SPFDeleteHandler)(SPF* spef, void* program);
 
 typedef struct {
 	const char*		name;
@@ -55,11 +56,13 @@ struct SPFPanel {
 	const char*		title;
 	SPF*			spf;
 	void*			userdata;
+	void*			program;
 	BOOL			show_cursor;
 };
 
 struct SPF {
 	void*			userdata;
+	void			(*delete_handler)(SPF* spf, void* program);
 	SPFPanel		panels[SPF_MAX_PANELS];
 	int			current_panel;
 	VT			vt;
@@ -98,6 +101,16 @@ static inline void SPFSetPanelTitle(SPFPanel* panel, const char* title)
 	panel->title = title;
 }
 
+static inline void SPFSetPanelProgram(SPFPanel* panel, void* program)
+{
+	panel->program = program;
+}
+
+static inline void* SPFGetPanelProgram(SPFPanel* panel)
+{
+	return panel->program;
+}
+
 static inline void* SPFGetPanelUserData(SPFPanel* panel)
 {
 	return panel->userdata;
@@ -116,6 +129,11 @@ static inline void SPFShowCursor(SPFPanel* panel)
 static inline void SPFHideCursor(SPFPanel* panel)
 {
 	panel->show_cursor = FALSE;
+}
+
+static inline void SPFSetDeleteHandler(SPF* spf, SPFDeleteHandler handler)
+{
+	spf->delete_handler = handler;
 }
 
 #endif
