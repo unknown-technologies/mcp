@@ -160,6 +160,8 @@ void SPFDrawMenuItem(SPF* spf, int index, const SPFMenuItem* item)
 
 	VTGoto(2 + index, 1 + dlg->offset);
 
+	VTWrite(CSI "0m", CSILEN + 2);
+
 	if(item->name == 0) {
 		/* end of menu */
 		VTWrite(ESC "(0m", 4);
