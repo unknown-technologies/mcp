@@ -1,5 +1,6 @@
 #include <emulight/types.h>
 #include <emulight/rad50.h>
+#include <emulight/string.h>
 #include <emulight/mcp/mon.h>
 #include <emulight/mcp/syslog.h>
 #include <emulight/mcp/sched.h>
@@ -47,6 +48,7 @@ int OSSpawn(const char* name, void (*pc)(void), void* sp, unsigned int flags)
 	for(unsigned int i = 0; i < MAX_TASKS; i++) {
 		OSTask* task = &tasks[i];
 		if(task->state == TASK_FREE) {
+			bzero(task, sizeof(OSTask));
 			void** stack = (void**) sp;
 			*stack = (void*) __OSTrampoline;
 			task->sp = MONSpawn(sp, pc);
@@ -98,4 +100,9 @@ int OSJoin(int tid)
 		}
 		MONYield();
 	}
+}
+
+OSTask* OSGetCurrentTask(void)
+{
+	return &tasks[taskid];
 }
