@@ -2,18 +2,64 @@
 #include <emulight/types.h>
 #include <emulight/string.h>
 #include <emulight/rad50.h>
+#include <emulight/r6.h>
+#include <emulight/mcp/mem.h>
 #include <emulight/mcp/si.h>
 #include <emulight/mcp/syslog.h>
 
+static unsigned int lock = 0;
 static int loglevel;
 static char logbuf[96];
+static BOOL logmem = FALSE;
+static OSLogRecord* log_ringbuf = NULL;
+static unsigned int log_ringbuf_wr = 0;
+static unsigned int log_ringbuf_sz = 0;
 
 static const char severity_chars[] = { 'D', 'I', 'A', 'W', 'E', 'C' };
 
 void OSLogInit(void)
 {
+	logmem = FALSE;
 	OSSetLogLevel(LOG_INFO);
 	OSLog(NUC_SYSLOG_START, "THE SYSTEM LOG IS NOW ACTIVE");
+}
+
+void OSLogToMemory(BOOL mem)
+{
+	logmem = mem;
+
+	if(mem && !log_ringbuf) {
+		log_ringbuf = MEMAlloc(LOG_BUF_SIZE * sizeof(OSLogRecord));
+		if(!log_ringbuf) {
+			logmem = FALSE;
+		} else {
+			bzero(log_ringbuf, LOG_BUF_SIZE * sizeof(OSLogRecord));
+		}
+	}
+}
+
+static void OSLogToBuffer(u16 sys, unsigned int code, int severity, const char* text, size_t len)
+{
+	if(!logmem) {
+		return;
+	}
+
+	u16 c = (code & 0x3FF) | ((severity & 0x0F) << 12);
+
+	OSLogRecord* log = &log_ringbuf[log_ringbuf_wr];
+
+	log->sys = sys;
+	log->code = c;
+
+	if(len > LOG_MAX_MSG * 4 / 3) {
+		len = LOG_MAX_MSG * 4 / 3;
+	}
+	R6Encode(log->data, text, len);
+
+	log_ringbuf_wr = (log_ringbuf_wr + 1) % LOG_BUF_SIZE;
+	if(log_ringbuf_sz < LOG_BUF_SIZE) {
+		log_ringbuf_sz++;
+	}
 }
 
 void OSSetLogLevel(int severity)
@@ -39,15 +85,23 @@ void OSLog(u16 sys, unsigned int code, int severity, const char* msg, ...)
 		ch = '?';
 	}
 
+	MONLock(&lock);
 	size_t len = sprintf(logbuf, "%s%03d%c ", sysstr, code, ch);
 
-	SITransmit(logbuf, len);
+	if(!logmem) {
+		SITransmit(logbuf, len);
+	}
 
 	va_list args;
 	va_start(args, msg);
 	len = vsprintf(logbuf, msg, args);
 	va_end(args);
 
-	SITransmit(logbuf, len);
-	SITransmit("\r\n", 2);
+	OSLogToBuffer(sys, code, severity, logbuf, len);
+
+	if(!logmem) {
+		SITransmit(logbuf, len);
+		SITransmit("\r\n", 2);
+	}
+	MONUnlock(&lock);
 }
