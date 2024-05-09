@@ -5,6 +5,7 @@
 
 extern u8*	__sector_buffer;
 extern void*	__relbase;
+extern void**	__emttbl;
 
 static inline void MONHalt(void)
 {
@@ -59,37 +60,30 @@ static inline BOOL MONLocate(const char* name, unsigned int* vtocix,
 	}
 }
 
-static inline void MONSetEMT(unsigned int emt, void* pc)
-{
-	register void* r0 asm("r0") = pc;
-	register unsigned int r1 asm("r1") = emt;
-	asm volatile ("emt 5" : "=r"(r0) : "r"(r0), "r"(r1));
-}
-
 static inline void* MONSpawn(void* sp, void* pc)
 {
 	register void* r0 asm("r0") = sp;
 	register void* r1 asm("r1") = pc;
-	asm volatile ("emt 6" : "=r"(r0) : "r"(r0), "r"(r1) : "memory");
+	asm volatile ("emt 5" : "=r"(r0) : "r"(r0), "r"(r1) : "memory");
 
 	return r0;
 }
 
 static inline void MONYield(void)
 {
-	asm volatile ("emt 7");
+	asm volatile ("emt 6");
 }
 
 static inline void MONLock(void* word)
 {
 	register void* r0 asm("r0") = word;
-	asm volatile ("emt 8" : "=r"(r0) : "r"(r0));
+	asm volatile ("emt 7" : "=r"(r0) : "r"(r0));
 }
 
 static inline void MONUnlock(void* word)
 {
 	register void* r0 asm("r0") = word;
-	asm volatile ("emt 9" : "=r"(r0) : "r"(r0));
+	asm volatile ("emt 8" : "=r"(r0) : "r"(r0));
 }
 
 #endif

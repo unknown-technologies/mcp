@@ -66,6 +66,9 @@ _START:		; TRANSFER DATA FROM BOOT LOADER
 		; SETUP STACK
 		MOV	#1000,	SP
 
+		; RELOCATE DISK LOCK WORD
+		ADD	R1,	DISKLK
+
 		; RELOCATE EMT TABLE
 		MOV	#EMTTBL,R0
 		ADD	R1,	R0
@@ -148,18 +151,22 @@ LTCFOUND:	MOV	R2,	(R1)		; RESTORE LTC VECTOR
 		MTPS	R1
 
 		; EXECUTE MAIN PROGRAM
-		MOV	BUF,	R0
+		MOV	MONBASE,R5
+		MOV	BUF,	R0		; R0 = BUF
 		MOV	#SCHEDULE,R1
-		ADD	MONBASE,R1
-		JMP	@(SP)+
+		ADD	R5,	R1		; R1 = &SCHEDULE
+		MOV	#NEXTDAY,R2
+		ADD	R5,	R2		; R2 = &NEXTDAY
+		MOV	#EMTTBL,R3
+		ADD	R5,	R3		; R3 = EMTTBL
+
+		JMP	@(SP)+			; JUMP TO NUCLEUS
 
 END:		BR	END
 		HALT
 
 EXECFAIL:	JSR	R5,	PUTERR
 		.WORD	NOTFOUNDERR
-		JSR	R5,	PUTS
-		.WORD	EXECFAILMSG
 		HALT
 		BR	END
 
@@ -210,6 +217,15 @@ EMTREADBLOCK:	MOV	R0,	-(SP)
 		MOV	R4,	-(SP)
 		MOV	R5,	-(SP)
 
+		MOV	DISKLK,	R0
+		EMT	7			; LOCK(DISKLK)
+
+		MOV	12(SP),	R0		; RELOAD R0
+
+		MFPS	R5			; CLEAR PRIORITY BIT
+		BIC	#300,	R5
+		MTPS	R5
+
 		ASL	R0			; SECT = 2 * BLOCK
 		MOV	R0,	-(SP)
 		MOV	R1,	-(SP)
@@ -224,6 +240,9 @@ EMTREADBLOCK:	MOV	R0,	-(SP)
 		JSR	PC,	READRX02
 		TST	(SP)+
 
+		MOV	DISKLK,	R0
+		EMT	10			; UNLOCK(DISKLK)
+
 		MOV	(SP)+,	R5
 		MOV	(SP)+,	R4
 		MOV	(SP)+,	R3
@@ -231,11 +250,6 @@ EMTREADBLOCK:	MOV	R0,	-(SP)
 		MOV	(SP)+,	R1
 		MOV	(SP)+,	R0
 
-		RTI
-
-EMTPRINT:	MOV	R0,	-(SP)
-		JSR	PC,	PRINT
-		MOV	(SP)+,	R0
 		RTI
 
 EMTHALT:	MOV	R0,	-(SP)
@@ -254,7 +268,7 @@ EMTHALT:	MOV	R0,	-(SP)
 
 		HALT
 
-		CLR	(SP)+
+		TST	(SP)+
 		RTI
 
 EMTNOEMT:	JSR	R5,	PUTERR
@@ -649,7 +663,7 @@ EMTTONEXT:	CMP	TTOSZ,	#400		; IF(TTOSZ < 256)
 		BIC	#300,	R3
 		MTPS	R3
 
-		EMT	7			; WAIT FOR IRQ (YIED)
+		EMT	6			; WAIT FOR IRQ (YIED)
 
 		BIS	#300,	R3		; SET PRIORITY BIT
 		MTPS	R3
@@ -766,36 +780,84 @@ SIGTTOE:	RTI
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTGETTIME: RETURN CURRENT TIME
+EMTGETTIME:	MOV	HOUR,	R0
+		MOV	MINUTE,	R1
+		MOV	SECOND,	R2
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTSETTIME: SET CURRENT TIME
+EMTSETTIME:	MOV	R0,	HOUR
+		MOV	R1,	MINUTE
+		MOV	R2,	SECOND
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTGETTICK: RETURN CURRENT TICK
+EMTGETTICK:	MOV	TICK,	R0
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TASK HANDLING AND CONTEXT SWITCHING ROUTINES                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SIGEVT: LTC INTERRUPT
-SIGEVT:		MOV	R0,	-(SP)
+SIGEVT:		INC	TICK			; TICK++
+		INC	TICKHZ			; TICKHZ++
+
+		CMP	TICKHZ,	#62		; IF(TICKHZ < 50) THEN
+		BLT	EMTYIELD		;     GOTO EMTYIELD
+
+		CLR	TICKHZ			; TICKHZ = 0
+		INC	SECOND			; SECOND++
+		CMP	SECOND,	#74		; IF(SECOND < 60) THEN
+		BLT	EMTYIELD		;     GOTO EMTYIELD
+
+		CLR	SECOND			; SECOND = 0
+		INC	MINUTE			; MINUTE++
+		CMP	MINUTE,	#74		; IF(MINUTE < 60) THEN
+		BLT	EMTYIELD		;     GOTO EMTYIELD
+
+		CLR	MINUTE			; MINUTE = 0
+		INC	HOUR			; HOUR++
+		CMP	HOUR,	#30		; IF(HOUR < 24) THEN
+		BLT	EMTYIELD		;     GOTO EMTYIELD
+
+		CLR	HOUR			; HOUR = 0
+
+		; END OF DAY PROCESSING
+		TST	NEXTDAY			; IF(!NEXTDAY) THEN
+		BEQ	EMTYIELD		;    GOTO EMTYIELD
+		JSR	PC,	@NEXTDAY	; NEXTDAY()
+
+EMTYIELD:	; GET NEXT TASK: SCHEDULING FUNCTION AVAILABLE?
+		TST	SCHEDULE
+		BEQ	SIGEVTE
+
+		; SAVE CONTEXT
+		MOV	R0,	-(SP)
 		MOV	R1,	-(SP)
 		MOV	R2,	-(SP)
 		MOV	R3,	-(SP)
 		MOV	R4,	-(SP)
 		MOV	R5,	-(SP)
 
-		; GET NEXT TASK
-		TST	SCHEDULE
-		BEQ	SIGEVTE
-
 		; C CALL TO SCHEDULE(SP)
 		MOV	SP,	-(SP)
 		JSR	PC,	@SCHEDULE
-		CLR	(SP)+
+		TST	(SP)+
 		MOV	R0,	SP
 
 		; RESTORE CONTEXT
-SIGEVTE:	MOV	(SP)+,	R5
+		MOV	(SP)+,	R5
 		MOV	(SP)+,	R4
 		MOV	(SP)+,	R3
 		MOV	(SP)+,	R2
 		MOV	(SP)+,	R1
 		MOV	(SP)+,	R0
-		RTI
+SIGEVTE:	RTI
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTSPAWN: CREATE NEW TASK
@@ -812,24 +874,11 @@ EMTSPAWN:	CLR	-(R0)			; PSW
 		RTI
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EMTSETEMT: SET EMT VECTOR
-;; R0: ADDRESS, R1: ID
-EMTSETEMT:	CMP	R1,	#10
-		BLE	SETEMTE
-		MOV	R1,	-(SP)
-		ASL	R1			; R1 = ID * 2
-		ADD	#EMTTBL,R1
-		ADD	MONBASE,R1
-		MOV	R0,	(R1)		; EMTTBL[ID] = R0
-		MOV	(SP)+,	R1
-SETEMTE:	RTI
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTMTXLK: LOCK MUTEX
 ;; R0: LOCK WORD ADDRESS
 EMTMTXLK:	TST	(R0)
 		BEQ	EMTMTXLKE
-		EMT	7			; YIELD
+		EMT	6			; YIELD
 		BR	EMTMTXLK
 EMTMTXLKE:	INC	(R0)
 		RTI
@@ -837,10 +886,10 @@ EMTMTXLKE:	INC	(R0)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTMTXULK: UNLOCK MUTEX
 ;; R0: LOCK WORD ADDRESS
-EMTMTXULK:	TST	(R0)
-		BEQ	EMTMTXULKE
+EMTMTXUL:	TST	(R0)
+		BEQ	EMTMTXULE
 		CLR	(R0)
-EMTMTXULKE:	RTI
+EMTMTXULE:	RTI
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTHALTSYS: FLUSH TTO BUFFER AND HALT
@@ -873,13 +922,13 @@ EMTTBL:		.WORD	EMTHALTSYS		; EMT  0: HALT
 		.WORD	EMTTTI			; EMT  2: TTI
 		.WORD	EMTREADBLOCK		; EMT  3: READBLOCK
 		.WORD	EMTLOCATE		; EMT  4: LOCATE
-		.WORD	EMTSETEMT		; EMT  5: SETEMT
-		.WORD	EMTSPAWN		; EMT  6: SPAWN
-		.WORD	SIGEVT			; EMT  7: YIELD
-		.WORD	EMTMTXLK		; EMT 10: LOCK MUTEX
-		.WORD	EMTMTXULK		; EMT 11: UNLOCK MUTEX
-		.WORD	0			; EMT 12
-		.WORD	0			; EMT 13
+		.WORD	EMTSPAWN		; EMT  5: SPAWN
+		.WORD	EMTYIELD		; EMT  6: YIELD
+		.WORD	EMTMTXLK		; EMT  7: LOCK MUTEX
+		.WORD	EMTMTXUL		; EMT 10: UNLOCK MUTEX
+		.WORD	EMTGETTIME		; EMT 11: GETTIME
+		.WORD	EMTSETTIME		; EMT 12: SETTIME
+		.WORD	EMTGETTICK		; EMT 13: GETTICK
 		.WORD	0			; EMT 14
 		.WORD	0			; EMT 15
 		.WORD	0			; EMT 16
@@ -928,6 +977,19 @@ TTOSZ:		.WORD	0			; CURRENTLY USED SIZE
 
 ; SCHEDULING FUNCTION (C CALLING CONVENTION: VOID* SCHED(VOID* SP))
 SCHEDULE:	.WORD	0
+
+; DATE AND TIME VARIABLES
+TICK:		.WORD	0
+TICKHZ:		.WORD	0
+SECOND:		.WORD	0
+MINUTE:		.WORD	0
+HOUR:		.WORD	0
+
+; END OF DAY FUNCTION (C CALLING CONVENTION: VOID NEXTDAY(VOID))
+NEXTDAY:	.WORD	0
+
+DISKLK:		.WORD	DISKLKWORD
+DISKLKWORD:	.WORD	0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; VECTOR TABLE
@@ -979,5 +1041,4 @@ RX02ERR:	"RX2001E DEVICE ERROR"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; INFO MESSAGES
 LOADMSG:	"MON100I LOADING NUCLEUS\n"
-EXECFAILMSG:	"MON101C FAILED TO LOAD NUCLEUS\n"
-HALTMSG:	"MON102I SYSTEM HALTED"
+HALTMSG:	"MON101I SYSTEM HALTED"

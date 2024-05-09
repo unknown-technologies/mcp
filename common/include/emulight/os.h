@@ -1,6 +1,8 @@
 #ifndef __OS_H__
 #define __OS_H__
 
+#include <emulight/syscall.h>
+
 #define LOG_DEBUG	0
 #define LOG_INFO	1
 #define LOG_AUDIT	2
@@ -28,65 +30,97 @@ typedef struct {
 
 static inline void OSYield(void)
 {
-	asm volatile ("emt 7");
+	asm volatile ("emt " __SC(SYS_YIELD));
 }
 
 static inline void OSLock(void* word)
 {
 	register void* r0 asm("r0") = word;
-	asm volatile ("emt 8" : "=r"(r0) : "r"(r0) : "memory");
+	asm volatile ("emt " __SC(SYS_MTXLK) : "=r"(r0) : "r"(r0) : "memory");
 }
 
 static inline void OSUnlock(void* word)
 {
 	register void* r0 asm("r0") = word;
-	asm volatile ("emt 9" : "=r"(r0) : "r"(r0) : "memory");
+	asm volatile ("emt " __SC(SYS_MTXUL) : "=r"(r0) : "r"(r0) : "memory");
 }
 
-static inline void OSLog(unsigned int sys, unsigned int code, unsigned int severity, const char* msg)
+static inline void OSLog(unsigned int sys, unsigned int code,
+		unsigned int severity, const char* msg)
 {
 	register unsigned int r0 asm("r0") = sys;
 	register unsigned int r1 asm("r1") = code;
 	register unsigned int r2 asm("r2") = severity;
 	register const char* r3 asm("r3") = msg;
-	asm volatile ("emt 10" : "=r"(r0) : "r"(r0), "r"(r1), "r"(r2), "r"(r3) : "memory");
+	asm volatile ("emt " __SC(SYS_OSLOG) : "=r"(r0)
+			: "r"(r0), "r"(r1), "r"(r2), "r"(r3)
+			: "memory");
 }
 
 static inline void* OSLoadProgram(const char* name, const char* dsn)
 {
 	register void* r0 asm("r0") = (void*) name;
 	register void* r1 asm("r1") = (void*) dsn;
-	asm volatile ("emt 11" : "=r"(r0) : "r"(r0), "r"(r1) : "memory");
+	asm volatile ("emt " __SC(SYS_OSLOADPROG) : "=r"(r0)
+			: "r"(r0), "r"(r1)
+			: "memory");
 	return r0;
 }
 
 static inline void OSUnloadProgram(void* program)
 {
 	register void* r0 asm("r0") = program;
-	asm volatile ("emt 12" : "=r"(r0) : "r"(r0));
+	asm volatile ("emt " __SC(SYS_ULPROG) : "=r"(r0) : "r"(r0));
 }
 
-static inline int OSSpawn(const char* name, void (*pc)(void), void* sp, unsigned int flags)
+static inline int OSSpawn(const char* name, void (*pc)(void), void* sp,
+		unsigned int flags)
 {
 	register unsigned int r0 asm("r0") = (unsigned int) name;
 	register unsigned int r1 asm("r1") = (unsigned int) pc;
 	register unsigned int r2 asm("r2") = (unsigned int) sp;
 	register unsigned int r3 asm("r3") = (unsigned int) flags;
-	asm volatile ("emt 13" : "=r"(r0) : "r"(r0), "r"(r1), "r"(r2), "r"(r3) : "memory");
+	asm volatile ("emt " __SC(SYS_OSSPAWN) : "=r"(r0)
+			: "r"(r0), "r"(r1), "r"(r2), "r"(r3)
+			: "memory");
 	return (int) r0;
 }
 
 static inline int OSJoin(int pid)
 {
 	register int r0 asm("r0") = pid;
-	asm volatile ("emt 14" : "=r"(r0) : "r"(r0));
+	asm volatile ("emt " __SC(SYS_OSJOIN) : "=r"(r0) : "r"(r0));
 	return r0;
 }
 
 static inline void OSExit(int status)
 {
 	register int r0 asm("r0") = status;
-	asm volatile ("emt 15" : "=r"(r0) : "r"(r0));
+	asm volatile ("emt " __SC(SYS_OSEXIT) : "=r"(r0) : "r"(r0));
+}
+
+static inline void OSGetTime(OSTime* time)
+{
+	register int r0 asm("r0");
+	register int r1 asm("r1");
+	register int r2 asm("r2");
+	asm volatile ("emt " __SC(SYS_GETTIME) : "=r"(r0), "=r"(r1), "=r"(r2));
+	time->hour = r0;
+	time->minute = r1;
+	time->second = r2;
+}
+
+static inline void OSGetDateTime(OSDateTime* datetime)
+{
+	OSGetTime(&datetime->time);
+}
+
+static inline void OSSetTime(OSTime* time)
+{
+	register int r0 asm("r0") = time->hour;
+	register int r1 asm("r1") = time->minute;
+	register int r2 asm("r2") = time->second;
+	asm volatile ("emt " __SC(SYS_SETTIME) : : "r"(r0), "r"(r1), "r"(r2));
 }
 
 #endif
