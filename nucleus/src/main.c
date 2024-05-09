@@ -20,7 +20,7 @@ void nucleus(void)
 
 	/* memory is from 01000 (initial SP) to __relbase */
 	MEMInit((void*) 01000, __relbase);
-	OSLogToMemory(FALSE);
+	OSLogToMemory(TRUE);
 
 	OSSchedInit();
 	RLInit();
