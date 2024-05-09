@@ -196,7 +196,7 @@ SIGEMT:		MOV	R0,	-(SP)
 		CMPB	-1(R0), #210
 		BNE	EMTNOEMT
 		MOVB	-2(R0), R0		; R0 = -2(R0)
-		CMP	R0,	#20
+		CMP	R0,	#40
 		BGE	EMTHALT
 		ASL	R0
 		ADD	MONBASE,R0
@@ -830,6 +830,24 @@ EMTSETEMT:	CMP	R1,	#10
 SETEMTE:	RTI
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTMTXLK: LOCK MUTEX
+;; R0: LOCK WORD ADDRESS
+EMTMTXLK:	TST	(R0)
+		BEQ	EMTMTXLKE
+		EMT	7			; YIELD
+		BR	EMTMTXLK
+EMTMTXLKE:	INC	(R0)
+		RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; EMTMTXULK: UNLOCK MUTEX
+;; R0: LOCK WORD ADDRESS
+EMTMTXULK:	TST	(R0)
+		BEQ	EMTMTXULKE
+		CLR	(R0)
+EMTMTXULKE:	RTI
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTHALTSYS: FLUSH TTO BUFFER AND HALT
 EMTHALTSYS:	CLR	SCHEDULE		; DISABLE SCHEDULING
 
@@ -854,7 +872,7 @@ EMTHALTLOCK:	BR	EMTHALTLOCK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EMT HANDLER TABLE: SPACE FOR 16 HANDLERS
+;; EMT HANDLER TABLE: SPACE FOR 32 HANDLERS
 EMTTBL:		.WORD	EMTHALTSYS		; EMT  0: HALT
 		.WORD	EMTTTO			; EMT  1: TTO
 		.WORD	EMTTTI			; EMT  2: TTI
@@ -863,14 +881,30 @@ EMTTBL:		.WORD	EMTHALTSYS		; EMT  0: HALT
 		.WORD	EMTSETEMT		; EMT  5: SETEMT
 		.WORD	EMTSPAWN		; EMT  6: SPAWN
 		.WORD	SIGEVT			; EMT  7: YIELD
-		.WORD	0			; EMT 10
-		.WORD	0			; EMT 11
+		.WORD	EMTMTXLK		; EMT 10: LOCK MUTEX
+		.WORD	EMTMTXULK		; EMT 11: UNLOCK MUTEX
 		.WORD	0			; EMT 12
 		.WORD	0			; EMT 13
 		.WORD	0			; EMT 14
 		.WORD	0			; EMT 15
 		.WORD	0			; EMT 16
 		.WORD	0			; EMT 17
+		.WORD	0			; EMT 20
+		.WORD	0			; EMT 21
+		.WORD	0			; EMT 22
+		.WORD	0			; EMT 23
+		.WORD	0			; EMT 24
+		.WORD	0			; EMT 25
+		.WORD	0			; EMT 26
+		.WORD	0			; EMT 27
+		.WORD	0			; EMT 30
+		.WORD	0			; EMT 31
+		.WORD	0			; EMT 32
+		.WORD	0			; EMT 33
+		.WORD	0			; EMT 34
+		.WORD	0			; EMT 35
+		.WORD	0			; EMT 36
+		.WORD	0			; EMT 37
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GLOBAL CONSTANTS
