@@ -39,7 +39,7 @@ void* NMLoadFile(const char* filename)
 
 void NMPrintSymbols(PROGRAM* prog)
 {
-	if(U16B(prog->magic) != 0x0301) {
+	if(U16B(prog->magic) != 0x0301 && prog->magic != 0) {
 		printf("Not an MCP program\n");
 		return;
 	}

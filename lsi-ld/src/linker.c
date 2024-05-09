@@ -652,6 +652,45 @@ void* LDLinkBinary(LINKER* linker, size_t* size)
 		return NULL;
 	}
 
+	BOOL zero_magic = FALSE;
+	if(linker->entry) {
+		/* is this a text symbol or a data symbol? */
+		BOOL data;
+		switch(linker->entry->type) {
+			case 003:	/* data segment symbol */
+			case 043:	/* data segment external symbol */
+				data = TRUE;
+				break;
+			default:
+				data = FALSE;
+				break;
+		}
+
+		AOUT* aout = linker->entry->module->aout;
+		if(data && U16L(aout->text) == 0) {
+			/* if this is in data and sizeof(.text) = 0:
+			 * swap .text and .data
+			 */
+
+			aout->text = aout->data;
+			aout->data = 0;
+			linker->entry->type--;
+			zero_magic = TRUE;
+
+			SYMTAB symtab;
+			AOUTGetSymtab(aout, &symtab);
+
+			SYM* sym = symtab.sym;
+			for(unsigned int i = 0; i < U16L(aout->symbols); i += 8, sym++) {
+				const char* symname = &symtab.names[sym->offset];
+				if(!strcmp(symname, linker->entry->name)) {
+					sym->type--;
+					break;
+				}
+			}
+		}
+	}
+
 	unsigned int relocs = 0;
 
 	MODULE* last_module = NULL;
@@ -945,7 +984,11 @@ void* LDLinkBinary(LINKER* linker, size_t* size)
 	}
 
 	PROGRAM* prog = (PROGRAM*) image;
-	prog->magic = U16B(PROG_MAGIC);
+	if(zero_magic) {
+		prog->magic = 0;
+	} else {
+		prog->magic = U16B(PROG_MAGIC);
+	}
 	if(symmod) {
 		prog->image_size = U16L(symmod->dataptr) - sizeof(PROGRAM);
 	} else {
