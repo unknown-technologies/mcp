@@ -8,9 +8,7 @@
 #include <emulight/mcp/program.h>
 #include <emulight/mcp/syscall.h>
 
-extern void* __relbase;
-
-void nucleus(void)
+void init(void)
 {
 	OSSyscallInit();
 	OSLogInit();
@@ -24,8 +22,11 @@ void nucleus(void)
 
 	OSSchedInit();
 	RLInit();
-
 	OSInitLibrary();
+}
+
+void run_ispf(void)
+{
 	OSLoadLibrary("SYSLIB", "SYS1.SYSLIB");
 
 	OSLog(NUC_MEM, "%u BYTES AVAILABLE", MEMAvailable());
@@ -35,6 +36,12 @@ void nucleus(void)
 		void (*ispf_main)(void) = (void (*)(void)) ispf;
 		ispf_main();
 	}
+}
+
+void nucleus(void)
+{
+	init();
+	run_ispf();
 
 	OSLog(MSGID_NUC, 500, LOG_INFO, "NUCLEUS EXITED");
 
