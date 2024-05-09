@@ -778,7 +778,6 @@ SIGTTOU:	TST	TTOSZ
 
 SIGTTOE:	RTI
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EMTGETTIME: RETURN CURRENT TIME
 EMTGETTIME:	MOV	HOUR,	R0
@@ -797,6 +796,7 @@ EMTSETTIME:	MOV	R0,	HOUR
 ;; EMTGETTICK: RETURN CURRENT TICK
 EMTGETTICK:	MOV	TICK,	R0
 		RTI
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; TASK HANDLING AND CONTEXT SWITCHING ROUTINES                       ;;
