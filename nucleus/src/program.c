@@ -27,6 +27,7 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_strcmp",		.value = strcmp },
 	{ .name = "_memcpy",		.value = memcpy },
 	{ .name = "_memcmp",		.value = memcmp },
+	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_R6Encode",		.value = R6Encode },
 	{ .name = "_R6Decode",		.value = R6Decode },
 	{ .name = "_R7Encode",		.value = R7Encode },
