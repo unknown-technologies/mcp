@@ -33,7 +33,7 @@ void run_ispf(void)
 
 	OSLog(NUC_MEM, "%u BYTES AVAILABLE", MEMAvailable());
 
-	void* ispf = OSLoadProgram("ISPF", "SYS1.ISPF");
+	void* ispf = OSLoadProgram("SYS1.ISPF");
 	if(ispf) {
 		void (*ispf_main)(void) = (void (*)(void)) ispf;
 		ispf_main();

@@ -53,10 +53,9 @@ EMT_OSLog:
 	rti
 
 EMT_OSLoadProgram:
-	mov	r1,	-(sp)
 	mov	r0,	-(sp)
 	jsr	pc,	_OSLoadProgram
-	add	$4,	sp
+	tst	(sp)+
 	rti
 
 EMT_OSUnloadProgram:

@@ -8,6 +8,7 @@ BOOT		:=	mon/build/boot.bin
 NUCLEUS		:=	nucleus/build/nucleus
 SYSLIB		:=	syslib/build/syslib
 ISPF		:=	programs/ispf/build/ispf
+CLOCKCFG	:=	programs/clockcfg/build/clockcfg
 
 .PHONY:	all clean modules
 
@@ -17,6 +18,7 @@ $(DISK): modules
 	@cp $(NUCLEUS) $(DISKROOT)/SYS1.NUCLEUS
 	@cp $(SYSLIB) $(DISKROOT)/SYS1.SYSLIB
 	@cp $(ISPF) $(DISKROOT)/SYS1.ISPF
+	@cp $(CLOCKCFG) $(DISKROOT)/SYS1.PROG.CLOCKCFG
 	@$(MKDISK) -b $(BOOT) -m $(MON) -d $(DISKROOT) -o $@
 
 modules:
@@ -27,6 +29,7 @@ modules:
 	@$(MAKE) -C nucleus all --no-print-directory
 	@$(MAKE) -C syslib all --no-print-directory
 	@$(MAKE) -C programs/ispf all --no-print-directory
+	@$(MAKE) -C programs/clockcfg all --no-print-directory
 
 clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
@@ -36,7 +39,9 @@ clean:
 	@$(MAKE) -C nucleus clean --no-print-directory
 	@$(MAKE) -C syslib clean --no-print-directory
 	@$(MAKE) -C programs/ispf clean --no-print-directory
+	@$(MAKE) -C programs/clockcfg clean --no-print-directory
 	@rm -f $(DISK)
 	@rm -f $(DISKROOT)/SYS1.NUCLEUS
 	@rm -f $(DISKROOT)/SYS1.SYSLIB
 	@rm -f $(DISKROOT)/SYS1.ISPF
+	@rm -f $(DISKROOT)/SYS1.PROG.CLOCKCFG

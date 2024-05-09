@@ -131,13 +131,13 @@ void* OSGetSymbol(const char* name)
 	return NULL;
 }
 
-static BOOL OSResolveImports(DS* ds, void* prog, void* base, const char* name)
+static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 {
 	char name_buffer[MAX_SYMBOL_LEN];
 
 	unsigned int externals = 0;
 	if(DSRead(ds, &externals, sizeof(unsigned int)) != sizeof(unsigned int)) {
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 		return FALSE;
 	}
 
@@ -145,13 +145,13 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base, const char* name)
 		OSImportSymbol import;
 
 		if(DSRead(ds, &import, sizeof(OSImportSymbol)) != sizeof(OSImportSymbol)) {
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 			return FALSE;
 		}
 
 		bzero(name_buffer, MAX_SYMBOL_LEN);
 		if(DSRead(ds, name_buffer, import.name) != import.name) {
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 			return FALSE;
 		}
 
@@ -162,14 +162,14 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base, const char* name)
 #endif
 
 		if(!addr) {
-			OSLog(NUC_PROGRAM_NOSYM, "LOADING PROGRAM %s FAILED: SYMBOL %s NOT FOUND", name, name_buffer);
+			OSLog(NUC_PROGRAM_NOSYM, "LOADING PROGRAM FAILED: SYMBOL %s NOT FOUND", name_buffer);
 			return FALSE;
 		}
 
 		for(unsigned int j = 0; j < import.relocs; j++) {
 			unsigned int reloc;
 			if(DSRead(ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
-				OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+				OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 				return FALSE;
 			}
 
@@ -265,7 +265,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	OSRelocateSymbols(oslib);
 
 	/* load import symbols and apply them */
-	if(!OSResolveImports(&ds, lib, lib, name)) {
+	if(!OSResolveImports(&ds, lib, lib)) {
 		OSFreeLibrary(oslib);
 		return FALSE;
 	}
@@ -278,19 +278,19 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	return TRUE;
 }
 
-void* OSLoadProgram(const char* name, const char* dsn)
+void* OSLoadProgram(const char* dsn)
 {
 	DS ds;
 	if(!DSOpen(&ds, dsn)) {
-		OSLog(NUC_PROGRAM_NOT_FOUND, "PROGRAM %s NOT FOUND AT DSN %s", name, dsn);
+		OSLog(NUC_PROGRAM_NOT_FOUND, "PROGRAM NOT FOUND AT DSN %s", dsn);
 		return NULL;
 	}
 
-	OSLog(NUC_LOAD_PROGRAM, "LOADING PROGRAM %s FROM DSN %s", name, dsn);
+	OSLog(NUC_LOAD_PROGRAM, "LOADING PROGRAM FROM DSN %s", dsn);
 
 	OSProgram header;
 	if(DSRead(&ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 		return NULL;
 	}
 
@@ -298,14 +298,14 @@ void* OSLoadProgram(const char* name, const char* dsn)
 
 	void* prog = MEMAlloc(size);
 	if(!prog) {
-		OSLog(NUC_PROGRAM_NOMEM, "FAILED TO LOAD PROGRAM %s: NO MEMORY", name);
+		OSLog(NUC_PROGRAM_NOMEM, "FAILED TO LOAD PROGRAM: NO MEMORY");
 		return NULL;
 	}
 
 	/* load code */
 	if(DSRead(&ds, prog, size) != size) {
 		MEMFree(prog);
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 		return NULL;
 	}
 
@@ -315,7 +315,7 @@ void* OSLoadProgram(const char* name, const char* dsn)
 	unsigned int relocs;
 	if(DSRead(&ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
 		MEMFree(prog);
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 		return NULL;
 	}
 
@@ -328,7 +328,7 @@ void* OSLoadProgram(const char* name, const char* dsn)
 
 		if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
 			MEMFree(prog);
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM %s FAILED: READ ERROR", name);
+			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
 			return NULL;
 		}
 
@@ -342,13 +342,13 @@ void* OSLoadProgram(const char* name, const char* dsn)
 	}
 
 	/* load import symbols and apply them */
-	if(!OSResolveImports(&ds, prog, base, name)) {
+	if(!OSResolveImports(&ds, prog, base)) {
 		MEMFree(prog);
 		return FALSE;
 	}
 
 #ifdef DEBUG
-	OSLog(NUC_PROGRAM_LOADED, "PROGRAM %s LOADED AT %04X", name,
+	OSLog(NUC_PROGRAM_LOADED, "PROGRAM LOADED AT %04X",
 			(unsigned int) prog);
 #endif
 

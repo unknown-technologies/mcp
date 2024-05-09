@@ -57,12 +57,11 @@ static inline void OSLog(unsigned int sys, unsigned int code,
 			: "memory");
 }
 
-static inline void* OSLoadProgram(const char* name, const char* dsn)
+static inline void* OSLoadProgram(const char* dsn)
 {
-	register void* r0 asm("r0") = (void*) name;
-	register void* r1 asm("r1") = (void*) dsn;
+	register void* r0 asm("r0") = (void*) dsn;
 	asm volatile ("emt " __SC(SYS_OSLOADPROG) : "=r"(r0)
-			: "r"(r0), "r"(r1)
+			: "r"(r0)
 			: "memory");
 	return r0;
 }
@@ -70,7 +69,7 @@ static inline void* OSLoadProgram(const char* name, const char* dsn)
 static inline void OSUnloadProgram(void* program)
 {
 	register void* r0 asm("r0") = program;
-	asm volatile ("emt " __SC(SYS_ULPROG) : "=r"(r0) : "r"(r0));
+	asm volatile ("emt " __SC(SYS_OSULPROG) : "=r"(r0) : "r"(r0));
 }
 
 static inline int OSSpawn(const char* name, void (*pc)(void), void* sp,

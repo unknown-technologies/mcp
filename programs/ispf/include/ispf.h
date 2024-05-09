@@ -3,5 +3,6 @@
 
 void ISPFInit(void);
 void ISPFProcess(void);
+void ISPFInitRoot(SPF* spf);
 
 #endif

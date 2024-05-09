@@ -52,6 +52,21 @@ static const SPFMenuData menus[] = {
 
 static SPF ispf;
 
+void ISPFLoadProgram(SPF* spf, const char* dsn)
+{
+	void* program = OSLoadProgram(dsn);
+	if(!program) {
+		SPFShowError(spf, "Failed to load program");
+		return;
+	}
+
+	SPFPanelDefinition* def = (SPFPanelDefinition*) program;
+	SPFPanel* panel = SPFCreatePanel(spf, def);
+	if(panel) {
+		SPFSetPanelProgram(panel, program);
+	}
+}
+
 /******************************************************************************/
 void ISPFMenuHandler(SPF* spf, int action)
 {
@@ -63,6 +78,9 @@ void ISPFMenuHandler(SPF* spf, int action)
 			SPFShowMessage(spf, "Memory", buf);
 			break;
 		}
+		case UI_ACTION_CLOCKCFG:
+			ISPFLoadProgram(spf, "SYS1.PROG.CLOCKCFG");
+			break;
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel > 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
@@ -84,11 +102,20 @@ void ISPFMenuHandler(SPF* spf, int action)
 	}
 }
 
+void ISPFDeleteHandler(SPF* spf, void* program)
+{
+	if(program) {
+		OSUnloadProgram(program);
+	}
+}
+
 /******************************************************************************/
 void ISPFInit(void)
 {
 	SPFInit(&ispf);
 	SPFSetMenuBar(&ispf, menus, ISPFMenuHandler);
+	SPFSetDeleteHandler(&ispf, ISPFDeleteHandler);
+	ISPFInitRoot(&ispf);
 }
 
 void ISPFProcess(void)

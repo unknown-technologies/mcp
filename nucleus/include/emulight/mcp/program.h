@@ -32,7 +32,7 @@ typedef struct {
 
 void	OSInitLibrary(void);
 BOOL	OSLoadLibrary(const char* name, const char* dsn);
-void*	OSLoadProgram(const char* name, const char* dsn);
+void*	OSLoadProgram(const char* dsn);
 void	OSUnloadProgram(void* program);
 
 #endif
