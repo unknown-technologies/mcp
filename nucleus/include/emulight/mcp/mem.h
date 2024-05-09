@@ -6,5 +6,6 @@
 void	MEMInit(void* start, void* end);
 void*	MEMAlloc(size_t size);
 void	MEMFree(void* ptr);
+size_t	MEMAvailable(void);
 
 #endif

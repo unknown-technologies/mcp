@@ -51,3 +51,8 @@ void MEMFree(void* ptr)
 		OSLog(NUC_MFREE_FAIL, "FAILED TO FREE %u BYTES", size);
 	}
 }
+
+size_t MEMAvailable(void)
+{
+	return (size_t) (mem_alloc - mem_start);
+}
