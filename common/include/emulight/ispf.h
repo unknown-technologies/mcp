@@ -25,7 +25,7 @@ void	SPFShowError(SPF* spf, const char* message);
 /******************************************************************************/
 /* Message box routines                                                       */
 /******************************************************************************/
-void	SPFCreatePanel(SPF* spf, const SPFPanelDefinition* panel);
+SPFPanel* SPFCreatePanel(SPF* spf, const SPFPanelDefinition* panel);
 void	SPFDrawPanel(SPFPanel* panel);
 void	SPFUpdatePanel(SPFPanel* panel);
 void	SPFProcessPanel(SPFPanel* panel, u16 key);

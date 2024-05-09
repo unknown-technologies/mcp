@@ -3,11 +3,14 @@
 #include <emulight/vt.h>
 #include <emulight/ispf.h>
 
-void SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
+SPFPanel* SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 {
+	/* hack to avoid miscompilation on GCC 13 */
+	void (*const init)(SPFPanel*) = dlg->init;
+
 	if(spf->current_panel + 1 >= SPF_MAX_PANELS) {
 		SPFShowError(spf, "Cannot open new panel: out of resources");
-		return;
+		return NULL;
 	}
 
 	SPFPanel* current = SPFCurrentPanel(spf);
@@ -20,12 +23,14 @@ void SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 	panel->spf = spf;
 	panel->program = program;
 
-	if(panel->proto->init) {
-		panel->proto->init(panel);
+	if(init) {
+		init(panel);
 	}
 
 	/* draw panel for the first time */
 	SPFRepaint(spf);
+
+	return panel;
 }
 
 void SPFDrawPanel(SPFPanel* panel)
