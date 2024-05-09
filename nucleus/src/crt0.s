@@ -33,8 +33,8 @@ _start:	mov	pc,	r5
 	.globl	___sector_buffer
 	.globl	___schedule
 ___relbase:
-	.int	0
+	.word	0
 ___sector_buffer:
-	.int	0
+	.word	0
 ___schedule:
-	.int	0
+	.word	0
