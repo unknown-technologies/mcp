@@ -4,6 +4,7 @@
 #include <emulight/types.h>
 
 #define	MAX_LIBRARIES	4
+#define	MAX_SYMBOL_LEN	32
 
 typedef struct {
 	unsigned int	magic;
@@ -32,5 +33,6 @@ typedef struct {
 void	OSInitLibrary(void);
 BOOL	OSLoadLibrary(const char* name, const char* dsn);
 void*	OSLoadProgram(const char* name, const char* dsn);
+void	OSUnloadProgram(void* program);
 
 #endif
