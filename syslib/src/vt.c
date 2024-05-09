@@ -485,17 +485,13 @@ int VTPrint(const char* s)
 	return len;
 }
 
-#if 0
 int VTPrintf(const char* format, ...)
 {
 	va_list args;
 	int length;
 	va_start(args, format);
-	length = vsprintf(__os_buf, format, args);
+	length = vcsprintf(VTPutc, format, args);
 	va_end(args);
-
-	VTWrite(__os_buf, length);
 
 	return length;
 }
-#endif

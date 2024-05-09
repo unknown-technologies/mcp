@@ -21,12 +21,14 @@ typedef struct {
 
 static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_bzero",		.value = bzero },
-	{ .name = "_sprintf",		.value = sprintf },
-	{ .name = "_vsprintf",		.value = vsprintf },
-	{ .name = "_strlen",		.value = strlen },
-	{ .name = "_strcmp",		.value = strcmp },
+	{ .name = "_csprintf",		.value = csprintf },
 	{ .name = "_memcpy",		.value = memcpy },
 	{ .name = "_memcmp",		.value = memcmp },
+	{ .name = "_sprintf",		.value = sprintf },
+	{ .name = "_strlen",		.value = strlen },
+	{ .name = "_strcmp",		.value = strcmp },
+	{ .name = "_vcsprintf",		.value = vcsprintf },
+	{ .name = "_vsprintf",		.value = vsprintf },
 	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_R6Encode",		.value = R6Encode },
 	{ .name = "_R6Decode",		.value = R6Decode },

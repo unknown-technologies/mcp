@@ -250,7 +250,18 @@ static char* __sprintlu(char* result, unsigned int resultlen, unsigned long x)
 
 #define TMP_SIZE 32
 
-int vsprintf(char* buf, const char* s, va_list args)
+#define	WR(x) { \
+	if(buf) { \
+		*(p++) = x; \
+	} else { \
+		p++; \
+	} \
+	if(cb) { \
+		cb(x); \
+	} \
+}
+
+int ivsprintf(char* buf, const char* s, va_list args, void (*cb)(char))
 {
 	char tmp[TMP_SIZE];
 	char* c;
@@ -271,60 +282,76 @@ int vsprintf(char* buf, const char* s, va_list args)
 				n *= 10;
 				n += *s - '0';
 				s++;
-				if(!pad)
+				if(!pad) {
 					pad = ' ';
+				}
 			}
-			if(*s == 'c') {
+			if(*s == 'c' || *s == 'C') {
 				int val = va_arg(args, int);
-				*(p++) = val;
-			} else if(*s == 'd') {
+				WR(val);
+			} else if(*s == 'd' || *s == 'D') {
 				int val = va_arg(args, int);
 				c = __sprintd(tmp, TMP_SIZE, val);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = pad;
-				for(; *c != 0; c++)
-					*(p++) = *c;
-			} else if(*s == 'u') {
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(pad);
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c);
+				}
+			} else if(*s == 'u' || *s == 'U') {
 				unsigned int val = va_arg(args, unsigned int);
 				c = __sprintu(tmp, TMP_SIZE, val);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = pad;
-				for(; *c != 0; c++)
-					*(p++) = *c;
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(pad);
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c);
+				}
 			} else if(*s == 'x') {
 				int val = va_arg(args, int);
 				c = __sprinth(tmp, TMP_SIZE, val);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = pad;
-				for(; *c != 0; c++)
-					*(p++) = *c | 0x20;
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(pad);
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c | 0x20);
+				}
 			} else if(*s == 'X') {
 				int val = va_arg(args, int);
 				c = __sprinth(tmp, TMP_SIZE, val);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = pad;
-				for(; *c != 0; c++)
-					*(p++) = *c;
-			} else if(*s == 'o') {
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(pad);
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c);
+				}
+			} else if(*s == 'o' || *s == 'O') {
 				int val = va_arg(args, int);
 				c = __sprinto(tmp, TMP_SIZE, val);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = pad;
-				for(; *c != 0; c++)
-					*(p++) = *c;
-			} else if(*s == 'l') {
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(pad);
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c);
+				}
+			} else if(*s == 'l' || *s == 'L') {
 				s++;
-				if(*s == 'd') {
+				if(*s == 'd' || *s == 'D') {
 #ifdef LONG32
 					u32 val = va_arg(args, u32);
 					c = __sprintd32(tmp, TMP_SIZE, val);
@@ -336,12 +363,15 @@ int vsprintf(char* buf, const char* s, va_list args)
 					c = __sprintld(tmp, TMP_SIZE, val);
 #endif
 					t = n - strlen(c);
-					if(pad)
-						for(; t > 0; t--)
-							*(p++) = pad;
-					for(; *c != 0; c++)
-						*(p++) = *c;
-				} else if(*s == 'u') {
+					if(pad) {
+						for(; t > 0; t--) {
+							WR(pad);
+						}
+					}
+					for(; *c != 0; c++) {
+						WR(*c);
+					}
+				} else if(*s == 'u' || *s == 'U') {
 #ifdef LONG32
 					u32 val = va_arg(args, u32);
 					c = __sprintu32(tmp, TMP_SIZE, val);
@@ -353,11 +383,14 @@ int vsprintf(char* buf, const char* s, va_list args)
 					c = __sprintlu(tmp, TMP_SIZE, val);
 #endif
 					t = n - strlen(c);
-					if(pad)
-						for(; t > 0; t--)
-							*(p++) = pad;
-					for(; *c != 0; c++)
-						*(p++) = *c;
+					if(pad) {
+						for(; t > 0; t--) {
+							WR(pad);
+						}
+					}
+					for(; *c != 0; c++) {
+						WR(*c);
+					}
 				} else if(*s == 'x') {
 #ifdef LONG32
 					u32 val = va_arg(args, u32);
@@ -370,11 +403,14 @@ int vsprintf(char* buf, const char* s, va_list args)
 					c = __sprintlh(tmp, TMP_SIZE, val);
 #endif
 					t = n - strlen(c);
-					if(pad)
-						for(; t > 0; t--)
-							*(p++) = pad;
-					for(; *c != 0; c++)
-						*(p++) = *c | 0x20;
+					if(pad) {
+						for(; t > 0; t--) {
+							WR(pad);
+						}
+					}
+					for(; *c != 0; c++) {
+						WR(*c | 0x20);
+					}
 				} else if(*s == 'X') {
 #ifdef LONG32
 					u32 val = va_arg(args, u32);
@@ -387,28 +423,49 @@ int vsprintf(char* buf, const char* s, va_list args)
 					c = __sprintlh(tmp, TMP_SIZE, val);
 #endif
 					t = n - strlen(c);
-					if(pad)
-						for(; t > 0; t--)
-							*(p++) = pad;
-					for(; *c != 0; c++)
-						*(p++) = *c;
+					if(pad) {
+						for(; t > 0; t--) {
+							WR(pad);
+						}
+					}
+					for(; *c != 0; c++) {
+						WR(*c);
+					}
 				}
-			} else if(*s == 's') {
+			} else if(*s == 's' || *s == 'S') {
 				c = (char*)va_arg(args, char*);
 				t = n - strlen(c);
-				if(pad)
-					for(; t > 0; t--)
-						*(p++) = ' ';
-				for(; *c != 0; c++)
-					*(p++) = *c;
+				if(pad) {
+					for(; t > 0; t--) {
+						WR(' ');
+					}
+				}
+				for(; *c != 0; c++) {
+					WR(*c);
+				}
 			} else if(*s == '%') {
-				*(p++) = '%';
+				WR('%');
 			}
-		} else
-			*(p++) = *s;
+		} else {
+			WR(*s);
+		}
 	}
-	*(p++) = 0;
-	return p - buf - 1;
+	if(buf) {
+		*(p++) = 0;
+		return p - buf - 1;
+	} else {
+		return p - buf;
+	}
+}
+
+int vsprintf(char* buf, const char* s, va_list args)
+{
+	return ivsprintf(buf, s, args, NULL);
+}
+
+int vcsprintf(void (*cb)(char), const char* s, va_list args)
+{
+	return ivsprintf(NULL, s, args, cb);
 }
 
 int sprintf(char* buf, const char* format, ...)
@@ -417,6 +474,17 @@ int sprintf(char* buf, const char* format, ...)
 	int length;
 	va_start(args, format);
 	length = vsprintf(buf, format, args);
+	va_end(args);
+
+	return length;
+}
+
+int csprintf(void (*cb)(char), const char* format, ...)
+{
+	va_list args;
+	int length;
+	va_start(args, format);
+	length = vcsprintf(cb, format, args);
 	va_end(args);
 
 	return length;

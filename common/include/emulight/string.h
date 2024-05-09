@@ -33,5 +33,7 @@ char*	strnstr(const char* haystack, const char* needle, size_t haystack_len);
 
 int	sprintf(char* buf, const char* fmt, ...);
 int	vsprintf(char* buf, const char* fmt, va_list args);
+int	csprintf(void (*cb)(char), const char* fmt, ...);
+int	vcsprintf(void (*cb)(char), const char* fmt, va_list args);
 
 #endif
