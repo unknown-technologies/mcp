@@ -10,11 +10,6 @@
 void start(void)
 {
 	ISPFInit();
-	VTGoto(1, 1);
-	VTShowCursor();
-
-	VTClearScreen();
-	VTHome();
 
 	OSLog(ISPF_FACILITY, 100, LOG_INFO, "ISPF STARTED");
 

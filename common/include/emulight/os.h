@@ -136,4 +136,6 @@ static inline void OSGetDateTime(OSDateTime* datetime)
 	OSGetTime(&datetime->time);
 }
 
+size_t MEMAvailable(void);
+
 #endif

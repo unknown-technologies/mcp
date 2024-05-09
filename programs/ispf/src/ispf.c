@@ -56,6 +56,13 @@ static SPF ispf;
 void ISPFMenuHandler(SPF* spf, int action)
 {
 	switch(action) {
+		case UI_ACTION_SYSINFO: {
+			size_t mem = MEMAvailable();
+			char buf[24];
+			sprintf(buf, "MEM: %u bytes", mem);
+			SPFShowMessage(spf, "Memory", buf);
+			break;
+		}
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel > 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
