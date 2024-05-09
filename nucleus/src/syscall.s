@@ -10,7 +10,7 @@ _OSSyscallInit:
 	mov	$EMT_table, r0	# EMT handlers
 	mov	___emttbl,r1	# EMT table
 	add	$24,	r1	# first EMT ID
-	mov	$10,	r2	# count
+	mov	$12,	r2	# count
 .L0:	mov	(r0)+,	(r1)+
 	sob	r2,	.L0
 	mov	(sp)+,	r2
@@ -24,10 +24,24 @@ _OSSyscallInit:
 	.globl	_OSSpawn
 	.globl	_OSJoin
 	.globl	_OSTerminate
+	.globl	_OSGetDate
+	.globl	_OSSetDate
 	.globl	___DSOpen
 	.globl	___DSRead
 	.globl	___DSSeek
 	.globl	___DSClose
+
+EMT_OSGetDate:
+	mov	r0,	-(sp)
+	jsr	pc,	_OSGetDate
+	tst	(sp)+
+	rti
+
+EMT_OSSetDate:
+	mov	r0,	-(sp)
+	jsr	pc,	_OSSetDate
+	tst	(sp)+
+	rti
 
 EMT_OSLog:
 	mov	r3,	-(sp)
@@ -63,19 +77,19 @@ EMT_OSSpawn:
 EMT_OSJoin:
 	mov	r0,	-(sp)
 	jsr	pc,	_OSJoin
-	clr	(sp)+
+	tst	(sp)+
 	rti
 
 EMT_OSTerminate:
 	mov	r0,	-(sp)
 	jsr	pc,	_OSTerminate
-	clr	(sp)+
+	tst	(sp)+
 	rti
 
 EMT_DSOpen:
 	mov	r0,	-(sp)
 	jsr	pc,	___DSOpen
-	clr	(sp)+
+	tst	(sp)+
 	rti
 
 EMT_DSRead:
@@ -96,19 +110,21 @@ EMT_DSSeek:
 EMT_DSClose:
 	mov	r0,	-(sp)
 	jsr	pc,	___DSClose
-	clr	(sp)+
+	tst	(sp)+
 	rti
 
 	.data
 	.even
 EMT_table:
-	.word	EMT_OSLog			# EMT 12: OSLog
-	.word	EMT_OSLoadProgram		# EMT 13: OSLoadProgram
-	.word	EMT_OSUnloadProgram		# EMT 14: OSUnloadProgram
-	.word	EMT_OSSpawn			# EMT 15: OSSpawn
-	.word	EMT_OSJoin			# EMT 16: OSJoin
-	.word	EMT_OSTerminate			# EMT 17: OSTerminate
-	.word	EMT_DSOpen			# EMT 18: DSOpen
-	.word	EMT_DSRead			# EMT 19: DSRead
-	.word	EMT_DSSeek			# EMT 20: DSSeek
-	.word	EMT_DSClose			# EMT 21: DSClose
+	.word	EMT_OSGetDate			# EMT 12: OSGetDate
+	.word	EMT_OSSetDate			# EMT 13: OSSetDate
+	.word	EMT_OSLog			# EMT 14: OSLog
+	.word	EMT_OSLoadProgram		# EMT 15: OSLoadProgram
+	.word	EMT_OSUnloadProgram		# EMT 16: OSUnloadProgram
+	.word	EMT_OSSpawn			# EMT 17: OSSpawn
+	.word	EMT_OSJoin			# EMT 18: OSJoin
+	.word	EMT_OSTerminate			# EMT 19: OSTerminate
+	.word	EMT_DSOpen			# EMT 20: DSOpen
+	.word	EMT_DSRead			# EMT 21: DSRead
+	.word	EMT_DSSeek			# EMT 22: DSSeek
+	.word	EMT_DSClose			# EMT 23: DSClose

@@ -6,6 +6,7 @@
 #include <emulight/mcp/sched.h>
 #include <emulight/mcp/mem.h>
 #include <emulight/mcp/program.h>
+#include <emulight/mcp/cal.h>
 #include <emulight/mcp/syscall.h>
 
 void init(void)
@@ -23,6 +24,7 @@ void init(void)
 	OSSchedInit();
 	RLInit();
 	OSInitLibrary();
+	OSInitCalendar();
 }
 
 void run_ispf(void)

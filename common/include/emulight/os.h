@@ -110,17 +110,30 @@ static inline void OSGetTime(OSTime* time)
 	time->second = r2;
 }
 
-static inline void OSGetDateTime(OSDateTime* datetime)
-{
-	OSGetTime(&datetime->time);
-}
-
 static inline void OSSetTime(OSTime* time)
 {
 	register int r0 asm("r0") = time->hour;
 	register int r1 asm("r1") = time->minute;
 	register int r2 asm("r2") = time->second;
 	asm volatile ("emt " __SC(SYS_SETTIME) : : "r"(r0), "r"(r1), "r"(r2));
+}
+
+static inline void OSGetDate(OSDate* date)
+{
+	register void* r0 asm("r0") = date;
+	asm volatile ("emt " __SC(SYS_GETDATE) : "=r"(r0) : "r"(r0) : "memory");
+}
+
+static inline void OSSetDate(OSDate* date)
+{
+	register void* r0 asm("r0") = date;
+	asm volatile ("emt " __SC(SYS_SETDATE) : "=r"(r0) : "r"(r0) : "memory");
+}
+
+static inline void OSGetDateTime(OSDateTime* datetime)
+{
+	OSGetDate(&datetime->date);
+	OSGetTime(&datetime->time);
 }
 
 #endif

@@ -40,10 +40,6 @@ void SPFDrawStatusBar(SPF* spf)
 	VTWrite(CSI "0m", CSILEN + 2);
 }
 
-void SPFUpdateDate(SPF* spf)
-{
-}
-
 void SPFUpdateTime(SPF* spf)
 {
 	OSTime now;
@@ -61,6 +57,31 @@ void SPFUpdateTime(SPF* spf)
 			ESC "8");	/* restore cursor position */
 
 		spf->clock.time = now;
+		SPFPanel* panel = SPFCurrentPanel(spf);
+		if(panel && panel->show_cursor) {
+			VTWrite(CSI "?25h", CSILEN + 4); /* show cursor */
+		}
+	}
+}
+
+void SPFUpdateDate(SPF* spf)
+{
+	OSDate now;
+	OSGetDate(&now);
+
+	/* did anything change? */
+	if(spf->clock.date.day != now.day
+			|| spf->clock.date.month != now.month
+			|| spf->clock.date.year != now.year) {
+		VTPrint(ESC "7"		/* store cursor position */
+			CSI "?25l"	/* hide cursor */
+			CSI "24;64H"	/* go to (64, 24) */
+			CSI "0;7m");	/* reverse video */
+		VTPrintf("%02d:%02d.%04d", now.day, now.month, now.year);
+		VTPrint(CSI "0m"	/* normal video */
+			ESC "8");	/* restore cursor position */
+
+		spf->clock.date = now;
 		SPFPanel* panel = SPFCurrentPanel(spf);
 		if(panel && panel->show_cursor) {
 			VTWrite(CSI "?25h", CSILEN + 4); /* show cursor */
