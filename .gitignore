@@ -3,4 +3,5 @@
 *.trc
 *.tdb
 */build
+programs/*/build
 disk.rx2
