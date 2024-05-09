@@ -15,7 +15,30 @@ void OSInitCalendar(void)
 	*__nextday = OSiNextDay;
 }
 
-static BOOL CALIsLeapYear(unsigned int year)
+void OSiNextDay(void)
+{
+	unsigned int days = CALGetDaysOfMonth(date.year, date.month);
+	if(date.month >= days) {
+		date.day = 1;
+		date.month++;
+		if(date.month >= 12) {
+			date.month = 1;
+			date.year++;
+		}
+	}
+}
+
+void OSGetDate(OSDate* now)
+{
+	*now = date;
+}
+
+void OSSetDate(OSDate* now)
+{
+	date = *now;
+}
+
+BOOL CALIsLeapYear(unsigned int year)
 {
 	if((year % 400) == 0) {
 		return TRUE;
@@ -26,7 +49,7 @@ static BOOL CALIsLeapYear(unsigned int year)
 	}
 }
 
-static unsigned int CALGetDaysOfMonth(unsigned int year, unsigned int month)
+unsigned int CALGetDaysOfMonth(unsigned int year, unsigned int month)
 {
 	switch(month) {
 		case 1: /* JAN */
@@ -56,27 +79,4 @@ static unsigned int CALGetDaysOfMonth(unsigned int year, unsigned int month)
 		default:
 			return 30;
 	}
-}
-
-void OSiNextDay(void)
-{
-	unsigned int days = CALGetDaysOfMonth(date.year, date.month);
-	if(date.month >= days) {
-		date.day = 1;
-		date.month++;
-		if(date.month >= 12) {
-			date.month = 1;
-			date.year++;
-		}
-	}
-}
-
-void OSGetDate(OSDate* now)
-{
-	*now = date;
-}
-
-void OSSetDate(OSDate* now)
-{
-	date = *now;
 }

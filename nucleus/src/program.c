@@ -8,6 +8,7 @@
 #include <emulight/mcp/mem.h>
 #include <emulight/mcp/program.h>
 #include <emulight/mcp/fs.h>
+#include <emulight/mcp/cal.h>
 
 static OSLibrary libraries[MAX_LIBRARIES];
 
@@ -29,6 +30,8 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_strcmp",		.value = strcmp },
 	{ .name = "_vcsprintf",		.value = vcsprintf },
 	{ .name = "_vsprintf",		.value = vsprintf },
+	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
+	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
 	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_R6Encode",		.value = R6Encode },
 	{ .name = "_R6Decode",		.value = R6Decode },

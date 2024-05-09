@@ -9,7 +9,10 @@ typedef struct {
 	u16	year;
 } OSDate;
 
-void OSInitCalendar(void);
-void OSiNextDay(void);
+void		OSInitCalendar(void);
+void		OSiNextDay(void);
+
+BOOL		CALIsLeapYear(unsigned int year);
+unsigned int	CALGetDaysOfMonth(unsigned int year, unsigned int month);
 
 #endif
