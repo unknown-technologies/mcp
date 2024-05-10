@@ -64,6 +64,8 @@ void ISPFLoadProgram(SPF* spf, const char* dsn)
 	SPFPanel* panel = SPFCreatePanel(spf, def);
 	if(panel) {
 		SPFSetPanelProgram(panel, program);
+	} else {
+		OSUnloadProgram(program);
 	}
 }
 
