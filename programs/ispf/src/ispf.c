@@ -76,7 +76,7 @@ void ISPFMenuHandler(SPF* spf, int action)
 		case UI_ACTION_SYSINFO: {
 			size_t mem = MEMAvailable();
 			char buf[24];
-			sprintf(buf, "MEM: %u bytes", mem);
+			sprintf(buf, "Free: %u bytes", mem);
 			SPFShowMessage(spf, "Memory", buf);
 			break;
 		}
