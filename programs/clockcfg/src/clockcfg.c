@@ -374,7 +374,7 @@ void CFGProcess(SPFPanel* self, u16 key)
 							VTPutc(key);
 						} else {
 							VTPutc(key);
-							VTPutc(0x08);
+							VTPrint(CSI "D");
 						}
 						break;
 				}
