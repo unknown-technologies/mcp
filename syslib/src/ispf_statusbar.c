@@ -77,7 +77,7 @@ void SPFUpdateDate(SPF* spf)
 			CSI "?25l"	/* hide cursor */
 			CSI "24;64H"	/* go to (64, 24) */
 			CSI "0;7m");	/* reverse video */
-		VTPrintf("%02d:%02d.%04d", now.day, now.month, now.year);
+		VTPrintf("%02d.%02d.%04d", now.day, now.month, now.year);
 		VTPrint(CSI "0m"	/* normal video */
 			ESC "8");	/* restore cursor position */
 
