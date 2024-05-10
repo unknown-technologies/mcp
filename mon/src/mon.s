@@ -546,14 +546,6 @@ RAD50ENCIDX7:	CLR	R0
 		RTS	PC
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; COPY MEMORY FROM R0 TO R1, R2 WORDS
-MEMCPY:		TST	R2
-		BEQ	MEMCPYE
-MEMCPYL:	MOV	(R0)+,	(R1)+
-		SOB	R2,	MEMCPYL
-MEMCPYE:	RTS	PC
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; SET MEMORY AT R1 TO R0, R2 WORDS
 MEMSET:		TST	R2
 		BEQ	MEMSETE
@@ -790,6 +782,7 @@ EMTGETTIME:	MOV	HOUR,	R0
 EMTSETTIME:	MOV	R0,	HOUR
 		MOV	R1,	MINUTE
 		MOV	R2,	SECOND
+		CLR	TICKHZ
 		RTI
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
