@@ -18,10 +18,11 @@ void OSInitCalendar(void)
 void OSiNextDay(void)
 {
 	unsigned int days = CALGetDaysOfMonth(date.year, date.month);
-	if(date.month >= days) {
+	date.day++;
+	if(date.day > days) {
 		date.day = 1;
 		date.month++;
-		if(date.month >= 12) {
+		if(date.month > 12) {
 			date.month = 1;
 			date.year++;
 		}
