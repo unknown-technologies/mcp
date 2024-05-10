@@ -135,6 +135,12 @@ static inline void OSGetDateTime(OSDateTime* datetime)
 	OSGetTime(&datetime->time);
 }
 
+static inline void OSSetDateTime(OSDateTime* datetime)
+{
+	OSSetDate(&datetime->date);
+	OSSetTime(&datetime->time);
+}
+
 size_t MEMAvailable(void);
 
 #endif
