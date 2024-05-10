@@ -80,6 +80,9 @@ void ISPFMenuHandler(SPF* spf, int action)
 			SPFShowMessage(spf, "Memory", buf);
 			break;
 		}
+		case UI_ACTION_CLOCK:
+			ISPFLoadProgram(spf, "SYS1.PROG.CLOCK");
+			break;
 		case UI_ACTION_CLOCKCFG:
 			ISPFLoadProgram(spf, "SYS1.PROG.CLOCKCFG");
 			break;
