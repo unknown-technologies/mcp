@@ -39,7 +39,7 @@ void SPFDraw(SPF* spf)
 		VTWrite(CSI "?25l", CSILEN + 4);
 		SPFDrawMenu(spf);
 	} else if(spf->current_panel != -1) {
-		if(SPFCurrentPanel(spf)->show_cursor) {
+		if(SPFIsCursorVisible(SPFCurrentPanel(spf))) {
 			VTWrite(CSI "?25h", CSILEN + 4);
 		} else {
 			VTWrite(CSI "?25l", CSILEN + 4);
@@ -65,6 +65,8 @@ void SPFRepaint(SPF* spf)
 
 void SPFProcess(SPF* spf)
 {
+	SPFCleanupPanels(spf);
+
 	u16 key = VTReceive(&spf->vt, NULL, NULL);
 
 	if(spf->error_active) {

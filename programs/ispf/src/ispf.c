@@ -94,6 +94,7 @@ void ISPFMenuHandler(SPF* spf, int action)
 		case UI_ACTION_CLOSE_ALL_PANELS:
 			while(spf->current_panel > 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
+				SPFCleanupPanels(spf);
 			}
 			break;
 		case UI_ACTION_VERSION:

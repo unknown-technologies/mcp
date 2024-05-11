@@ -30,6 +30,7 @@ void	SPFDrawPanel(SPFPanel* panel);
 void	SPFUpdatePanel(SPFPanel* panel);
 void	SPFProcessPanel(SPFPanel* panel, u16 key);
 void	SPFDestroyPanel(SPFPanel* panel);
+void	SPFCleanupPanels(SPF* spf);
 
 
 /******************************************************************************/

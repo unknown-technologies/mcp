@@ -7,6 +7,10 @@
 
 #define	SPF_MAX_PANELS		8
 
+#define	SPF_FLAG_ACTIVE		_BV(0)
+#define	SPF_FLAG_CURSOR		_BV(1)
+#define	SPF_FLAG_DESTROY	_BV(2)
+
 struct SPF;
 struct SPFPanel;
 
@@ -57,7 +61,7 @@ struct SPFPanel {
 	SPF*			spf;
 	void*			userdata;
 	void*			program;
-	BOOL			show_cursor;
+	u16			flags;
 };
 
 struct SPF {
@@ -71,6 +75,7 @@ struct SPF {
 	SPFStatusBar		status;
 	BOOL			error_active;
 	BOOL			dirty;
+	BOOL			delete_pending;
 	OSDateTime		clock;
 };
 
@@ -123,12 +128,17 @@ static inline void SPFSetPanelUserData(SPFPanel* panel, void* data)
 
 static inline void SPFShowCursor(SPFPanel* panel)
 {
-	panel->show_cursor = TRUE;
+	panel->flags |= SPF_FLAG_CURSOR;
 }
 
 static inline void SPFHideCursor(SPFPanel* panel)
 {
-	panel->show_cursor = FALSE;
+	panel->flags &= ~SPF_FLAG_CURSOR;
+}
+
+static inline BOOL SPFIsCursorVisible(SPFPanel* panel)
+{
+	return panel->flags & SPF_FLAG_CURSOR;
 }
 
 static inline void SPFSetDeleteHandler(SPF* spf, SPFDeleteHandler handler)

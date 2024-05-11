@@ -58,7 +58,7 @@ void SPFUpdateTime(SPF* spf)
 
 		spf->clock.time = now;
 		SPFPanel* panel = SPFCurrentPanel(spf);
-		if(panel && panel->show_cursor) {
+		if(panel && SPFIsCursorVisible(panel)) {
 			VTWrite(CSI "?25h", CSILEN + 4); /* show cursor */
 		}
 	}
@@ -83,7 +83,7 @@ void SPFUpdateDate(SPF* spf)
 
 		spf->clock.date = now;
 		SPFPanel* panel = SPFCurrentPanel(spf);
-		if(panel && panel->show_cursor) {
+		if(panel && SPFIsCursorVisible(panel)) {
 			VTWrite(CSI "?25h", CSILEN + 4); /* show cursor */
 		}
 	}
@@ -107,7 +107,7 @@ void SPFUpdateStatusBar(SPF* spf)
 				ESC "8");	/* restore cursor position */
 
 			SPFPanel* panel = SPFCurrentPanel(spf);
-			if(panel && panel->show_cursor) {
+			if(panel && SPFIsCursorVisible(panel)) {
 				/* show cursor */
 				VTWrite(CSI "?25h", CSILEN + 4);
 			}
