@@ -89,6 +89,7 @@ void ISPFMenuHandler(SPF* spf, int action)
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel > 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
+				SPFCleanupPanels(spf);
 			}
 			break;
 		case UI_ACTION_CLOSE_ALL_PANELS:
@@ -115,6 +116,33 @@ void ISPFDeleteHandler(SPF* spf, void* program)
 	}
 }
 
+static char statusbar_buf[4];
+static u8 statusbar_ram = 0;
+
+const char* ISPFStatusDrawHandler(SPF* spf)
+{
+	(void) spf;
+	size_t size = MEMAvailable();
+	statusbar_ram = (size + 512) / 1024;
+	statusbar_buf[0] = statusbar_ram / 10 + '0';
+	statusbar_buf[1] = statusbar_ram % 10 + '0';
+	statusbar_buf[2] = 'K';
+	statusbar_buf[3] = 0;
+	return statusbar_buf;
+}
+
+const char* ISPFStatusUpdateHandler(SPF* spf)
+{
+	(void) spf;
+	size_t size = MEMAvailable();
+	u8 ram = (size + 512) / 1024;
+	if(statusbar_ram != ram) {
+		return ISPFStatusDrawHandler(spf);
+	} else {
+		return NULL;
+	}
+}
+
 /******************************************************************************/
 void ISPFInit(void)
 {
@@ -122,6 +150,8 @@ void ISPFInit(void)
 	SPFSetMenuBar(&ispf, menus, ISPFMenuHandler);
 	SPFSetDeleteHandler(&ispf, ISPFDeleteHandler);
 	ISPFInitRoot(&ispf);
+	SPFSetStatusBarDrawCallback(&ispf, ISPFStatusDrawHandler);
+	SPFSetStatusBarUpdateCallback(&ispf, ISPFStatusUpdateHandler);
 }
 
 void ISPFProcess(void)
