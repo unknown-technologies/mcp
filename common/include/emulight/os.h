@@ -1,6 +1,7 @@
 #ifndef __OS_H__
 #define __OS_H__
 
+#include <emulight/types.h>
 #include <emulight/syscall.h>
 
 #define LOG_DEBUG	0
