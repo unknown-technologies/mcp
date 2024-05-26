@@ -131,13 +131,23 @@ void* OSGetSymbol(const char* name)
 	return NULL;
 }
 
+#ifdef DEBUG
+#define	READ_ERROR() \
+	OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR [%u]", __LINE__);
+#else
+static void READ_ERROR(void)
+{
+	OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+}
+#endif
+
 static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 {
 	char name_buffer[MAX_SYMBOL_LEN];
 
 	unsigned int externals = 0;
 	if(DSRead(ds, &externals, sizeof(unsigned int)) != sizeof(unsigned int)) {
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+		READ_ERROR();
 		return FALSE;
 	}
 
@@ -145,13 +155,13 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 		OSImportSymbol import;
 
 		if(DSRead(ds, &import, sizeof(OSImportSymbol)) != sizeof(OSImportSymbol)) {
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+			READ_ERROR();
 			return FALSE;
 		}
 
 		bzero(name_buffer, MAX_SYMBOL_LEN);
 		if(DSRead(ds, name_buffer, import.name) != import.name) {
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+			READ_ERROR();
 			return FALSE;
 		}
 
@@ -169,7 +179,7 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 		for(unsigned int j = 0; j < import.relocs; j++) {
 			unsigned int reloc;
 			if(DSRead(ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
-				OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+				READ_ERROR();
 				return FALSE;
 			}
 
@@ -290,7 +300,7 @@ void* OSLoadProgram(const char* dsn)
 
 	OSProgram header;
 	if(DSRead(&ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+		READ_ERROR();
 		return NULL;
 	}
 
@@ -305,7 +315,7 @@ void* OSLoadProgram(const char* dsn)
 	/* load code */
 	if(DSRead(&ds, prog, size) != size) {
 		MEMFree(prog);
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+		READ_ERROR();
 		return NULL;
 	}
 
@@ -315,7 +325,7 @@ void* OSLoadProgram(const char* dsn)
 	unsigned int relocs;
 	if(DSRead(&ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
 		MEMFree(prog);
-		OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+		READ_ERROR();
 		return NULL;
 	}
 
@@ -328,7 +338,7 @@ void* OSLoadProgram(const char* dsn)
 
 		if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
 			MEMFree(prog);
-			OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+			READ_ERROR();
 			return NULL;
 		}
 
