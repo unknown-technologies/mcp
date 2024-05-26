@@ -158,6 +158,15 @@ BOOL handle_enter(void)
 	}
 	command[INPUT_LEN] = 0;
 
+	/* trim space at the end */
+	for(int i = INPUT_LEN - 1; i >= 0; i--) {
+		if(command[i] == ' ') {
+			command[i] = 0;
+		} else if(command[i]) {
+			break;
+		}
+	}
+
 	/* parse command */
 	if(!strcmp(command, "ISPF")) {
 		logon_ds = "SYS1.ISPF";
