@@ -79,7 +79,7 @@ size_t DSRead(DS* ds, void* dst, size_t size)
 	}
 	MONUnlock(&lock);
 
-	return size;
+	return read;
 }
 
 void DSSeek(DS* ds, size_t pos)
@@ -91,11 +91,13 @@ void DSSeek(DS* ds, size_t pos)
 		ds->current_size = ds->size - blocks;
 		ds->pos = pos % 512;
 
-		MONReadBlock(__sector_buffer, ds->current_block);
-		ds->buf_block = ds->current_block;
-		current_block = ds->current_block;
-		ds->current_block++;
-		ds->current_size--;
+		if(ds->pos) {
+			MONReadBlock(__sector_buffer, ds->current_block);
+			ds->buf_block = ds->current_block;
+			current_block = ds->current_block;
+			ds->current_block++;
+			ds->current_size--;
+		}
 	}
 	MONUnlock(&lock);
 }
