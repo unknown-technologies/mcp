@@ -20,6 +20,6 @@ void screen_cursor_end(void);
 void screen_bs(void);
 
 BOOL screen_line_cont(void);
-const char* screen_get_command(size_t* len);
+char* screen_get_command(size_t* len);
 
 #endif

@@ -34,7 +34,7 @@ void scroll_up(void)
 	}
 	bzero(screen[lines - 1], cols);
 	input_lines[lines - 1] = 0;
-	VTGoto(lines, cols);
+	VTGotoLine(lines);
 	VTEL2();
 }
 
@@ -62,6 +62,7 @@ void screen_nl(void)
 		VTEL2();
 		bzero(screen[cursor_y], VTGetWidth(&vt));
 	}
+	input_lines[cursor_y] = mode;
 }
 
 static void screen_putchar(char c)
@@ -191,9 +192,13 @@ void screen_cursor_pos1(void)
 void screen_cursor_end(void)
 {
 	cursor_x = 0;
-	for(unsigned int i = 0; i < VTGetWidth(&vt); i++) {
+	unsigned int cols = VTGetWidth(&vt);
+	for(unsigned int i = 0; i < cols; i++) {
 		if(screen[cursor_y][i] && screen[cursor_y][i] != 0x20) {
-			cursor_x = i;
+			cursor_x = i + 1;
+			if(cursor_x >= cols) {
+				cursor_x = cols - 1;
+			}
 		}
 	}
 	screen_sync_cursor();
@@ -241,11 +246,20 @@ BOOL screen_line_cont(void)
 	return screen_line_cont_internal(cursor_y);
 }
 
-const char* screen_get_command(size_t* len)
+char* screen_get_command(size_t* len)
 {
 	unsigned int lines = 1;
 
-	const char* command = screen[cursor_y];
+	char* command = screen[cursor_y];
+
+	/* check if current line ends with "+" continuation */
+	for(unsigned int i = cursor_y; i < VTGetHeight(&vt); i++) {
+		if(screen_line_cont_internal(i)) {
+			lines++;
+		} else {
+			break;
+		}
+	}
 
 	if(cursor_y > 0) {
 		/* check if previous line ended with a "+" continuation */
