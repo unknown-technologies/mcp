@@ -18,12 +18,15 @@
 #define	UI_ACTION_ABOUT			6
 #define	UI_ACTION_VERSION		7
 #define	UI_ACTION_HELP			8
+#define	UI_ACTION_LOGOFF		9
 
 static const SPFMenuItem system_menu[] = {
 	{ .name = "System Information",	.action = UI_ACTION_SYSINFO },
 	{ .name = "Fullscreen Clock",	.action = UI_ACTION_CLOCK },
 	{ .name = "-",			.action = 0 },
 	{ .name = "Configure Clock",	.action = UI_ACTION_CLOCKCFG },
+	{ .name = "-",			.action = 0 },
+	{ .name = "Logoff",		.action = UI_ACTION_LOGOFF },
 	{ .name = NULL,			.action = 0 }
 };
 
@@ -102,6 +105,14 @@ void ISPFMenuHandler(SPF* spf, int action)
 			SPFShowMessage(spf, "Software Version",
 					"This is software version "
 					SOFTWARE_VERSION);
+			break;
+		case UI_ACTION_LOGOFF:
+			if(spf->current_panel > 0) {
+				SPFShowError(spf, "Cannot logoff while panels "
+						"are still active");
+			} else {
+				exit_ispf = TRUE;
+			}
 			break;
 		default:
 			SPFShowError(spf, "Function not implemented");

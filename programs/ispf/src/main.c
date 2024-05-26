@@ -7,13 +7,15 @@
 
 #include "ispf.h"
 
+volatile BOOL exit_ispf = FALSE;
+
 void start(void)
 {
 	ISPFInit();
 
 	OSLog(ISPF_FACILITY, 100, LOG_INFO, "ISPF STARTED");
 
-	while(1) {
+	while(!exit_ispf) {
 		ISPFProcess();
 		OSYield();
 	}

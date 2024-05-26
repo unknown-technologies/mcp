@@ -25,29 +25,33 @@ void init(void)
 	RLInit();
 	OSInitLibrary();
 	OSInitCalendar();
-}
 
-void run_ispf(void)
-{
 	OSLoadLibrary("SYSLIB", "SYS1.SYSLIB");
 
 	OSLog(NUC_MEM, "%u BYTES AVAILABLE", MEMAvailable());
+}
 
-	void* ispf = OSLoadProgram("SYS1.ISPF");
-	if(ispf) {
-		void (*ispf_main)(void) = (void (*)(void)) ispf;
-		ispf_main();
-	}
+void shutdown(void)
+{
+	OSLog(MSGID_NUC, 500, LOG_INFO, "NUCLEUS EXITED");
+
+	MONHalt();
 }
 
 void nucleus(void)
 {
 	init();
-	run_ispf();
 
-	OSLog(MSGID_NUC, 500, LOG_INFO, "NUCLEUS EXITED");
+	void* startup = OSLoadProgram("SYS1.STARTUP");
+	if(startup) {
+		void (*main)(void) = (void (*)(void)) startup;
+		main();
+	} else {
+		OSLogToMemory(FALSE);
+		OSLog(NUC_LOGON_FAIL, "FAILED TO LAUNCH STARTUP PROGRAM");
+	}
 
-	MONHalt();
+	shutdown();
 
 	asm("HALT");
 }
