@@ -224,6 +224,7 @@ void logon(void)
 					update_time();
 					if(error_msg) {
 						VTGoto(24, 2);
+						VTEL2();
 						VTPrint(error_msg);
 					}
 					VTGoto(23, 3 + input_pos);
