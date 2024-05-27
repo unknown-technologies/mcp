@@ -68,6 +68,8 @@ void tso_execute(void)
 		unsigned int state = STATE_SPACE;
 		TSOArgument* arg = NULL;
 
+		bzero(cmd_args, sizeof(cmd_args));
+
 		/* TODO: filter continuation character */
 		for(size_t i = 0; i < len; i++) {
 			char c = cmd[i];
@@ -104,6 +106,7 @@ void tso_execute(void)
 						arg->name = arg->value;
 						arg->value = NULL;
 						arg->index = -1;
+						cmd[i] = 0;
 						state = STATE_LPAR;
 						for(char* ch = (char*) arg->name;
 								*ch; ch++) {
@@ -131,8 +134,6 @@ void tso_execute(void)
 						level++;
 					} else if(c == 0) {
 						cmd[i] = ' ';
-					} else {
-						cmd[i] = toupper(c);
 					}
 					break;
 				case STATE_RPAR:
