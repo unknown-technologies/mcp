@@ -23,6 +23,7 @@ void init(void)
 
 	OSSchedInit();
 	RLInit();
+	FSInit();
 	OSInitLibrary();
 	OSInitCalendar();
 

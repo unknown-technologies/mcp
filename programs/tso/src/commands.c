@@ -1,5 +1,6 @@
 #include <emulight/string.h>
 #include <emulight/os.h>
+#include <emulight/ds.h>
 
 #include "tso.h"
 #include "screen.h"
@@ -17,6 +18,7 @@ static TSOCommand tso_commands[] = {
 	{ .name = "SHOWVER",	.main = tso_showver },
 	{ .name = "SHOWLOG",	.main = tso_showlog },
 	{ .name = "WRITE",	.main = tso_write },
+	{ .name = "LISTCAT",	.main = tso_listcat },
 	{ .name = NULL,		.main = NULL }
 };
 
@@ -144,6 +146,28 @@ int tso_showlog(unsigned int argc, TSOArgument* argv)
 	}
 
 	OSGetLog(tso_logmsg, NULL);
+
+	return 0;
+}
+
+static void tso_listcat_cb(const char* dsn, void* user)
+{
+	(void) user;
+
+	screen_print(dsn);
+	screen_nl();
+}
+
+int tso_listcat(unsigned int argc, TSOArgument* argv)
+{
+	(void) argv;
+
+	if(argc != 1) {
+		screen_print("SYNTAX ERROR\n");
+		return -1;
+	}
+
+	FSList(NULL, tso_listcat_cb, NULL);
 
 	return 0;
 }

@@ -1,11 +1,80 @@
 #include <emulight/types.h>
 #include <emulight/string.h>
+#include <emulight/r4.h>
 #include <emulight/mcp/mon.h>
 #include <emulight/mcp/syslog.h>
 #include <emulight/mcp/fs.h>
 
 static unsigned int lock = 0;
 static unsigned int current_block = 0;
+
+static unsigned int vtoc_size;
+static unsigned int vtoc_block;
+
+extern char __reltab[];
+
+static BOOL startswith(const char* a, const char* b)
+{
+	while(*a == *b) {
+		if(!*a) {
+			return TRUE;
+		}
+		a++;
+		b++;
+	}
+
+	return !*b;
+}
+
+void FSInit(void)
+{
+	DSCB_VTOC* vtoc = (DSCB_VTOC*) __sector_buffer;
+	MONReadBlock(__sector_buffer, 1);
+	current_block = 1;
+
+	if(vtoc->type != EFS_DSCB_VTOC || memcmp(vtoc->magic, EFS_MAGIC, 8)) {
+		OSLog(NUC_FS_CORRUPT, "VOLUME IS CORRUPT");
+		return;
+	}
+
+	char* buf = (char*) &vtoc[1];
+	R4DecodeString(buf, vtoc->label, 3);
+	OSLog(NUC_FS_INFO, "VOLUME ID: %s", buf);
+
+	vtoc_size = vtoc->vtoc_size;
+	vtoc_block = vtoc->vtoc_block;
+}
+
+void FSList(const char* prefix,
+		void (*callback)(const char* dsn, void* userdata),
+		void* userdata)
+{
+	if(!callback) {
+		return;
+	}
+
+	DSCB_DS* vtoc = (DSCB_DS*) __sector_buffer;
+	char* name = __reltab;
+
+	MONLock(&lock);
+	for(unsigned int i = 0; i < vtoc_size; i++) {
+		current_block = vtoc_block + i;
+		MONReadBlock(__sector_buffer, current_block);
+		for(unsigned int j = 0; j < 512 / sizeof(DSCB_DS); j++) {
+			DSCB_DS* ds = &vtoc[j];
+			if(ds->type == EFS_DSCB_UNUSED
+					|| ds->type == EFS_DSCB_FREE) {
+				continue;
+			}
+			R4DecodeString(name, ds->name, 10);
+			if(prefix && !startswith(name, prefix)) {
+				continue;
+			}
+			callback(name, userdata);
+		}
+	}
+	MONUnlock(&lock);
+}
 
 BOOL DSOpen(DS* ds, const char* dsn)
 {

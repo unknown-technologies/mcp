@@ -12,6 +12,7 @@ typedef struct {
 	unsigned int	block;		/* start block */
 	unsigned int	size;		/* size in blocks */
 	unsigned int	vtocix;		/* VTOC index */
+	unsigned int	flags;		/* DSCB flags */
 } DS;
 
 static inline int DSOpen(const char* dsn)
@@ -43,6 +44,17 @@ static inline void DSClose(int ds)
 {
 	register int r0 asm("r0") = ds;
 	asm volatile ("emt " __SC(SYS_DSCLOSE) : "=r"(r0) : "r"(r0));
+}
+
+static inline int FSList(const char* prefix,
+		void (*callback)(const char* dsn, void* user), void* user)
+{
+	register unsigned int r0 asm("r0") = (unsigned int) prefix;
+	register unsigned int r1 asm("r1") = (unsigned int) callback;
+	register unsigned int r2 asm("r2") = (unsigned int) user;
+	asm volatile ("emt " __SC(SYS_FSLIST) : "=r"(r0)
+			: "r"(r0), "r"(r1), "r"(r2) : "memory");
+	return (int) r0;
 }
 
 #endif
