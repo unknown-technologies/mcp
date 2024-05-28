@@ -28,7 +28,7 @@ static char* __sprinto(char* result, unsigned int resultlen, unsigned int x)
 		return p;
 	}
 	while(x != 0) {
-		*(--p) = x & 0x07;
+		*(--p) = (x & 0x07) + '0';
 		x >>= 3;
 	}
 	return p;
