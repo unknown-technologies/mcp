@@ -126,8 +126,10 @@ int tso_write(unsigned int argc, TSOArgument* argv)
 	return 0;
 }
 
-static void tso_logmsg(const char* msg)
+static void tso_logmsg(const char* msg, void* user)
 {
+	(void) user;
+
 	screen_print(msg);
 	screen_nl();
 }
@@ -141,7 +143,7 @@ int tso_showlog(unsigned int argc, TSOArgument* argv)
 		return -1;
 	}
 
-	OSGetLog(tso_logmsg);
+	OSGetLog(tso_logmsg, NULL);
 
 	return 0;
 }

@@ -142,10 +142,13 @@ static inline void OSSetDateTime(OSDateTime* datetime)
 	OSSetTime(&datetime->time);
 }
 
-static inline void OSGetLog(void (*callback)(const char*))
+static inline void OSGetLog(void (*callback)(const char* msg, void* user),
+		void* user)
 {
 	register void* r0 asm("r0") = callback;
-	asm volatile ("emt " __SC(SYS_OSGETLOG) : "=r"(r0) : "r"(r0) : "memory");
+	register void* r1 asm("r1") = user;
+	asm volatile ("emt " __SC(SYS_OSGETLOG) : "=r"(r0) : "r"(r0), "r"(r1)
+			: "memory");
 }
 
 size_t MEMAvailable(void);

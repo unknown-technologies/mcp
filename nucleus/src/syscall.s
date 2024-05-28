@@ -114,9 +114,10 @@ EMT_DSClose:
 	rti
 
 EMT_OSGetLog:
+	mov	r1,	-(sp)
 	mov	r0,	-(sp)
 	jsr	pc,	_OSGetLog
-	tst	(sp)+
+	add	$4,	sp
 	rti
 
 	.data

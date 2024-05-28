@@ -69,7 +69,7 @@ void OSSetLogLevel(int severity)
 	loglevel = severity;
 }
 
-void OSGetLog(void (*callback)(const char* msg))
+void OSGetLog(void (*callback)(const char* msg, void* user), void* user)
 {
 	if(!callback) {
 		return;
@@ -96,7 +96,7 @@ void OSGetLog(void (*callback)(const char* msg))
 		char* dec = &logbuf[8];
 		R6Decode(dec, log->data, LOG_MAX_MSG);
 
-		callback(logbuf);
+		callback(logbuf, user);
 	}
 
 	MONUnlock(&lock);
