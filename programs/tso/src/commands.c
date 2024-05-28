@@ -21,6 +21,19 @@ static TSOCommand tso_commands[] = {
 
 static int last_status = 0;
 
+BOOL startswith(const char* a, const char* b)
+{
+	while(*a == *b) {
+		if(!*a) {
+			return TRUE;
+		}
+		a++;
+		b++;
+	}
+
+	return !*b;
+}
+
 void tso_execute_command(unsigned int argc, TSOArgument* argv)
 {
 	if(argc == 0) {
@@ -34,6 +47,24 @@ void tso_execute_command(unsigned int argc, TSOArgument* argv)
 			last_status = cmd->main(argc, argv);
 			return;
 		}
+	}
+
+	/* no command found, but now check if it's unique */
+	TSOCommand* found = NULL;
+	for(TSOCommand* cmd = tso_commands; cmd->name; cmd++) {
+		if(startswith(cmd->name, name)) {
+			if(found) {
+				last_status = -1;
+				screen_print("AMBIGUOUS COMMAND\n");
+				return;
+			}
+			found = cmd;
+		}
+	}
+
+	if(found) {
+		last_status = found->main(argc, argv);
+		return;
 	}
 
 	last_status = -1;
