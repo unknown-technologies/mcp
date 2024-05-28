@@ -733,6 +733,11 @@ void* LDLinkBinary(LINKER* linker, size_t* size)
 					&& (sym->type == 000 || sym->type == 040)
 					&& MAPGet(&linker->symbols, symname) == NULL;
 
+				/* is this a reference to ___reltab or ___symtab? */
+				if(unresolved && (!strcmp(symname, reltab_name) || !strcmp(symname, symtab_name))) {
+					unresolved = FALSE;
+				}
+
 				if(!unresolved && !pcrel) {
 					relocs++;
 				}
@@ -757,6 +762,11 @@ void* LDLinkBinary(LINKER* linker, size_t* size)
 				BOOL unresolved = type == 4
 					&& (sym->type == 000 || sym->type == 040)
 					&& MAPGet(&linker->symbols, symname) == NULL;
+
+				/* is this a reference to ___reltab or ___symtab? */
+				if(unresolved && (!strcmp(symname, reltab_name) || !strcmp(symname, symtab_name))) {
+					unresolved = FALSE;
+				}
 
 				if(!unresolved && !pcrel) {
 					relocs++;
