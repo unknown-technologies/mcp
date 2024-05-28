@@ -10,7 +10,7 @@ _OSSyscallInit:
 	mov	$EMT_table, r0	# EMT handlers
 	mov	___emttbl,r1	# EMT table
 	add	$24,	r1	# first EMT ID
-	mov	$12,	r2	# count
+	mov	$13,	r2	# count
 .L0:	mov	(r0)+,	(r1)+
 	sob	r2,	.L0
 	mov	(sp)+,	r2
@@ -30,6 +30,7 @@ _OSSyscallInit:
 	.globl	___DSRead
 	.globl	___DSSeek
 	.globl	___DSClose
+	.globl	_OSGetLog
 
 EMT_OSGetDate:
 	mov	r0,	-(sp)
@@ -112,6 +113,12 @@ EMT_DSClose:
 	tst	(sp)+
 	rti
 
+EMT_OSGetLog:
+	mov	r0,	-(sp)
+	jsr	pc,	_OSGetLog
+	tst	(sp)+
+	rti
+
 	.data
 	.even
 EMT_table:
@@ -127,3 +134,4 @@ EMT_table:
 	.word	EMT_DSRead			# EMT 21: DSRead
 	.word	EMT_DSSeek			# EMT 22: DSSeek
 	.word	EMT_DSClose			# EMT 23: DSClose
+	.word	EMT_OSGetLog			# EMT 24: OSGetLog

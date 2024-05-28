@@ -23,5 +23,6 @@ int tso_logoff(unsigned int argc, TSOArgument* argv);
 int tso_showmem(unsigned int argc, TSOArgument* argv);
 int tso_showver(unsigned int argc, TSOArgument* argv);
 int tso_write(unsigned int argc, TSOArgument* argv);
+int tso_showlog(unsigned int argc, TSOArgument* argv);
 
 #endif

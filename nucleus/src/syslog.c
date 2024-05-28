@@ -48,6 +48,8 @@ static void OSLogToBuffer(u16 sys, unsigned int code, int severity, const char* 
 
 	OSLogRecord* log = &log_ringbuf[log_ringbuf_wr];
 
+	bzero(log, sizeof(OSLogRecord));
+
 	log->sys = sys;
 	log->code = c;
 
@@ -65,6 +67,39 @@ static void OSLogToBuffer(u16 sys, unsigned int code, int severity, const char* 
 void OSSetLogLevel(int severity)
 {
 	loglevel = severity;
+}
+
+void OSGetLog(void (*callback)(const char* msg))
+{
+	if(!callback) {
+		return;
+	}
+
+	MONLock(&lock);
+
+	unsigned int rd = log_ringbuf_wr - log_ringbuf_sz;
+	if(log_ringbuf_sz > log_ringbuf_wr) {
+		rd += LOG_BUF_SIZE;
+	}
+
+	for(unsigned int i = 0; i < log_ringbuf_sz; i++) {
+		OSLogRecord* log = &log_ringbuf[rd];
+		rd = (rd + 1) % LOG_BUF_SIZE;
+
+		bzero(logbuf, sizeof(logbuf));
+		sprintf(&logbuf[3], "%03d", log->code & 0x3FF);
+		logbuf[6] = severity_chars[(log->code >> 12) & 0x0F];
+		logbuf[7] = ' ';
+
+		RAD50Decode(logbuf, log->sys);
+
+		char* dec = &logbuf[8];
+		R6Decode(dec, log->data, LOG_MAX_MSG);
+
+		callback(logbuf);
+	}
+
+	MONUnlock(&lock);
 }
 
 void OSLog(u16 sys, unsigned int code, int severity, const char* msg, ...)

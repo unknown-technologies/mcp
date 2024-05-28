@@ -24,5 +24,6 @@ void OSLogInit(void);
 void OSLogToMemory(BOOL mem);
 void OSSetLogLevel(int severity);
 void OSLog(u16 sys, unsigned int code, int severity, const char* msg, ...);
+void OSGetLog(void (*callback)(const char* msg));
 
 #endif

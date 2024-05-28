@@ -25,6 +25,7 @@
 #define	SYS_DSREAD	21
 #define	SYS_DSSEEK	22
 #define	SYS_DSCLOSE	23
+#define	SYS_OSGETLOG	24
 
 #define	__SCNUM(x)	#x
 #define	__SC(x)		__SCNUM(x)

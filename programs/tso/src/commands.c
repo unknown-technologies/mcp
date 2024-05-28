@@ -15,6 +15,7 @@ static TSOCommand tso_commands[] = {
 	{ .name = "LOGOFF",	.main = tso_logoff },
 	{ .name = "SHOWMEM",	.main = tso_showmem },
 	{ .name = "SHOWVER",	.main = tso_showver },
+	{ .name = "SHOWLOG",	.main = tso_showlog },
 	{ .name = "WRITE",	.main = tso_write },
 	{ .name = NULL,		.main = NULL }
 };
@@ -121,6 +122,26 @@ int tso_write(unsigned int argc, TSOArgument* argv)
 	}
 
 	screen_nl();
+
+	return 0;
+}
+
+static void tso_logmsg(const char* msg)
+{
+	screen_print(msg);
+	screen_nl();
+}
+
+int tso_showlog(unsigned int argc, TSOArgument* argv)
+{
+	(void) argv;
+
+	if(argc != 1) {
+		screen_print("SYNTAX ERROR\n");
+		return -1;
+	}
+
+	OSGetLog(tso_logmsg);
 
 	return 0;
 }
