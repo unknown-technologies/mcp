@@ -12,16 +12,16 @@ static u8 encode(const char c)
 }
 
 static char decode(u8 c) {
-	return c + 0x20;
+	return (char) (c + 0x20);
 }
 
 void R6Encode(u8* out, const char* in, unsigned int len)
 {
-	u8 accumulator = 0;
+	unsigned int accumulator = 0;
 
 	unsigned int cnt = 0;
 	for(unsigned int i = 0; i < len && *in; i++, in++) {
-		u8 c = encode(*in);
+		unsigned int c = encode(*in);
 		switch(cnt) {
 			case 0:
 				/* A = 000000__ */
@@ -52,16 +52,17 @@ void R6Encode(u8* out, const char* in, unsigned int len)
 		}
 	}
 
-	if(len && !cnt) {
+	if(len && cnt) {
 		*(out++) = accumulator;
 	}
 }
 
 void R6Decode(char* out, u8* in, unsigned int len)
 {
-	u8 accumulator = 0;
+	char* ptr = out;
+	unsigned int accumulator = 0;
 
-	u8 tmp;
+	unsigned int tmp;
 	unsigned int cnt = 0;
 	for(unsigned int i = 0; i < len; i++) {
 		switch(cnt) {
@@ -69,9 +70,9 @@ void R6Decode(char* out, u8* in, unsigned int len)
 				/* RD = 00000011 */
 				tmp = *(in++);
 				/* WR = 000000__ */
-				*(out++) = decode(accumulator >> 2);
+				*(out++) = decode(tmp >> 2);
 				/* AC = __11____ */
-				accumulator = tmp << 4;
+				accumulator = (tmp << 4) & 0x3F;
 				break;
 			case 1:
 				/* RD = 11112222 */
@@ -79,7 +80,7 @@ void R6Decode(char* out, u8* in, unsigned int len)
 				/* WR = __111111 */
 				*(out++) = decode(accumulator | (tmp >> 4));
 				/* AC = __2222__ */
-				accumulator = tmp << 2;
+				accumulator = (tmp << 2) & 0x3F;
 				break;
 			case 2:
 				/* RD = 22333333 */
@@ -87,7 +88,7 @@ void R6Decode(char* out, u8* in, unsigned int len)
 				/* WR = __222222 */
 				*(out++) = decode(accumulator | (tmp >> 6));
 				/* WR = __333333 */
-				if(i == len - 1 || tmp & 0x3F) {
+				if(i != len - 1) {
 					*(out++) = decode(tmp & 0x3F);
 				}
 				break;
@@ -96,6 +97,15 @@ void R6Decode(char* out, u8* in, unsigned int len)
 		cnt++;
 		if(cnt == 3) {
 			cnt = 0;
+		}
+	}
+
+	/* trim trailing spaces */
+	for(char* p = out - 1; p >= ptr; p--) {
+		if(*p == ' ') {
+			*p = 0;
+		} else {
+			break;
 		}
 	}
 
