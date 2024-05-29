@@ -8,8 +8,8 @@
 static unsigned int lock = 0;
 static unsigned int current_block = 0;
 
-static unsigned int vtoc_size;
-static unsigned int vtoc_block;
+static unsigned int vtoc_size = 0;
+static unsigned int vtoc_block = 0;
 
 extern char __reltab[];
 

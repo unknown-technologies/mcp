@@ -44,6 +44,9 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = NULL,			.value = NULL }
 };
 
+static const char* loaderror_program = "FAILED TO LOAD PROGRAM";
+static const char* loaderror_library = "FAILED TO LOAD LIBRARY";
+
 static void* OSCreateLibrary(const char* name)
 {
 	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
@@ -137,7 +140,7 @@ void* OSGetSymbol(const char* name)
 #else
 static void READ_ERROR(void)
 {
-	OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR");
+	OSLog(NUC_PROGRAM_READERR, "%s: READ ERROR", loaderror_program);
 }
 #endif
 
@@ -172,7 +175,7 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 #endif
 
 		if(!addr) {
-			OSLog(NUC_PROGRAM_NOSYM, "LOADING PROGRAM FAILED: SYMBOL %s NOT FOUND", name_buffer);
+			OSLog(NUC_PROGRAM_NOSYM, "%s: SYMBOL %s NOT FOUND", loaderror_program, name_buffer);
 			return FALSE;
 		}
 
@@ -216,7 +219,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	OSLog(NUC_LOAD_LIBRARY, "LOADING LIBRARY %s FROM DSN %s", name, dsn);
 
 	if(DSRead(&ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
-		OSLog(NUC_LIBRARY_READERR, "LOADING LIBRARY %s FAILED: READ ERROR", name);
+		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
 		return FALSE;
 	}
 
@@ -224,13 +227,13 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 
 	OSLibrary* oslib = OSCreateLibrary(name);
 	if(!oslib) {
-		OSLog(NUC_LIBRARY_NOSPC, "FAILED TO LOAD LIBRARY %s: NO SLOT LEFT", name);
+		OSLog(NUC_LIBRARY_NOSPC, "%s %s: NO SLOT LEFT", loaderror_library, name);
 		return FALSE;
 	}
 
 	void* lib = MEMAlloc(size);
 	if(!lib) {
-		OSLog(NUC_LIBRARY_NOMEM, "FAILED TO LOAD LIBRARY %s: NO MEMORY", name);
+		OSLog(NUC_LIBRARY_NOMEM, "%s %s: NO MEMORY", loaderror_library, name);
 		return FALSE;
 	}
 
@@ -243,7 +246,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	size_t rdsz = size - sizeof(OSProgram);
 	if(DSRead(&ds, oslib->library + 1, rdsz) != rdsz) {
 		OSFreeLibrary(lib);
-		OSLog(NUC_LIBRARY_READERR, "LOADING LIBRARY %s FAILED: READ ERROR", name);
+		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
 		return FALSE;
 	}
 
@@ -251,7 +254,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 	unsigned int relocs;
 	if(DSRead(&ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
 		OSFreeLibrary(oslib);
-		OSLog(NUC_LIBRARY_READERR, "LOADING LIBRARY %s FAILED: READ ERROR", name);
+		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
 		return FALSE;
 	}
 
@@ -263,7 +266,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 
 		if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
 			OSFreeLibrary(oslib);
-			OSLog(NUC_LIBRARY_READERR, "LOADING LIBRARY %s FAILED: READ ERROR", name);
+			OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
 			return FALSE;
 		}
 
@@ -308,7 +311,7 @@ void* OSLoadProgram(const char* dsn)
 
 	void* prog = MEMAlloc(size);
 	if(!prog) {
-		OSLog(NUC_PROGRAM_NOMEM, "FAILED TO LOAD PROGRAM: NO MEMORY");
+		OSLog(NUC_PROGRAM_NOMEM, "%s: NO MEMORY", loaderror_program);
 		return NULL;
 	}
 
