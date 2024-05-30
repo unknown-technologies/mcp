@@ -87,6 +87,7 @@ void OSInitLibrary(void)
 {
 	bzero(libraries, sizeof(libraries));
 
+#if 0
 	OSLibrary* self = OSCreateLibrary("NUCLEUS");
 
 	self->library = (OSProgram*) __relbase;
@@ -98,6 +99,7 @@ void OSInitLibrary(void)
 
 	/* relocate symbols */
 	OSRelocateSymbols(self);
+#endif
 }
 
 void* OSGetSymbolFromLibrary(OSLibrary* lib, const char* name)
@@ -136,7 +138,7 @@ void* OSGetSymbol(const char* name)
 
 #ifdef DEBUG
 #define	READ_ERROR() \
-	OSLog(NUC_PROGRAM_READERR, "LOADING PROGRAM FAILED: READ ERROR [%u]", __LINE__);
+	OSLog(NUC_PROGRAM_READERR, "%s: READ ERROR [%u]", loaderror_program, __LINE__);
 #else
 static void READ_ERROR(void)
 {
@@ -159,6 +161,11 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 
 		if(DSRead(ds, &import, sizeof(OSImportSymbol)) != sizeof(OSImportSymbol)) {
 			READ_ERROR();
+			return FALSE;
+		}
+
+		if(import.name > MAX_SYMBOL_LEN) {
+			OSLog(NUC_PROGRAM_SYMLEN, "SYMBOL TOO LONG");
 			return FALSE;
 		}
 
