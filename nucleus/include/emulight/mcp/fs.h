@@ -2,6 +2,7 @@
 #define __FS_H__
 
 #include <emulight/types.h>
+#include <emulight/mcp/vol.h>
 
 #define	EFS_MAGIC		"EFFS-R01"
 
@@ -53,9 +54,10 @@ typedef struct {
 	unsigned int	size;		/* size in blocks */
 	unsigned int	vtocix;		/* VTOC index */
 	unsigned int	flags;		/* DSCB_DS flags */
+	unsigned int	volume;		/* on which volume is this DS? */
 } DS;
 
-void	FSInit(void);
+void	FSInit(unsigned int id, VOLUME* vol);
 void	FSList(const char* prefix,
 		void (*callback)(const char* dsn, void* userdata),
 		void* userdata);

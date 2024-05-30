@@ -2,6 +2,8 @@
 #include <emulight/mcp/mon.h>
 #include <emulight/mcp/si.h>
 #include <emulight/mcp/syslog.h>
+#include <emulight/mcp/vol.h>
+#include <emulight/mcp/fs.h>
 #include <emulight/mcp/rl02.h>
 #include <emulight/mcp/sched.h>
 #include <emulight/mcp/mem.h>
@@ -22,8 +24,8 @@ void init(void)
 	OSLogToMemory(TRUE);
 
 	OSSchedInit();
+	VOLInit();
 	RLInit();
-	FSInit();
 	OSInitLibrary();
 	OSInitCalendar();
 
