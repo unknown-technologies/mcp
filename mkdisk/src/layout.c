@@ -110,12 +110,10 @@ BOOL add_file(EFS* efs, const char* dsn, const char* path, unsigned int flags)
 			if(type == EFS_DSCB_DS_TYPE_TXT6B) {
 				size_t lrecl6 = (lrecl + 3) / 4 * 3;
 				sz = lc * lrecl6;
-				printf("TXT6: LRECL=%lu LRECL6=%lu\n", lrecl, lrecl6);
 				recfmt6((u8*) lines, lrecl, c);
 			} else if(type == EFS_DSCB_DS_TYPE_TXT7B) {
 				size_t lrecl7 = (lrecl + 7) / 8 * 7;
 				sz = lc * lrecl7;
-				printf("TXT7: LRECL=%lu LRECL7=%lu\n", lrecl, lrecl7);
 				recfmt7((u8*) lines, lrecl, c);
 			} else {
 				recfmt8(lines, lrecl, c);
