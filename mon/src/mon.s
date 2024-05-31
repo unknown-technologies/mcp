@@ -547,14 +547,6 @@ RAD50ENCIDX7:	CLR	R0
 		RTS	PC
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; SET MEMORY AT R1 TO R0, R2 WORDS
-MEMSET:		TST	R2
-		BEQ	MEMSETE
-MEMSETL:	MOV	R0,	(R1)+
-		SOB	R2,	MEMSETL
-MEMSETE:	RTS	PC
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; FIND FILE IN VTOC WITH FILENAME IN R0
 FINDFILE:	SUB	#24,	SP		; TMP = NEW U16[10]
 		MOV	R0,	-(SP)
@@ -562,7 +554,8 @@ FINDFILE:	SUB	#24,	SP		; TMP = NEW U16[10]
 		MOV	SP,	R1		; R1 = TMP
 		ADD	#2,	R1
 		MOV	#12,	R2
-		JSR	PC,	MEMSET
+MEMSETL:	MOV	R0,	(R1)+
+		SOB	R2,	MEMSETL
 		MOV	(SP)+,	R0
 
 		MOV	SP,	R1

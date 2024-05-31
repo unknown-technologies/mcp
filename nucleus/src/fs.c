@@ -62,7 +62,7 @@ void FSList(const char* prefix,
 		VOLUME* vol = VOLGetVolume(volid);
 
 		for(unsigned int i = 0; i < vol->vtoc_size; i++) {
-			VOLReadBlock(0, __sector_buffer, vol->vtoc_block + i);
+			VOLReadBlock(volid, __sector_buffer, vol->vtoc_block + i);
 			for(unsigned int j = 0; j < 512 / sizeof(DSCB_DS); j++) {
 				DSCB_DS* ds = &vtoc[j];
 				if(ds->type == EFS_DSCB_UNUSED
@@ -80,20 +80,72 @@ void FSList(const char* prefix,
 	MONUnlock(&lock);
 }
 
+BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* volume)
+{
+	if(!dsn || !ds) {
+		return FALSE;
+	}
+
+	DSCB_DS* vtoc = (DSCB_DS*) __sector_buffer;
+	u16* name = (u16*) dsnbuf;
+	R4EncodeString(name, dsn, 10);
+
+	BOOL found = FALSE;
+
+	MONLock(&lock);
+	for(unsigned int volid = 0; volid < MAX_VOLUMES; volid++) {
+		if(!VOLIsActive(volid)) {
+			continue;
+		}
+
+		VOLUME* vol = VOLGetVolume(volid);
+
+		for(unsigned int i = 0; i < vol->vtoc_size; i++) {
+			VOLReadBlock(volid, __sector_buffer, vol->vtoc_block + i);
+			for(unsigned int j = 0; j < 512 / sizeof(DSCB_DS); j++) {
+				DSCB_DS* dscb = &vtoc[j];
+				if(dscb->type == EFS_DSCB_UNUSED
+						|| dscb->type == EFS_DSCB_FREE) {
+					continue;
+				}
+
+				if(memcmp(name, dscb->name, 20)) {
+					continue;
+				}
+
+				found = TRUE;
+				if(volume) {
+					*volume = volid;
+				}
+				memcpy(ds, dscb, sizeof(DSCB_DS));
+
+				goto end;
+			}
+		}
+	}
+end:
+	MONUnlock(&lock);
+
+	return found;
+}
+
 BOOL DSOpen(DS* ds, const char* dsn)
 {
 #ifdef DEBUG
 	OSLog(NUC_FILE_OPEN, "OPENING DATASET WITH DSN %s", dsn);
 #endif
 
-	MONLock(&lock);
-	BOOL result = MONLocate(dsn, &ds->vtocix, &ds->block, &ds->size);
-	ds->current_block = ds->block;
-	ds->current_size = ds->size;
-	ds->pos = 0;
-	ds->buf_block = 0;
-	ds->volume = 0;
-	MONUnlock(&lock);
+	DSCB_DS dscb;
+	BOOL result = FSLocate(dsn, &dscb, &ds->volume);
+	if(result) {
+		ds->block = dscb.start_block;
+		ds->size = dscb.size;
+		ds->current_block = ds->block;
+		ds->current_size = ds->size;
+		ds->pos = 0;
+		ds->buf_block = 0;
+		ds->flags = dscb.flags;
+	}
 	return result;
 }
 
