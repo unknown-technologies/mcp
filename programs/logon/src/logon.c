@@ -1,6 +1,7 @@
 #include <emulight/string.h>
 #include <emulight/os.h>
 #include <emulight/vt.h>
+#include <emulight/ds.h>
 
 #include "logon.h"
 
@@ -16,6 +17,8 @@ static unsigned int input_pos;
 
 const char* logon_ds = NULL;
 const char* error_msg = NULL;
+
+static char applid_buf[96];
 
 static void VTDrawText(int line, int column, const char* s)
 {
@@ -175,13 +178,65 @@ BOOL handle_enter(void)
 
 	if(command[0] == 'L' && command[1] == ' ') {
 		char* s = &command[2];
-		if(!strcmp(s, "ISPF")) {
-			logon_ds = "SYS1.ISPF";
-			return TRUE;
-		} else if(!strcmp(s, "TSO")) {
-			logon_ds = "SYS1.TSO";
-			return TRUE;
+		while(*s == ' ') {
+			s++;
 		}
+
+		/* open SYS1.APPLID dataset and read it to find the DSN of the
+		 * requested application */
+		int ds = DSOpen("SYS1.APPLID");
+		if(ds < 0) {
+			error_msg = "Failed to open APPLID dataset";
+			return FALSE;
+		}
+		DS info;
+		DSGetInfo(ds, &info);
+		size_t lrecl = DSGetRecLen(&info);
+
+		if(lrecl >= 96) {
+			error_msg = "Invalid APPLID dataset";
+			DSClose(ds);
+			return FALSE;
+		}
+
+		while(DSRead(ds, applid_buf, 1) == 1) {
+			applid_buf[sizeof(applid_buf) - 1] = 0;
+
+			char* name = applid_buf;
+			for(char* c = name; *c; c++) {
+				if(*c == ' ') {
+					*c = 0;
+					break;
+				}
+			}
+
+			if(*name == 0) {
+				/* empty line */
+				continue;
+			}
+
+			if(!strcmp(s, name)) {
+				/* we found the APPLID */
+				char* dsn = &applid_buf[8];
+				while(*dsn == ' ') {
+					dsn++;
+				}
+
+				for(char* c = dsn; *c; c++) {
+					if(*c == ' ') {
+						*c = 0;
+						break;
+					}
+				}
+
+				DSClose(ds);
+
+				logon_ds = dsn;
+				return TRUE;
+			}
+		}
+
+		DSClose(ds);
 
 		error_msg = "Invalid application";
 	} else {
