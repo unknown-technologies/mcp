@@ -5,128 +5,9 @@
 
 #include "types.h"
 #include "efs.h"
+#include "r4.h"
 
 #define	EFS_MAGIC	"EFFS-R01"
-
-static inline BOOL R4CheckValid(const char c)
-{
-	if(c >= 'A' && c <= 'Z') {
-		return TRUE;
-	} else if(c >= 'a' && c <= 'z') {
-		return TRUE;
-	} else if(c >= '0' && c <= '9') {
-		return TRUE;
-	} else if(c == '$' || c == '#' || c == '@' || c == '.') {
-		return TRUE;
-	} else {
-		return FALSE;
-	}
-}
-
-static u8 r4_getidx(const char c)
-{
-	if(c == '.') {
-		return 0;
-	} else if(c == '#') {
-		return 1;
-	} else if(c == '@') {
-		return 2;
-	} else if(c == '$') {
-		return 3;
-	} else if(c >= '0' && c <= '9') {
-		return c - '0' + 4;
-	} else if(c >= 'A' && c <= 'Z') {
-		return c - 'A' + 14;
-	} else if(c >= 'a' && c <= 'z') {
-		return c - 'a' + 14;
-	} else {
-		return 0;
-	}
-}
-
-static char r4_decode(u8 value)
-{
-	if(value == 0) {
-		return '.';
-	} else if(value == 1) {
-		return '#';
-	} else if(value == 2) {
-		return '@';
-	} else if(value == 3) {
-		return '$';
-	} else if(value < 14) {
-		return '0' + value - 4;
-	} else {
-		return 'A' + value - 14;
-	}
-}
-
-u16 R4Encode(const char* s)
-{
-	char c1 = *s;
-	char c2 = 0;
-	char c3 = 0;
-
-	if(c1) {
-		c2 = s[1];
-
-		if(c2) {
-			c3 = s[2];
-		}
-	}
-
-	return ((r4_getidx(c3) * 40) + r4_getidx(c2)) * 40 + r4_getidx(c1);
-}
-
-char* R4Decode(char* out, u16 enc)
-{
-	u8 i1 = enc % 40;
-	enc /= 40;
-	u8 i2 = enc % 40;
-	enc /= 40;
-	u8 i3 = enc % 40;
-
-	out[0] = r4_decode(i1);
-	out[1] = r4_decode(i2);
-	out[2] = r4_decode(i3);
-
-	return out;
-}
-
-void R4EncodeString(u16* out, const char* s, unsigned int len)
-{
-	while(len) {
-		*(out++) = R4Encode(s);
-		if(s[0] && s[1] && s[2]) {
-			s += 3;
-			len--;
-		} else {
-			len--;
-			break;
-		}
-	}
-
-	while(len--) {
-		*(out++) = 0;
-	}
-}
-
-void R4DecodeString(char* out, u16* in, unsigned int len)
-{
-	char* o = out;
-	while(len--) {
-		R4Decode(out, *(in++));
-		out += 3;
-	}
-
-	if(len > 0) {
-		out--;
-		while(out >= o && *out == '.') {
-			*out = 0;
-			out--;
-		}
-	}
-}
 
 void EFSSetCurrentDate(u16* efs_year, u8* efs_date, u16* efs_time)
 {
@@ -291,7 +172,7 @@ void EFSSetBlocks(EFS* efs, u16 start, size_t count)
 	}
 }
 
-void EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data)
+void EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data, unsigned int flags)
 {
 	u32 sector[512 / sizeof(u32)];
 
@@ -345,7 +226,7 @@ vtocix_found:
 	R4EncodeString(dscb->name, dsn, sizeof(dscb->name) / sizeof(u16));
 	dscb->start_block = block;
 	dscb->size = blocks;
-	dscb->flags = 0;
+	dscb->flags = flags;
 	EFSSetCurrentDate(&dscb->create_year, &dscb->create_date, &dscb->create_time);
 	dscb->type = EFS_DSCB_DATASET;
 

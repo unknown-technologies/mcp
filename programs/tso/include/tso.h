@@ -14,6 +14,8 @@ typedef struct {
 
 extern VT vt;
 
+char toupper(char c);
+
 void tso(void);
 void tso_exit(void);
 void tso_execute_command(unsigned int argc, TSOArgument* argv);
@@ -25,5 +27,7 @@ int tso_showver(unsigned int argc, TSOArgument* argv);
 int tso_write(unsigned int argc, TSOArgument* argv);
 int tso_showlog(unsigned int argc, TSOArgument* argv);
 int tso_listcat(unsigned int argc, TSOArgument* argv);
+int tso_listds(unsigned int argc, TSOArgument* argv);
+int tso_printds(unsigned int argc, TSOArgument* argv);
 
 #endif

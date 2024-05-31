@@ -1,5 +1,6 @@
 DISK		:=	disk.rx2
 DISKROOT	:=	diskroot
+DISKLAYOUT	:=	disk.lyt
 
 MKDISK		:=	mkdisk/build/mkdisk
 
@@ -27,7 +28,7 @@ $(DISK): modules
 	@cp $(ISPF) $(DISKROOT)/SYS1.ISPF
 	@cp $(CLOCK) $(DISKROOT)/SYS1.PROG.CLOCK
 	@cp $(CLOCKCFG) $(DISKROOT)/SYS1.PROG.CLOCKCFG
-	@$(MKDISK) -b $(BOOT) -m $(MON) -d $(DISKROOT) -o $@
+	@$(MKDISK) -b $(BOOT) -m $(MON) -l $(DISKLAYOUT) -o $@
 
 modules:
 	@$(MAKE) -C mkdisk all --no-print-directory

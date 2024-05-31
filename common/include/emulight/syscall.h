@@ -22,11 +22,14 @@
 #define	SYS_OSJOIN	18
 #define	SYS_OSEXIT	19
 #define	SYS_DSOPEN	20
-#define	SYS_DSREAD	21
-#define	SYS_DSSEEK	22
-#define	SYS_DSCLOSE	23
-#define	SYS_FSLIST	24
-#define	SYS_OSGETLOG	25
+#define	SYS_DSGETINFO	21
+#define	SYS_DSREAD	22
+#define	SYS_DSWRITE	23
+#define	SYS_DSSEEK	24
+#define	SYS_DSCLOSE	25
+#define	SYS_FSLIST	26
+#define	SYS_VOLGETLABEL	27
+#define	SYS_OSGETLOG	28
 
 #define	__SCNUM(x)	#x
 #define	__SC(x)		__SCNUM(x)

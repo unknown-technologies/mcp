@@ -22,6 +22,11 @@
 #define	EFS_DSCB_DATASET	2
 #define	EFS_DSCB_FREE		0xFF
 
+#define	EFS_DSCB_DS_TYPE_EXEC	(0 << 14)
+#define	EFS_DSCB_DS_TYPE_TXT6B	(1 << 14)
+#define	EFS_DSCB_DS_TYPE_TXT7B	(2 << 14)
+#define	EFS_DSCB_DS_TYPE_BIN	(3 << 14)
+
 /* sizeof(DSCB_DS) == 32 */
 typedef struct {
 	u16	name[10];
@@ -58,6 +63,6 @@ typedef struct {
 
 void	EFSInit(EFS* efs, void* userdata, void (*read)(void*, void*, unsigned int), void (*write)(void*, void*, unsigned int));
 void	EFSInitDisk(EFS* efs, const char* label, size_t size, unsigned int vtoc_size, unsigned int start_block);
-void	EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data);
+void	EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data, unsigned int flags);
 
 #endif

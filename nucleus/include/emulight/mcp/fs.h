@@ -12,10 +12,9 @@
 #define	EFS_DSCB_FREE		0xFF
 
 #define	EFS_DSCB_DS_TYPE_EXEC	(0 << 14)
-#define	EFS_DSCB_DS_TYPE_TXT7B	(1 << 14)
-#define	EFS_DSCB_DS_TYPE_TXT8B	(2 << 14)
+#define	EFS_DSCB_DS_TYPE_TXT6B	(1 << 14)
+#define	EFS_DSCB_DS_TYPE_TXT7B	(2 << 14)
 #define	EFS_DSCB_DS_TYPE_BIN	(3 << 14)
-#define	EFS_DSCB_DS_FLAG_REC_FB	_BV(13)
 
 /* sizeof(DSCB_DS) == 32 */
 typedef struct {
@@ -46,15 +45,19 @@ typedef struct {
 } DSCB_VTOC;
 
 typedef struct {
-	unsigned int	pos;		/* position in block buffer */
-	unsigned int	current_block;	/* current/next block */
-	unsigned int	current_size;	/* remaining size */
-	unsigned int	buf_block;	/* block in block buffer */
 	unsigned int	block;		/* start block */
 	unsigned int	size;		/* size in blocks */
 	unsigned int	vtocix;		/* VTOC index */
 	unsigned int	flags;		/* DSCB_DS flags */
 	unsigned int	volume;		/* on which volume is this DS? */
+} DSInfo;
+
+typedef struct {
+	unsigned int	pos;		/* position in block buffer */
+	unsigned int	current_block;	/* current/next block */
+	unsigned int	current_size;	/* remaining size */
+	unsigned int	buf_block;	/* block in block buffer */
+	DSInfo		info;
 } DS;
 
 void	FSInit(unsigned int id, VOLUME* vol);
@@ -62,7 +65,10 @@ void	FSList(const char* prefix,
 		void (*callback)(const char* dsn, void* userdata),
 		void* userdata);
 
+BOOL	DSIsFB(DS* ds);
+size_t	DSGetRecLen(DS* ds);
 BOOL	DSOpen(DS* ds, const char* dsn);
+void	DSGetInfo(DS* ds, DSInfo* info);
 size_t	DSRead(DS* ds, void* dst, size_t size);
 void	DSSeek(DS* ds, size_t pos);
 

@@ -40,6 +40,8 @@ void FSInit(unsigned int id, VOLUME* vol)
 
 	vol->vtoc_size = vtoc->vtoc_size;
 	vol->vtoc_block = vtoc->vtoc_block;
+
+	memcpy(vol->label, vtoc->label, 6);
 }
 
 void FSList(const char* prefix,
@@ -80,7 +82,8 @@ void FSList(const char* prefix,
 	MONUnlock(&lock);
 }
 
-BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* volume)
+BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* vtocix,
+		unsigned int* volume)
 {
 	if(!dsn || !ds) {
 		return FALSE;
@@ -114,6 +117,10 @@ BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* volume)
 				}
 
 				found = TRUE;
+				if(vtocix) {
+					*vtocix = i * (512 / sizeof(DSCB_DS))
+						+ j;
+				}
 				if(volume) {
 					*volume = volid;
 				}
@@ -129,6 +136,21 @@ end:
 	return found;
 }
 
+BOOL DSIsFB(DS* ds)
+{
+	return DSGetRecLen(ds) > 0;
+}
+
+size_t DSGetRecLen(DS* ds)
+{
+	unsigned int lrecl = ds->info.flags & 0x0FFF;
+	if(lrecl) {
+		return lrecl + 1;
+	} else {
+		return 0;
+	}
+}
+
 BOOL DSOpen(DS* ds, const char* dsn)
 {
 #ifdef DEBUG
@@ -136,17 +158,22 @@ BOOL DSOpen(DS* ds, const char* dsn)
 #endif
 
 	DSCB_DS dscb;
-	BOOL result = FSLocate(dsn, &dscb, &ds->volume);
+	BOOL result = FSLocate(dsn, &dscb, &ds->info.vtocix, &ds->info.volume);
 	if(result) {
-		ds->block = dscb.start_block;
-		ds->size = dscb.size;
-		ds->current_block = ds->block;
-		ds->current_size = ds->size;
+		ds->info.block = dscb.start_block;
+		ds->info.size = dscb.size;
+		ds->current_block = ds->info.block;
+		ds->current_size = ds->info.size;
 		ds->pos = 0;
 		ds->buf_block = 0;
-		ds->flags = dscb.flags;
+		ds->info.flags = dscb.flags;
 	}
 	return result;
+}
+
+void DSGetInfo(DS* ds, DSInfo* info)
+{
+	*info = ds->info;
 }
 
 size_t DSRead(DS* ds, void* dst, size_t size)
@@ -158,7 +185,7 @@ size_t DSRead(DS* ds, void* dst, size_t size)
 		if(ds->pos == 0) {
 			/* read complete block */
 			if(size >= 512 && ds->current_size > 0) {
-				VOLReadBlock(ds->volume, dst,
+				VOLReadBlock(ds->info.volume, dst,
 						ds->current_block);
 				ds->buf_block = ds->current_block;
 				dst += 512;
@@ -168,7 +195,7 @@ size_t DSRead(DS* ds, void* dst, size_t size)
 				ds->current_size--;
 				continue;
 			} else if(ds->current_size) {
-				VOLReadBlock(ds->volume, __sector_buffer,
+				VOLReadBlock(ds->info.volume, __sector_buffer,
 						ds->current_block);
 				ds->buf_block = ds->current_block;
 				ds->current_block++;
@@ -178,7 +205,7 @@ size_t DSRead(DS* ds, void* dst, size_t size)
 				return read;
 			}
 		} else if(ds->buf_block != current_block) {
-			VOLReadBlock(ds->volume, __sector_buffer,
+			VOLReadBlock(ds->info.volume, __sector_buffer,
 					ds->buf_block);
 		}
 
@@ -211,13 +238,13 @@ void DSSeek(DS* ds, size_t pos)
 {
 	MONLock(&lock);
 	size_t blocks = pos / 512;
-	if(blocks < ds->size) {
-		ds->current_block = ds->block + blocks;
-		ds->current_size = ds->size - blocks;
+	if(blocks < ds->info.size) {
+		ds->current_block = ds->info.block + blocks;
+		ds->current_size = ds->info.size - blocks;
 		ds->pos = pos % 512;
 
 		if(ds->pos) {
-			VOLReadBlock(ds->volume, __sector_buffer,
+			VOLReadBlock(ds->info.volume, __sector_buffer,
 					ds->current_block);
 			ds->buf_block = ds->current_block;
 			ds->current_block++;

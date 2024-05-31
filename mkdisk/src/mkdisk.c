@@ -9,6 +9,7 @@
 #include "types.h"
 #include "rx02.h"
 #include "efs.h"
+#include "layout.h"
 
 size_t get_size(const char* path)
 {
@@ -129,6 +130,7 @@ int main(int argc, char** argv)
 	const char* monitor_file = NULL;
 	const char* output_file = NULL;
 	const char* diskroot_path = NULL;
+	const char* layout_path = NULL;
 
 	EFS efs;
 
@@ -149,6 +151,10 @@ int main(int argc, char** argv)
 			diskroot_path = argv[1];
 			argc--;
 			argv++;
+		} else if(!strcmp("-l", *argv) && argc > 1) {
+			layout_path = argv[1];
+			argc--;
+			argv++;
 		} else if(!strcmp("-h", *argv) || !strcmp("--help", *argv)) {
 			printf("Usage: %s [OPTIONS]\n"
 				"\n"
@@ -157,6 +163,7 @@ int main(int argc, char** argv)
 				"  -m mon.bin      Use monitor from mon.bin\n"
 				"  -o disk.rx2     Write disk image to disk.rx2\n"
 				"  -d diskroot     Use diskroot as content for the disk\n"
+				"  -l layout.txt   Use layout file for the disk content\n"
 				"  -h, --help      Show this help message\n", self);
 			return 0;
 		} else {
@@ -180,8 +187,8 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	if(!diskroot_path) {
-		printf("Error: no disk root directory\n");
+	if(!diskroot_path && !layout_path) {
+		printf("Error: no disk root directory or layout file\n");
 		return 1;
 	}
 
@@ -279,59 +286,65 @@ int main(int argc, char** argv)
 	EFSInit(&efs, disk, disk_read, disk_write);
 	EFSInitDisk(&efs, "ROMVOL", 512512 / 512, 2, efs_block);
 
-	/* copy everything from diskroot onto the disk */
-	DIR* diskroot = opendir(diskroot_path);
-	if(!diskroot) {
-		printf("Failed to open disk root directory: %s\n", strerror(errno));
-		return 1;
-	}
-
-	struct dirent* file;
-	while((file = readdir(diskroot)) != NULL) {
-		if(file->d_type != DT_REG) {
-			continue;
-		}
-
-		char* path = malloc(strlen(diskroot_path) + strlen(file->d_name) + 2);
-		sprintf(path, "%s/%s", diskroot_path, file->d_name);
-		struct stat buf;
-		if(stat(path, &buf) == -1) {
-			printf("Failed to stat %s: %s\n", path, strerror(errno));
+	if(diskroot_path) {
+		/* copy everything from diskroot onto the disk */
+		DIR* diskroot = opendir(diskroot_path);
+		if(!diskroot) {
+			printf("Failed to open disk root directory: %s\n", strerror(errno));
 			return 1;
 		}
 
-		if(buf.st_size == 0) {
-			printf("%s is empty, skipping\n", file->d_name);
+		struct dirent* file;
+		while((file = readdir(diskroot)) != NULL) {
+			if(file->d_type != DT_REG) {
+				continue;
+			}
+
+			char* path = malloc(strlen(diskroot_path) + strlen(file->d_name) + 2);
+			sprintf(path, "%s/%s", diskroot_path, file->d_name);
+			struct stat buf;
+			if(stat(path, &buf) == -1) {
+				printf("Failed to stat %s: %s\n", path, strerror(errno));
+				return 1;
+			}
+
+			if(buf.st_size == 0) {
+				printf("%s is empty, skipping\n", file->d_name);
+				free(path);
+				continue;
+			}
+
+			void* data = malloc(buf.st_size);
+			if(!data) {
+				printf("Failed to allocated %lu bytes\n", buf.st_size);
+				return 1;
+			}
+
+			FILE* fd = fopen(path, "rb");
+			if(!fd) {
+				printf("Failed to open file %s: %s\n", path, strerror(errno));
+				return 1;
+			}
+
+			if(fread(data, buf.st_size, 1, fd) != 1) {
+				printf("Failed to read %s\n", path);
+				return 1;
+			}
+
+			fclose(fd);
+
+			EFSStoreSequential(&efs, file->d_name, buf.st_size, data, EFS_DSCB_DS_TYPE_EXEC);
+
+			free(data);
 			free(path);
-			continue;
 		}
 
-		void* data = malloc(buf.st_size);
-		if(!data) {
-			printf("Failed to allocated %lu bytes\n", buf.st_size);
-			return 1;
-		}
-
-		FILE* fd = fopen(path, "rb");
-		if(!fd) {
-			printf("Failed to open file %s: %s\n", path, strerror(errno));
-			return 1;
-		}
-
-		if(fread(data, buf.st_size, 1, fd) != 1) {
-			printf("Failed to read %s\n", path);
-			return 1;
-		}
-
-		fclose(fd);
-
-		EFSStoreSequential(&efs, file->d_name, buf.st_size, data);
-
-		free(data);
-		free(path);
+		closedir(diskroot);
 	}
 
-	closedir(diskroot);
+	if(layout_path) {
+		LAYOUTProcess(&efs, layout_path);
+	}
 
 	FILE* out = fopen(output_file, "wb");
 	if(!out) {

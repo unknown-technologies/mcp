@@ -19,10 +19,14 @@ static TSOCommand tso_commands[] = {
 	{ .name = "SHOWLOG",	.main = tso_showlog },
 	{ .name = "WRITE",	.main = tso_write },
 	{ .name = "LISTCAT",	.main = tso_listcat },
+	{ .name = "LISTDS",	.main = tso_listds },
+	{ .name = "PRINTDS",	.main = tso_printds },
 	{ .name = NULL,		.main = NULL }
 };
 
 static int last_status = 0;
+
+static char recbuf[134];
 
 BOOL startswith(const char* a, const char* b)
 {
@@ -160,14 +164,124 @@ static void tso_listcat_cb(const char* dsn, void* user)
 
 int tso_listcat(unsigned int argc, TSOArgument* argv)
 {
-	(void) argv;
-
-	if(argc != 1) {
+	if(argc == 1) {
+		FSList(NULL, tso_listcat_cb, NULL);
+	} else {
 		screen_print("SYNTAX ERROR\n");
 		return -1;
 	}
 
-	FSList(NULL, tso_listcat_cb, NULL);
+	return 0;
+}
+
+int tso_listds(unsigned int argc, TSOArgument* argv)
+{
+	char buf[16];
+	if(argc == 2) {
+		char* dsn = (char*) argv[1].value; /* evil, but anyway */
+		for(char* c = dsn; *c; c++) {
+			*c = toupper(*c);
+		}
+
+		screen_print(dsn);
+		screen_nl();
+
+		DS info;
+		int ds = DSOpen(argv[1].value);
+		if(ds < 0) {
+			screen_print("FAILED TO OPEN DS\n");
+		} else {
+			DSGetInfo(ds, &info);
+			DSClose(ds);
+
+			screen_print("--RECFM-LRECL-BLKSIZE-DSORG");
+			screen_nl();
+			screen_print("  ");
+			if(DSIsFB(&info)) {
+				screen_print("FB    ");
+			} else {
+				screen_print("U     ");
+			}
+
+			size_t len;
+			if(DSIsFB(&info)) {
+				unsigned int lrecl = DSGetRecLen(&info);
+				len = sprintf(buf, "%u", lrecl);
+			} else {
+				buf[0] = '*';
+				buf[1] = '*';
+				len = 2;
+			}
+			for(size_t i = len; i < 6; i++) {
+				buf[i] = ' ';
+			}
+			buf[6] = 0;
+			screen_print(buf);
+
+			len = sprintf(buf, "%u ", info.size);
+			for(size_t i = len; i < 8; i++) {
+				buf[i] = ' ';
+			}
+			buf[8] = 0;
+			screen_print(buf);
+
+			screen_print("PS");
+			screen_nl();
+			screen_print("--VOLUMES--");
+			screen_nl();
+			screen_print("  ");
+
+			bzero(buf, sizeof(buf));
+			VOLGetLabel(info.volume, buf);
+			screen_print(buf);
+			screen_nl();
+		}
+	} else {
+		screen_print("SYNTAX ERROR\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+int tso_printds(unsigned int argc, TSOArgument* argv)
+{
+	if(argc == 2) {
+		char* dsn = (char*) argv[1].value; /* evil, but anyway */
+		for(char* c = dsn; *c; c++) {
+			*c = toupper(*c);
+		}
+
+		screen_print(dsn);
+		screen_nl();
+
+		DS info;
+		int ds = DSOpen(argv[1].value);
+		if(ds < 0) {
+			screen_print("FAILED TO OPEN DS\n");
+		} else {
+			DSGetInfo(ds, &info);
+			if(DSIsFB(&info)) {
+				char buf[8];
+				unsigned int i = 1;
+				unsigned int lrecl = DSGetRecLen(&info);
+				while(DSRead(ds, recbuf, 1) == 1) {
+					sprintf(buf, "%05d ", i++);
+					screen_print(buf);
+					recbuf[lrecl] = 0;
+					screen_print(recbuf);
+					screen_nl();
+				}
+				screen_print("*** EOF ***\n");
+			} else {
+				screen_print("NOT A FB DATA SET\n");
+			}
+			DSClose(ds);
+		}
+	} else {
+		screen_print("SYNTAX ERROR\n");
+		return -1;
+	}
 
 	return 0;
 }

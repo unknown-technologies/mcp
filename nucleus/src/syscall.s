@@ -10,7 +10,7 @@ _OSSyscallInit:
 	mov	$EMT_table, r0	# EMT handlers
 	mov	___emttbl,r1	# EMT table
 	add	$24,	r1	# first EMT ID
-	mov	$14,	r2	# count
+	mov	$17,	r2	# count
 .L0:	mov	(r0)+,	(r1)+
 	sob	r2,	.L0
 	mov	(sp)+,	r2
@@ -27,10 +27,13 @@ _OSSyscallInit:
 	.globl	_OSGetDate
 	.globl	_OSSetDate
 	.globl	___DSOpen
+	.globl	___DSGetInfo
 	.globl	___DSRead
+	.globl	___DSWrite
 	.globl	___DSSeek
 	.globl	___DSClose
 	.globl	_FSList
+	.globl	_VOLGetLabel
 	.globl	_OSGetLog
 
 EMT_OSGetDate:
@@ -93,11 +96,26 @@ EMT_DSOpen:
 	tst	(sp)+
 	rti
 
+EMT_DSGetInfo:
+	mov	r1,	-(sp)
+	mov	r0,	-(sp)
+	jsr	pc,	___DSGetInfo
+	add	$4,	sp
+	rti
+
 EMT_DSRead:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
 	jsr	pc,	___DSRead
+	add	$6,	sp
+	rti
+
+EMT_DSWrite:
+	mov	r2,	-(sp)
+	mov	r1,	-(sp)
+	mov	r0,	-(sp)
+	jsr	pc,	___DSWrite
 	add	$6,	sp
 	rti
 
@@ -122,6 +140,13 @@ EMT_FSList:
 	add	$6,	sp
 	rti
 
+EMT_VOLGetLabel:
+	mov	r1,	-(sp)
+	mov	r0,	-(sp)
+	jsr	pc,	_VOLGetLabel
+	add	$4,	sp
+	rti
+
 EMT_OSGetLog:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
@@ -141,8 +166,11 @@ EMT_table:
 	.word	EMT_OSJoin			# EMT 18: OSJoin
 	.word	EMT_OSTerminate			# EMT 19: OSTerminate
 	.word	EMT_DSOpen			# EMT 20: DSOpen
-	.word	EMT_DSRead			# EMT 21: DSRead
-	.word	EMT_DSSeek			# EMT 22: DSSeek
-	.word	EMT_DSClose			# EMT 23: DSClose
-	.word	EMT_FSList			# EMT 24: FSList
-	.word	EMT_OSGetLog			# EMT 25: OSGetLog
+	.word	EMT_DSGetInfo			# EMT 21: DSGetInfo
+	.word	EMT_DSRead			# EMT 22: DSRead
+	.word	EMT_DSWrite			# EMT 23: DSWrite
+	.word	EMT_DSSeek			# EMT 24: DSSeek
+	.word	EMT_DSClose			# EMT 25: DSClose
+	.word	EMT_FSList			# EMT 26: FSList
+	.word	EMT_VOLGetLabel			# EMT 27: VOLGetLabel
+	.word	EMT_OSGetLog			# EMT 28: OSGetLog

@@ -9,6 +9,8 @@ typedef struct {
 
 	unsigned int	vtoc_size;
 	unsigned int	vtoc_block;
+
+	u16		label[3];
 } VOLUME;
 
 extern unsigned int current_volume;
@@ -18,6 +20,7 @@ void	VOLInit(void);
 void	VOLAddVolume(unsigned int id, void (*read)(void*, unsigned int),
 		void (*write)(void*, unsigned int));
 VOLUME*	VOLGetVolume(unsigned int volume);
+void	VOLGetLabel(unsigned int volume, char* label);
 BOOL	VOLIsActive(unsigned int volume);
 void	VOLReadBlock(unsigned int volume, void* buf, unsigned int block);
 void	VOLWriteBlock(unsigned int volume, void* buf, unsigned int block);
