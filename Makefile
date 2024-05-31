@@ -20,14 +20,6 @@ CLOCKCFG	:=	programs/clockcfg/build/clockcfg
 all: $(DISK)
 
 $(DISK): modules
-	@cp $(NUCLEUS) $(DISKROOT)/SYS1.NUCLEUS
-	@cp $(SYSLIB) $(DISKROOT)/SYS1.SYSLIB
-	@cp $(STARTUP) $(DISKROOT)/SYS1.STARTUP
-	@cp $(LOGON) $(DISKROOT)/SYS1.LOGON
-	@cp $(TSO) $(DISKROOT)/SYS1.TSO
-	@cp $(ISPF) $(DISKROOT)/SYS1.ISPF
-	@cp $(CLOCK) $(DISKROOT)/SYS1.PROG.CLOCK
-	@cp $(CLOCKCFG) $(DISKROOT)/SYS1.PROG.CLOCKCFG
 	@$(MKDISK) -b $(BOOT) -m $(MON) -l $(DISKLAYOUT) -o $@
 
 modules:
@@ -43,6 +35,7 @@ modules:
 	@$(MAKE) -C programs/ispf all --no-print-directory
 	@$(MAKE) -C programs/clock all --no-print-directory
 	@$(MAKE) -C programs/clockcfg all --no-print-directory
+	@$(MAKE) -C programs/sim all --no-print-directory
 
 clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
@@ -57,12 +50,5 @@ clean:
 	@$(MAKE) -C programs/ispf clean --no-print-directory
 	@$(MAKE) -C programs/clock clean --no-print-directory
 	@$(MAKE) -C programs/clockcfg clean --no-print-directory
+	@$(MAKE) -C programs/sim clean --no-print-directory
 	@rm -f $(DISK)
-	@rm -f $(DISKROOT)/SYS1.NUCLEUS
-	@rm -f $(DISKROOT)/SYS1.SYSLIB
-	@rm -f $(DISKROOT)/SYS1.STARTUP
-	@rm -f $(DISKROOT)/SYS1.LOGON
-	@rm -f $(DISKROOT)/SYS1.TSO
-	@rm -f $(DISKROOT)/SYS1.ISPF
-	@rm -f $(DISKROOT)/SYS1.PROG.CLOCK
-	@rm -f $(DISKROOT)/SYS1.PROG.CLOCKCFG
