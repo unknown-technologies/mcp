@@ -72,6 +72,7 @@ void EFSInitDisk(EFS* efs, const char* label, size_t size, unsigned int vtoc_siz
 	EFSSetCurrentDate(&vtoc.create_year, &vtoc.create_date, &vtoc.create_time);
 	vtoc.type = EFS_DSCB_VTOC;
 
+	printf("VOL    blocks=%u\n", vtoc.size);
 	printf("VTOC   block=%u size=%u\n", vtoc.vtoc_block, vtoc_size);
 	printf("BITMAP block=%u size=%u\n", vtoc.bitmap, bitmap_size);
 
@@ -170,6 +171,76 @@ void EFSSetBlocks(EFS* efs, u16 start, size_t count)
 	if(blockid) {
 		efs->write(efs->userdata, sector, blockid);
 	}
+}
+
+u16 EFSGetUsedBlocks(EFS* efs)
+{
+	u32 sector[512 / sizeof(u32)];
+
+	/* read VTOC */
+	efs->read(efs->userdata, sector, 1);
+
+	DSCB_VTOC vtoc;
+	memcpy(&vtoc, sector, sizeof(DSCB_VTOC));
+
+	if(memcmp(vtoc.magic, EFS_MAGIC, 8)) {
+		printf("Invalid EFS magic!\n");
+		exit(1);
+	}
+
+	/* read bitmap */
+	unsigned int lastbitblock = (unsigned int) -1;
+	u16 size = 0;
+	for(unsigned int block = 0; block < vtoc.size; block++) {
+		unsigned int bitblock = block / 8 / 512 + vtoc.bitmap;
+		if(lastbitblock != bitblock) {
+			efs->read(efs->userdata, sector, bitblock);
+		}
+		lastbitblock = bitblock;
+
+		u8* bits = (u8*) sector;
+		u8 bit = bits[block / 8] & (1 << (block % 8));
+		if(!bit) {
+			size++;
+		}
+	}
+
+	return size;
+}
+
+u16 EFSGetFreeBlocks(EFS* efs)
+{
+	u32 sector[512 / sizeof(u32)];
+
+	/* read VTOC */
+	efs->read(efs->userdata, sector, 1);
+
+	DSCB_VTOC vtoc;
+	memcpy(&vtoc, sector, sizeof(DSCB_VTOC));
+
+	if(memcmp(vtoc.magic, EFS_MAGIC, 8)) {
+		printf("Invalid EFS magic!\n");
+		exit(1);
+	}
+
+	/* read bitmap */
+	unsigned int lastbitblock = (unsigned int) -1;
+	u16 size = 0;
+	for(unsigned int block = 0; block < vtoc.size; block++) {
+		unsigned int bitblock = block / 8 / 512 + vtoc.bitmap;
+		if(lastbitblock != bitblock) {
+			efs->read(efs->userdata, sector, bitblock);
+		}
+		lastbitblock = bitblock;
+
+		u8* bits = (u8*) sector;
+		u8 bit = bits[block / 8] & (1 << (block % 8));
+		if(bit) {
+			size++;
+		}
+	}
+
+	return size;
 }
 
 void EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data, unsigned int flags)

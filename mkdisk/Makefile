@@ -22,6 +22,7 @@ CFLAGS		:=	-O3 -g -Wall -std=c99 \
 			-D_XOPEN_SOURCE=500 -D_DEFAULT_SOURCE \
 			$(ASAN)
 
+LIBS		:=	-lm
 LDFLAGS		:=	-Wl,-x -Wl,--gc-sections $(ASAN)
 
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
@@ -63,7 +64,7 @@ all: $(TARGET)
 
 $(TARGET): $(OFILES)
 	@echo "[LD]    $(notdir $@)"
-	@$(LD) $(LDFLAGS) $(OFILES) -o $@ -Wl,-Map=$@.map
+	@$(LD) $(LDFLAGS) $(OFILES) -o $@ $(LIBS) -Wl,-Map=$@.map
 
 -include $(DEPSDIR)/*.d
 

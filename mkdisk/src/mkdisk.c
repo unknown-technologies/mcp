@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <errno.h>
 #include <dirent.h>
 #include <sys/stat.h>
@@ -345,6 +346,13 @@ int main(int argc, char** argv)
 	if(layout_path) {
 		LAYOUTProcess(&efs, layout_path);
 	}
+
+	unsigned int used_blocks = EFSGetUsedBlocks(&efs);
+	unsigned int free_blocks = EFSGetFreeBlocks(&efs);
+	printf("DISK SPACE: %u (%u BYTES) USED / %u (%u BYTES) FREE (%u%%)\n",
+			used_blocks, used_blocks * 512,
+			free_blocks, free_blocks * 512,
+			(unsigned int) round(free_blocks * 100.0 / (512512 / 512)));
 
 	FILE* out = fopen(output_file, "wb");
 	if(!out) {

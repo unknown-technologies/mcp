@@ -63,6 +63,8 @@ typedef struct {
 
 void	EFSInit(EFS* efs, void* userdata, void (*read)(void*, void*, unsigned int), void (*write)(void*, void*, unsigned int));
 void	EFSInitDisk(EFS* efs, const char* label, size_t size, unsigned int vtoc_size, unsigned int start_block);
+u16	EFSGetUsedBlocks(EFS* efs);
+u16	EFSGetFreeBlocks(EFS* efs);
 void	EFSStoreSequential(EFS* efs, const char* dsn, size_t size, void* data, unsigned int flags);
 
 #endif
