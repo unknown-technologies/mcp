@@ -67,6 +67,7 @@ void	FSList(const char* prefix,
 
 BOOL	DSIsFB(DS* ds);
 size_t	DSGetRecLen(DS* ds);
+size_t	DSGetPhysicalRecLen(DS* ds);
 BOOL	DSOpen(DS* ds, const char* dsn);
 void	DSGetInfo(DS* ds, DSInfo* info);
 size_t	DSRead(DS* ds, void* dst, size_t size);

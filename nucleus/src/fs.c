@@ -151,6 +151,21 @@ size_t DSGetRecLen(DS* ds)
 	}
 }
 
+size_t DSGetPhysicalRecLen(DS* ds)
+{
+	size_t lrecl = DSGetRecLen(ds);
+	u16 type = ds->info.flags & 0xC000;
+	if(type == EFS_DSCB_DS_TYPE_TXT6B) {
+		/* 6bit text encoding */
+		return (lrecl + 3) / 4 * 3;
+	} else if(type == EFS_DSCB_DS_TYPE_TXT7B) {
+		/* 7bit text encoding */
+		return (lrecl + 7) / 8 * 7;
+	} else {
+		return lrecl;
+	}
+}
+
 BOOL DSOpen(DS* ds, const char* dsn)
 {
 #ifdef DEBUG

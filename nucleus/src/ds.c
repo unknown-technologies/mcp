@@ -46,36 +46,26 @@ size_t __DSRead(int ds, void* dst, size_t size)
 	if(dataset) {
 		if(DSIsFB(dataset)) {
 			size_t lrecl = DSGetRecLen(dataset);
+			size_t lrecl_phy = DSGetPhysicalRecLen(dataset);
+			void (*decode)(char*, u8*, unsigned int) = NULL;
+
 			u16 type = dataset->info.flags & 0xC000;
 			if(type == EFS_DSCB_DS_TYPE_TXT6B) {
 				/* 6bit text encoding */
-				size_t lrecl6 = (lrecl + 3) / 4 * 3;
-				size_t off = lrecl - lrecl6;
-				char* p = (char*) dst;
-				size_t read = 0;
-				for(size_t i = 0; i < size; i++) {
-					u8* rd = (u8*) (p + off);
-					size_t rcnt = DSRead(dataset, rd, lrecl6);
-					R6Decode(p, rd, lrecl6);
-					if(rcnt != lrecl6) {
-						break;
-					} else {
-						read++;
-						p += lrecl;
-					}
-				}
-				return read;
+				decode = R6Decode;
 			} else if(type == EFS_DSCB_DS_TYPE_TXT7B) {
 				/* 7bit text encoding */
-				size_t lrecl7 = (lrecl + 7) / 8 * 7;
-				size_t off = lrecl - lrecl7;
+				decode = R7Decode;
+			}
+			if(decode) {
+				size_t off = lrecl - lrecl_phy;
 				char* p = (char*) dst;
 				size_t read = 0;
 				for(size_t i = 0; i < size; i++) {
 					u8* rd = (u8*) (p + off);
-					size_t rcnt = DSRead(dataset, rd, lrecl7);
-					R7Decode(p, rd, lrecl7);
-					if(rcnt != lrecl7) {
+					size_t rcnt = DSRead(dataset, rd, lrecl_phy);
+					decode(p, rd, lrecl_phy);
+					if(rcnt != lrecl_phy) {
 						break;
 					} else {
 						read++;
