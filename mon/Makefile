@@ -13,8 +13,11 @@ ifneq ($(BUILD),$(notdir $(CURDIR)))
 #-------------------------------------------------------------------------------
 export	DEPSDIR	:=	$(CURDIR)/$(BUILD)
 export	BINFILES:=	$(SFILES:.s=.bin)
+export	LDAFILES:=	$(SFILES:.s=.lda)
 export	VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) $(CURDIR)
 export	OUTPUT	:=	$(CURDIR)/$(TARGET)
+
+export	LDADUMP	:=	$(CURDIR)/../lsi-ldadump/build/lsi-ldadump
 
 .PHONY: $(BUILD) clean all
 
@@ -24,7 +27,7 @@ $(BUILD):
 
 clean:
 	@echo "[CLEAN]"
-	@rm -rf $(BUILD) $(BINFILES)
+	@rm -rf $(BUILD) $(BINFILES) $(LDAFILES)
 
 all: $(BUILD)
 
@@ -35,11 +38,15 @@ else
 #-------------------------------------------------------------------------------
 .PHONY: all
 
-all: $(BINFILES)
+all: $(BINFILES) $(LDAFILES)
 
-%.bin: %.s
+%.lda: %.s
 	@echo "[AS]    $(notdir $@)"
 	@$(AS) -q $< $@
+
+%.bin: %.lda
+	@echo "[DUMP]  $(notdir $@)"
+	@$(LDADUMP) -q $< $@
 
 #-------------------------------------------------------------------------------
 endif

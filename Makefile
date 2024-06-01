@@ -4,8 +4,9 @@ DISKLAYOUT	:=	disk.lyt
 
 MKDISK		:=	mkdisk/build/mkdisk
 
-MON		:=	mon/build/mon.bin
-BOOT		:=	mon/build/boot.bin
+MON		:=	mon/build/mon.lda
+BOOT		:=	mon/build/boot.lda
+NOBOOT		:=	mon/build/noboot.bin
 NUCLEUS		:=	nucleus/build/nucleus
 SYSLIB		:=	syslib/build/syslib
 STARTUP		:=	programs/startup/build/startup
@@ -26,6 +27,7 @@ modules:
 	@$(MAKE) -C mkdisk all --no-print-directory
 	@$(MAKE) -C lsi-ld all --no-print-directory
 	@$(MAKE) -C lsi-nm all --no-print-directory
+	@$(MAKE) -C lsi-ldadump all --no-print-directory
 	@$(MAKE) -C mon all --no-print-directory
 	@$(MAKE) -C nucleus all --no-print-directory
 	@$(MAKE) -C syslib all --no-print-directory
@@ -41,6 +43,7 @@ clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
 	@$(MAKE) -C lsi-ld clean --no-print-directory
 	@$(MAKE) -C lsi-nm clean --no-print-directory
+	@$(MAKE) -C lsi-ldadump clean --no-print-directory
 	@$(MAKE) -C mon clean --no-print-directory
 	@$(MAKE) -C nucleus clean --no-print-directory
 	@$(MAKE) -C syslib clean --no-print-directory

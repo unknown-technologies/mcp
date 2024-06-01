@@ -8,3 +8,4 @@ X ** SYS1.SIM			programs/sim/build/sim
 X ** SYS1.PROG.CLOCK		programs/clock/build/clock
 X ** SYS1.PROG.CLOCKCFG		programs/clockcfg/build/clockcfg
 6 72 SYS1.APPLID		diskroot/SYS1.APPLID
+B ** SYS1.NOBOOT		mon/build/noboot.bin
