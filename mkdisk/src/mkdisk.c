@@ -363,6 +363,8 @@ int main(int argc, char** argv)
 	FILE* out = fopen(output_file, "wb");
 	if(!out) {
 		printf("Failed to open output file: %s\n", strerror(errno));
+		free(memory);
+		free(disk);
 		return 1;
 	}
 
