@@ -132,6 +132,7 @@ int main(int argc, char** argv)
 	const char* output_file = NULL;
 	const char* diskroot_path = NULL;
 	const char* layout_path = NULL;
+	const char* disk_label = "ROMVOL";
 
 	EFS efs;
 
@@ -152,8 +153,12 @@ int main(int argc, char** argv)
 			diskroot_path = argv[1];
 			argc--;
 			argv++;
-		} else if(!strcmp("-l", *argv) && argc > 1) {
+		} else if(!strcmp("-c", *argv) && argc > 1) {
 			layout_path = argv[1];
+			argc--;
+			argv++;
+		} else if(!strcmp("-l", *argv) && argc > 1) {
+			disk_label = argv[1];
 			argc--;
 			argv++;
 		} else if(!strcmp("-h", *argv) || !strcmp("--help", *argv)) {
@@ -164,7 +169,8 @@ int main(int argc, char** argv)
 				"  -m mon.bin      Use monitor from mon.bin\n"
 				"  -o disk.rx2     Write disk image to disk.rx2\n"
 				"  -d diskroot     Use diskroot as content for the disk\n"
-				"  -l layout.txt   Use layout file for the disk content\n"
+				"  -c content.lst  Use content file for the disk content\n"
+				"  -l label        Disk label\n"
 				"  -h, --help      Show this help message\n", self);
 			return 0;
 		} else {
@@ -285,7 +291,7 @@ int main(int argc, char** argv)
 	}
 
 	EFSInit(&efs, disk, disk_read, disk_write);
-	EFSInitDisk(&efs, "ROMVOL", 512512 / 512, 2, efs_block);
+	EFSInitDisk(&efs, disk_label, 512512 / 512, 2, efs_block);
 
 	if(diskroot_path) {
 		/* copy everything from diskroot onto the disk */

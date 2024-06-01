@@ -20,7 +20,7 @@ CLOCKCFG	:=	programs/clockcfg/build/clockcfg
 all: $(DISK)
 
 $(DISK): modules
-	@$(MKDISK) -b $(BOOT) -m $(MON) -l $(DISKLAYOUT) -o $@
+	@$(MKDISK) -b $(BOOT) -m $(MON) -c $(DISKLAYOUT) -l MCP11 -o $@
 
 modules:
 	@$(MAKE) -C mkdisk all --no-print-directory
