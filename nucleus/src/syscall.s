@@ -11,8 +11,8 @@ _OSSyscallInit:
 	mov	___emttbl,r1	# EMT table
 	add	$24,	r1	# first EMT ID
 	mov	$17,	r2	# count
-.L0:	mov	(r0)+,	(r1)+
-	sob	r2,	.L0
+1:	mov	(r0)+,	(r1)+
+	sob	r2,	1b
 	mov	(sp)+,	r2
 	mov	(sp)+,	r1
 	mov	(sp)+,	r0
