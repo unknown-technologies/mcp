@@ -37,7 +37,7 @@ void* NMLoadFile(const char* filename)
 	return data;
 }
 
-void NMPrintSymbols(PROGRAM* prog)
+void NMPrintSymbols(PROGRAM* prog, BOOL octal)
 {
 	if(U16B(prog->magic) != 0x0301 && prog->magic != 0) {
 		printf("Not an MCP program\n");
@@ -91,15 +91,32 @@ void NMPrintSymbols(PROGRAM* prog)
 				break;
 		}
 
-		printf("%06o %c %s\n", U16L(sym->value), t, name);
+		if(octal) {
+			printf("%06o %c %s\n", U16L(sym->value), t, name);
+		} else {
+			printf("%04x %c %s\n", U16L(sym->value), t, name);
+		}
 	}
 }
 
 int main(int argc, char** argv)
 {
-	if(argc != 2) {
-		printf("Usage: %s program\n", *argv);
+	BOOL octal = FALSE;
+
+	if(argc != 2 && argc != 3) {
+		printf("Usage: %s [-o] program\n", *argv);
 		return 1;
+	}
+
+	if(argc == 3) {
+		if(!strcmp(argv[1], "-o")) {
+			octal = TRUE;
+		} else {
+			printf("Usage: %s [-o] program\n", *argv);
+			return 1;
+		}
+		argc--;
+		argv++;
 	}
 
 	PROGRAM* prog = NMLoadFile(argv[1]);
@@ -107,7 +124,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	NMPrintSymbols(prog);
+	NMPrintSymbols(prog, octal);
 
 	free(prog);
 

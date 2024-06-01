@@ -1202,7 +1202,7 @@ static int symsort(const void* a, const void* b)
 	return (int) sym_a->value - (int) sym_b->value;
 }
 
-void LDPrintMap(LINKER* linker, FILE* out)
+void LDPrintMap(LINKER* linker, FILE* out, BOOL oct)
 {
 	BOOL gc;
 	switch(linker->type) {
@@ -1282,7 +1282,11 @@ void LDPrintMap(LINKER* linker, FILE* out)
 				t = '?';
 				break;
 		}
-		fprintf(out, "%06o %c %s\n", sym->value, t, sym->name);
+		if(oct) {
+			fprintf(out, "%06o %c %s\n", sym->value, t, sym->name);
+		} else {
+			fprintf(out, "%04x %c %s\n", sym->value, t, sym->name);
+		}
 	}
 	free(symbols);
 }

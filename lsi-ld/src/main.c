@@ -16,6 +16,10 @@ void print_help(const char* self)
 			"  -h              Show this help text\n"
 			"  -m symbol.map   Print symbol map to file, - is stdout\n"
 			"  -o output.bin   Write output to file\n"
+			"  -e              Link EXEC program (statically linked)\n"
+			"  -d              Link DYN program (dynamically linked)\n"
+			"  -l              Link shared library\n"
+			"  -no             Output octal addresses in symbol map\n"
 			"\n"
 			"The last argument FILE is a list of object files to process\n", self);
 }
@@ -52,7 +56,7 @@ int print_symbol_list(char** ofiles, int ofilecnt)
 	return 0;
 }
 
-int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out, int type)
+int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out, int type, BOOL oct)
 {
 	LINKER ld;
 
@@ -89,7 +93,7 @@ int link(char* outfile, char** ofiles, int ofilecnt, FILE* symbols_out, int type
 		free(out);
 
 		if(symbols_out) {
-			LDPrintMap(&ld, symbols_out);
+			LDPrintMap(&ld, symbols_out, oct);
 		}
 	} else {
 		LDDestroy(&ld);
@@ -109,6 +113,7 @@ int main(int argc, char** argv)
 	char* outfile = NULL;
 	char* mapfile = NULL;
 	unsigned int type = LD_TYPE_EXEC;
+	BOOL oct = FALSE;
 
 	argc--;
 	argv++;
@@ -125,6 +130,8 @@ int main(int argc, char** argv)
 			type = LD_TYPE_LIB;
 		} else if(!strcmp(*argv, "-d")) {
 			type = LD_TYPE_DYN;
+		} else if(!strcmp(*argv, "-no")) {
+			oct = TRUE;
 		} else if(!strcmp(*argv, "-o") && argc > 1) {
 			outfile = argv[1];
 			argv++;
@@ -160,7 +167,7 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-		int result = link(outfile, ofiles, ofilecnt, symbols_out, type);
+		int result = link(outfile, ofiles, ofilecnt, symbols_out, type, oct);
 		if(symbols_out) {
 			fclose(symbols_out);
 		}

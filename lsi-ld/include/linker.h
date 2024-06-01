@@ -87,6 +87,6 @@ BOOL	LDCollect(LINKER* linker, const char* entry);
 BOOL	LDCollectLibrary(LINKER* linker);
 void*	LDLink(LINKER* linker, size_t* size);
 void*	LDLinkBinary(LINKER* linker, size_t* size);
-void	LDPrintMap(LINKER* linker, FILE* out);
+void	LDPrintMap(LINKER* linker, FILE* out, BOOL oct);
 
 #endif
