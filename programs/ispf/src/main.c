@@ -19,4 +19,6 @@ void start(void)
 		ISPFProcess();
 		OSYield();
 	}
+
+	OSLog(ISPF_FACILITY, 101, LOG_INFO, "ISPF EXITED");
 }
