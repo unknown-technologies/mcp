@@ -1,6 +1,7 @@
 #include <emulight/types.h>
 #include <emulight/string.h>
 #include <emulight/rad50.h>
+#include <emulight/r4.h>
 #include <emulight/r6.h>
 #include <emulight/r7.h>
 #include <emulight/mcp/mon.h>
@@ -8,11 +9,10 @@
 #include <emulight/mcp/mem.h>
 #include <emulight/mcp/program.h>
 #include <emulight/mcp/fs.h>
+#include <emulight/mcp/ds.h>
 #include <emulight/mcp/cal.h>
 
 static OSLibrary libraries[MAX_LIBRARIES];
-
-extern void* __relbase;
 
 /* symbols exported by the NUCLEUS itself to save space */
 typedef struct {
@@ -21,6 +21,25 @@ typedef struct {
 } NUCSymbol;
 
 static NUCSymbol nucleus_symbols[] = {
+	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
+	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
+	{ .name = "_MEMAlloc",		.value = MEMAlloc },
+	{ .name = "_MEMAvailable",	.value = MEMAvailable },
+	{ .name = "_OSCreateLibrary",	.value = OSCreateLibrary },
+	{ .name = "_OSFreeLibrary",	.value = OSFreeLibrary },
+	{ .name = "_OSLog",		.value = OSLog },
+	{ .name = "_OSResolveImports",	.value = OSResolveImports },
+	{ .name = "_R4DecodeString",	.value = R4DecodeString },
+	{ .name = "_R4EncodeString",	.value = R4EncodeString },
+	{ .name = "_R6Decode",		.value = R6Decode },
+	{ .name = "_R6Encode",		.value = R6Encode },
+	{ .name = "_R7Decode",		.value = R7Decode },
+	{ .name = "_R7Encode",		.value = R7Encode },
+	{ .name = "_RAD50Decode",	.value = RAD50Decode },
+	{ .name = "_RAD50Encode",	.value = RAD50Encode },
+	{ .name = "_RAD50DecodeString",	.value = RAD50DecodeString },
+	{ .name = "_RAD50EncodeString",	.value = RAD50EncodeString },
+	{ .name = "_VOLGetVolume",	.value = VOLGetVolume },
 	{ .name = "_bzero",		.value = bzero },
 	{ .name = "_csprintf",		.value = csprintf },
 	{ .name = "_memcpy",		.value = memcpy },
@@ -30,24 +49,12 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_strcmp",		.value = strcmp },
 	{ .name = "_vcsprintf",		.value = vcsprintf },
 	{ .name = "_vsprintf",		.value = vsprintf },
-	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
-	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
-	{ .name = "_MEMAvailable",	.value = MEMAvailable },
-	{ .name = "_R6Encode",		.value = R6Encode },
-	{ .name = "_R6Decode",		.value = R6Decode },
-	{ .name = "_R7Encode",		.value = R7Encode },
-	{ .name = "_R7Decode",		.value = R7Decode },
-	{ .name = "_RAD50Encode",	.value = RAD50Encode },
-	{ .name = "_RAD50Decode",	.value = RAD50Decode },
-	{ .name = "_RAD50EncodeString",	.value = RAD50EncodeString },
-	{ .name = "_RAD50DecodeString",	.value = RAD50DecodeString },
 	{ .name = NULL,			.value = NULL }
 };
 
 static const char* loaderror_program = "FAILED TO LOAD PROGRAM";
-static const char* loaderror_library = "FAILED TO LOAD LIBRARY";
 
-static void* OSCreateLibrary(const char* name)
+void* OSCreateLibrary(const char* name)
 {
 	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
 		OSLibrary* lib = &libraries[i];
@@ -60,46 +67,16 @@ static void* OSCreateLibrary(const char* name)
 	return NULL;
 }
 
-static void OSFreeLibrary(OSLibrary* lib)
+void OSFreeLibrary(OSLibrary* lib)
 {
 	MEMFree(lib->library);
 	lib->library = NULL;
 	lib->symbols = NULL;
 }
 
-static void OSRelocateSymbols(OSLibrary* lib)
-{
-	OSSymbol* sym = lib->symbols;
-	const char* names = (const char*) sym;
-	unsigned int cnt = lib->library->symbols;
-	void* base = lib->library;
-	for(unsigned int i = 0; i < cnt; i++) {
-		sym->name += (uintptr_t) names;
-		sym->value += (uintptr_t) base;
-#ifdef DEBUG
-		OSLog(NUC_LIBRARY_SYMBOL, "SYMBOL: %s = %04X", sym->name, (unsigned int) sym->value);
-#endif
-		sym++;
-	}
-}
-
 void OSInitLibrary(void)
 {
 	bzero(libraries, sizeof(libraries));
-
-#if 0
-	OSLibrary* self = OSCreateLibrary("NUCLEUS");
-
-	self->library = (OSProgram*) __relbase;
-	self->symbols = (OSSymbol*) ((uintptr_t) self->library + self->library->image_size + sizeof(OSProgram));
-
-#ifdef DEBUG
-	OSLog(NUC_SYMBOLS, "NUCLEUS CONTAINS %u SYMBOLS", self->library->symbols);
-#endif
-
-	/* relocate symbols */
-	OSRelocateSymbols(self);
-#endif
 }
 
 void* OSGetSymbolFromLibrary(OSLibrary* lib, const char* name)
@@ -146,7 +123,7 @@ static void READ_ERROR(void)
 }
 #endif
 
-static BOOL OSResolveImports(DS* ds, void* prog, void* base)
+BOOL OSResolveImports(int ds, void* prog, void* base)
 {
 	char name_buffer[MAX_SYMBOL_LEN];
 
@@ -215,126 +192,79 @@ static BOOL OSResolveImports(DS* ds, void* prog, void* base)
 
 BOOL OSLoadLibrary(const char* name, const char* dsn)
 {
-	OSProgram header;
-
-	DS ds;
-	if(!DSOpen(&ds, dsn)) {
-		OSLog(NUC_LIBRARY_NOT_FOUND, "LIBRARY %s NOT FOUND AT DSN %s", name, dsn);
+	void* loader = OSLoadModule("LOADLIB");
+	if(loader) {
+		BOOL (*OSiLoadLibrary)(const char*, const char*) = (BOOL (*)(const char*, const char*)) loader;
+		BOOL result = OSiLoadLibrary(name, dsn);
+		OSUnloadModule(loader);
+		return result;
+	} else {
 		return FALSE;
 	}
-
-	OSLog(NUC_LOAD_LIBRARY, "LOADING LIBRARY %s FROM DSN %s", name, dsn);
-
-	if(DSRead(&ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
-		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
-		return FALSE;
-	}
-
-	unsigned int size = header.relocs;
-
-	OSLibrary* oslib = OSCreateLibrary(name);
-	if(!oslib) {
-		OSLog(NUC_LIBRARY_NOSPC, "%s %s: NO SLOT LEFT", loaderror_library, name);
-		return FALSE;
-	}
-
-	void* lib = MEMAlloc(size);
-	if(!lib) {
-		OSLog(NUC_LIBRARY_NOMEM, "%s %s: NO MEMORY", loaderror_library, name);
-		return FALSE;
-	}
-
-	oslib->library = (OSProgram*) lib;
-	oslib->symbols = (OSSymbol*) (lib + header.image_size + sizeof(OSProgram));
-
-	memcpy(oslib->library, &header, sizeof(OSProgram));
-
-	/* load code and symbols */
-	size_t rdsz = size - sizeof(OSProgram);
-	if(DSRead(&ds, oslib->library + 1, rdsz) != rdsz) {
-		OSFreeLibrary(lib);
-		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
-		return FALSE;
-	}
-
-	/* load relocations one by one and apply them */
-	unsigned int relocs;
-	if(DSRead(&ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
-		OSFreeLibrary(oslib);
-		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
-		return FALSE;
-	}
-
-#ifdef DEBUG
-	OSLog(NUC_LIBRARY_RELOCS, "%u RELOCS", relocs);
-#endif
-	for(unsigned int i = 0; i < relocs; i++) {
-		unsigned int reloc;
-
-		if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
-			OSFreeLibrary(oslib);
-			OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR", loaderror_library, name);
-			return FALSE;
-		}
-
-		unsigned int* p = lib + reloc;
-		*p += (unsigned int) lib;
-	}
-
-	/* relocate symbols */
-	OSRelocateSymbols(oslib);
-
-	/* load import symbols and apply them */
-	if(!OSResolveImports(&ds, lib, lib)) {
-		OSFreeLibrary(oslib);
-		return FALSE;
-	}
-
-#ifdef DEBUG
-	OSLog(NUC_LIBRARY_LOADED, "LIBRARY %s LOADED AT %04X WITH %u SYMBOLS", name,
-			(unsigned int) oslib->library, oslib->library->symbols);
-#endif
-
-	return TRUE;
 }
 
 void* OSLoadProgram(const char* dsn)
 {
-	DS ds;
-	if(!DSOpen(&ds, dsn)) {
+	return OSiLoadProgram(dsn, FALSE);
+}
+
+static char dsnbuf[24];
+
+void* OSLoadModule(const char* name)
+{
+	sprintf(dsnbuf, "SYS1.MOD.%s", name);
+	return OSiLoadProgram(dsnbuf, TRUE);
+}
+
+void OSUnloadModule(void* module)
+{
+	MEMFreeBottom(module);
+}
+
+void* OSiLoadProgram(const char* dsn, BOOL bottom)
+{
+	void (*free)(void*) = bottom ? MEMFreeBottom : MEMFree;
+
+	int ds = DSOpen(dsn);
+	if(ds < 0) {
 		OSLog(NUC_PROGRAM_NOT_FOUND, "PROGRAM NOT FOUND AT DSN %s", dsn);
 		return NULL;
 	}
 
+#ifdef DEBUG
 	OSLog(NUC_LOAD_PROGRAM, "LOADING PROGRAM FROM DSN %s", dsn);
+#endif
 
 	OSProgram header;
-	if(DSRead(&ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
+	if(DSRead(ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
+		DSClose(ds);
 		READ_ERROR();
 		return NULL;
 	}
 
 	unsigned int size = header.image_size;
 
-	void* prog = MEMAlloc(size);
+	void* prog = bottom ? MEMAllocBottom(size) : MEMAlloc(size);
 	if(!prog) {
 		OSLog(NUC_PROGRAM_NOMEM, "%s: NO MEMORY", loaderror_program);
 		return NULL;
 	}
 
 	/* load code */
-	if(DSRead(&ds, prog, size) != size) {
-		MEMFree(prog);
+	if(DSRead(ds, prog, size) != size) {
+		free(prog);
+		DSClose(ds);
 		READ_ERROR();
 		return NULL;
 	}
 
 	/* load relocations one by one and apply them */
-	DSSeek(&ds, header.relocs);
+	DSSeek(ds, header.relocs);
 
 	unsigned int relocs;
-	if(DSRead(&ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
-		MEMFree(prog);
+	if(DSRead(ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
+		free(prog);
+		DSClose(ds);
 		READ_ERROR();
 		return NULL;
 	}
@@ -346,8 +276,9 @@ void* OSLoadProgram(const char* dsn)
 	for(unsigned int i = 0; i < relocs; i++) {
 		unsigned int reloc;
 
-		if(DSRead(&ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
-			MEMFree(prog);
+		if(DSRead(ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
+			free(prog);
+			DSClose(ds);
 			READ_ERROR();
 			return NULL;
 		}
@@ -362,10 +293,13 @@ void* OSLoadProgram(const char* dsn)
 	}
 
 	/* load import symbols and apply them */
-	if(!OSResolveImports(&ds, prog, base)) {
-		MEMFree(prog);
+	if(!OSResolveImports(ds, prog, base)) {
+		free(prog);
+		DSClose(ds);
 		return FALSE;
 	}
+
+	DSClose(ds);
 
 #ifdef DEBUG
 	OSLog(NUC_PROGRAM_LOADED, "PROGRAM LOADED AT %04X",

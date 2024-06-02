@@ -40,7 +40,8 @@ static inline BOOL DSIsFB(DS* ds)
 static inline int DSOpen(const char* dsn)
 {
 	register unsigned int r0 asm("r0") = (unsigned int) dsn;
-	asm volatile ("emt " __SC(SYS_DSOPEN) : "=r"(r0) : "r"(r0) : "memory");
+	asm volatile ("emt " __SC(SYS_DSOPEN) : "=r"(r0) : "r"(r0) : "r1",
+			"memory");
 	return (int) r0;
 }
 
@@ -104,6 +105,31 @@ static inline void VOLGetLabel(unsigned int vol, char* label)
 	register char* r1 asm("r1") = label;
 	asm volatile ("emt " __SC(SYS_VOLGETLABEL) : "=r"(r0)
 			: "r"(r0), "r"(r1) : "memory");
+}
+
+static inline void VOLReadBlock(unsigned int vol, void* dst, unsigned int block)
+{
+	register unsigned int r0 asm("r0") = vol;
+	register void* r1 asm("r1") = dst;
+	register unsigned int r2 asm("r2") = block;
+	asm volatile ("emt " __SC(SYS_VOLREADBLOCK) : "=r"(r0)
+			: "r"(r0), "r"(r1), "r"(r2) : "memory");
+}
+
+static inline void VOLWriteBlock(unsigned int vol, void* src, unsigned int block)
+{
+	register unsigned int r0 asm("r0") = vol;
+	register void* r1 asm("r1") = src;
+	register unsigned int r2 asm("r2") = block;
+	asm volatile ("emt " __SC(SYS_VOLWRITEBLOCK) : "=r"(r0)
+			: "r"(r0), "r"(r1), "r"(r2) : "memory");
+}
+
+static inline BOOL VOLIsActive(unsigned int vol)
+{
+	register unsigned int r0 asm("r0") = vol;
+	asm volatile ("emt " __SC(SYS_VOLISACTIVE) : "=r"(r0) : "r"(r0));
+	return (BOOL) r0;
 }
 
 #endif

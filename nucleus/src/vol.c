@@ -18,7 +18,7 @@ void VOLInit(void)
 {
 	bzero(volumes, sizeof(volumes));
 
-	VOLAddVolume(0, ROMReadBlock, NULL);
+	VOLAddVolume(ROMVOL_ID, ROMReadBlock, NULL);
 }
 
 void VOLAddVolume(unsigned int id, void (*read)(void*, unsigned int),

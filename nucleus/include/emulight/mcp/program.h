@@ -34,5 +34,12 @@ void	OSInitLibrary(void);
 BOOL	OSLoadLibrary(const char* name, const char* dsn);
 void*	OSLoadProgram(const char* dsn);
 void	OSUnloadProgram(void* program);
+void*	OSLoadModule(const char* name);
+void	OSUnloadModule(void* module);
+
+void*	OSCreateLibrary(const char* name);
+void	OSFreeLibrary(OSLibrary* lib);
+BOOL	OSResolveImports(int ds, void* prog, void* base);
+void*	OSiLoadProgram(const char* dsn, BOOL bottom);
 
 #endif

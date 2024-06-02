@@ -10,7 +10,7 @@ _OSSyscallInit:
 	mov	$EMT_table, r0	# EMT handlers
 	mov	___emttbl,r1	# EMT table
 	add	$24,	r1	# first EMT ID
-	mov	$17,	r2	# count
+	mov	$20,	r2	# count
 1:	mov	(r0)+,	(r1)+
 	sob	r2,	1b
 	mov	(sp)+,	r2
@@ -26,14 +26,16 @@ _OSSyscallInit:
 	.globl	_OSTerminate
 	.globl	_OSGetDate
 	.globl	_OSSetDate
-	.globl	___DSOpen
-	.globl	___DSGetInfo
-	.globl	___DSRead
-	.globl	___DSWrite
-	.globl	___DSSeek
-	.globl	___DSClose
+	.globl	_DSOpen
+	.globl	_DSGetInfo
+	.globl	_DSRead
+	.globl	_DSWrite
+	.globl	_DSSeek
+	.globl	_DSClose
 	.globl	_FSList
 	.globl	_VOLGetLabel
+	.globl	_VOLReadBlock
+	.globl	_VOLWriteBlock
 	.globl	_OSGetLog
 
 EMT_OSGetDate:
@@ -92,14 +94,14 @@ EMT_OSTerminate:
 
 EMT_DSOpen:
 	mov	r0,	-(sp)
-	jsr	pc,	___DSOpen
+	jsr	pc,	_DSOpen
 	tst	(sp)+
 	rti
 
 EMT_DSGetInfo:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
-	jsr	pc,	___DSGetInfo
+	jsr	pc,	_DSGetInfo
 	add	$4,	sp
 	rti
 
@@ -107,7 +109,7 @@ EMT_DSRead:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
-	jsr	pc,	___DSRead
+	jsr	pc,	_DSRead
 	add	$6,	sp
 	rti
 
@@ -115,20 +117,20 @@ EMT_DSWrite:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
-	jsr	pc,	___DSWrite
+	jsr	pc,	_DSWrite
 	add	$6,	sp
 	rti
 
 EMT_DSSeek:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
-	jsr	pc,	___DSSeek
+	jsr	pc,	_DSSeek
 	add	$4,	sp
 	rti
 
 EMT_DSClose:
 	mov	r0,	-(sp)
-	jsr	pc,	___DSClose
+	jsr	pc,	_DSClose
 	tst	(sp)+
 	rti
 
@@ -145,6 +147,28 @@ EMT_VOLGetLabel:
 	mov	r0,	-(sp)
 	jsr	pc,	_VOLGetLabel
 	add	$4,	sp
+	rti
+
+EMT_VOLReadBlock:
+	mov	r2,	-(sp)
+	mov	r1,	-(sp)
+	mov	r0,	-(sp)
+	jsr	pc,	_VOLReadBlock
+	add	$6,	sp
+	rti
+
+EMT_VOLWriteBlock:
+	mov	r2,	-(sp)
+	mov	r1,	-(sp)
+	mov	r0,	-(sp)
+	jsr	pc,	_VOLWriteBlock
+	add	$6,	sp
+	rti
+
+EMT_VOLIsActive:
+	mov	r0,	-(sp)
+	jsr	pc,	_VOLIsActive
+	tst	(sp)+
 	rti
 
 EMT_OSGetLog:
@@ -173,4 +197,7 @@ EMT_table:
 	.word	EMT_DSClose			# EMT 25: DSClose
 	.word	EMT_FSList			# EMT 26: FSList
 	.word	EMT_VOLGetLabel			# EMT 27: VOLGetLabel
-	.word	EMT_OSGetLog			# EMT 28: OSGetLog
+	.word	EMT_VOLReadBlock		# EMT 28: VOLReadBlock
+	.word	EMT_VOLWriteBlock		# EMT 29: VOLWriteBlock
+	.word	EMT_VOLIsActive			# EMT 30: VOLIsActive
+	.word	EMT_OSGetLog			# EMT 31: OSGetLog

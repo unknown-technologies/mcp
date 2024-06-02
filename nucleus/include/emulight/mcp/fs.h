@@ -44,6 +44,7 @@ typedef struct {
 	u8	type;
 } DSCB_VTOC;
 
+#ifndef MODULE
 typedef struct {
 	unsigned int	block;		/* start block */
 	unsigned int	size;		/* size in blocks */
@@ -68,9 +69,10 @@ void	FSList(const char* prefix,
 BOOL	DSIsFB(DS* ds);
 size_t	DSGetRecLen(DS* ds);
 size_t	DSGetPhysicalRecLen(DS* ds);
-BOOL	DSOpen(DS* ds, const char* dsn);
-void	DSGetInfo(DS* ds, DSInfo* info);
-size_t	DSRead(DS* ds, void* dst, size_t size);
-void	DSSeek(DS* ds, size_t pos);
+BOOL	DSiOpen(DS* ds, const char* dsn);
+void	DSiGetInfo(DS* ds, DSInfo* info);
+size_t	DSiRead(DS* ds, void* dst, size_t size);
+void	DSiSeek(DS* ds, size_t pos);
+#endif
 
 #endif

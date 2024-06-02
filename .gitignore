@@ -3,5 +3,6 @@
 *.trc
 *.tdb
 */build
+modules/*/build
 programs/*/build
 disk.rx2

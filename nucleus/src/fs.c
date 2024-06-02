@@ -5,43 +5,20 @@
 #include <emulight/mcp/syslog.h>
 #include <emulight/mcp/fs.h>
 #include <emulight/mcp/vol.h>
+#include <emulight/mcp/program.h>
 
 static unsigned int lock = 0;
 
-static char dsnbuf[31];
-
-static BOOL startswith(const char* a, const char* b)
-{
-	while(*a == *b) {
-		if(!*a) {
-			return TRUE;
-		}
-		a++;
-		b++;
-	}
-
-	return !*b;
-}
-
 void FSInit(unsigned int id, VOLUME* vol)
 {
-	/* initialize ROM volume */
-	DSCB_VTOC* vtoc = (DSCB_VTOC*) __sector_buffer;
-	VOLReadBlock(id, __sector_buffer, 1);
-
-	if(vtoc->type != EFS_DSCB_VTOC || memcmp(vtoc->magic, EFS_MAGIC, 8)) {
-		OSLog(NUC_FS_CORRUPT, "VOLUME %u IS CORRUPT", id);
-		return;
+	void* fsinit = OSLoadModule("FSINIT");
+	if(fsinit) {
+		void (*FSiInit)(unsigned int id, VOLUME* vol,
+				void* __sector_buffer)
+			= (void (*)(unsigned int, VOLUME*, void*)) fsinit;
+		FSiInit(id, vol, __sector_buffer);
+		OSUnloadModule(fsinit);
 	}
-
-	char* buf = (char*) &vtoc[1];
-	R4DecodeString(buf, vtoc->label, 3);
-	OSLog(NUC_FS_INFO, "VOLUME %u LABEL: %s", id, buf);
-
-	vol->vtoc_size = vtoc->vtoc_size;
-	vol->vtoc_block = vtoc->vtoc_block;
-
-	memcpy(vol->label, vtoc->label, 6);
 }
 
 void FSList(const char* prefix,
@@ -52,34 +29,17 @@ void FSList(const char* prefix,
 		return;
 	}
 
-	DSCB_DS* vtoc = (DSCB_DS*) __sector_buffer;
-	char* name = dsnbuf;
-
-	MONLock(&lock);
-	for(unsigned int volid = 0; volid < MAX_VOLUMES; volid++) {
-		if(!VOLIsActive(volid)) {
-			continue;
-		}
-
-		VOLUME* vol = VOLGetVolume(volid);
-
-		for(unsigned int i = 0; i < vol->vtoc_size; i++) {
-			VOLReadBlock(volid, __sector_buffer, vol->vtoc_block + i);
-			for(unsigned int j = 0; j < 512 / sizeof(DSCB_DS); j++) {
-				DSCB_DS* ds = &vtoc[j];
-				if(ds->type == EFS_DSCB_UNUSED
-						|| ds->type == EFS_DSCB_FREE) {
-					continue;
-				}
-				R4DecodeString(name, ds->name, 10);
-				if(prefix && !startswith(name, prefix)) {
-					continue;
-				}
-				callback(name, userdata);
-			}
-		}
+	void* fslist = OSLoadModule("FSLIST");
+	if(fslist) {
+		void (*FSiList)(const char* prefix,
+				void (*callback)(const char* dsn,
+					void* userdata), void* userdata,
+				void* __sector_buffer, void* lock)
+			= (void (*)(const char*, void (*)(const char*, void*),
+						void*, void*, void*)) fslist;
+		FSiList(prefix, callback, userdata, __sector_buffer, &lock);
+		OSUnloadModule(fslist);
 	}
-	MONUnlock(&lock);
 }
 
 BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* vtocix,
@@ -89,51 +49,34 @@ BOOL FSLocate(const char* dsn, DSCB_DS* ds, unsigned int* vtocix,
 		return FALSE;
 	}
 
-	DSCB_DS* vtoc = (DSCB_DS*) __sector_buffer;
-	u16* name = (u16*) dsnbuf;
-	R4EncodeString(name, dsn, 10);
-
-	BOOL found = FALSE;
-
-	MONLock(&lock);
-	for(unsigned int volid = 0; volid < MAX_VOLUMES; volid++) {
-		if(!VOLIsActive(volid)) {
-			continue;
+	if(!memcmp(dsn, "SYS1.MOD.", 9)) {
+		if(volume) {
+			*volume = ROMVOL_ID;
 		}
-
-		VOLUME* vol = VOLGetVolume(volid);
-
-		for(unsigned int i = 0; i < vol->vtoc_size; i++) {
-			VOLReadBlock(volid, __sector_buffer, vol->vtoc_block + i);
-			for(unsigned int j = 0; j < 512 / sizeof(DSCB_DS); j++) {
-				DSCB_DS* dscb = &vtoc[j];
-				if(dscb->type == EFS_DSCB_UNUSED
-						|| dscb->type == EFS_DSCB_FREE) {
-					continue;
-				}
-
-				if(memcmp(name, dscb->name, 20)) {
-					continue;
-				}
-
-				found = TRUE;
-				if(vtocix) {
-					*vtocix = i * (512 / sizeof(DSCB_DS))
-						+ j;
-				}
-				if(volume) {
-					*volume = volid;
-				}
-				memcpy(ds, dscb, sizeof(DSCB_DS));
-
-				goto end;
-			}
-		}
+		bzero(ds, sizeof(DSCB_DS));
+		unsigned int block = 0;
+		unsigned int size = 0;
+		BOOL result = MONLocate(dsn, vtocix, &block, &size);
+		ds->start_block = block;
+		ds->size = size;
+		return result;
 	}
-end:
-	MONUnlock(&lock);
 
-	return found;
+	void* fslocate = OSLoadModule("FSLOCATE");
+	if(fslocate) {
+		BOOL (*FSiLocate)(const char* dsn, DSCB_DS* ds,
+				unsigned int* vtocix, unsigned int* volume,
+				void* __sector_buffer, void* lock)
+			= (BOOL (*)(const char*, DSCB_DS*, unsigned int*,
+						unsigned int*, void*, void*))
+				fslocate;
+		BOOL result = FSiLocate(dsn, ds, vtocix, volume,
+				__sector_buffer, &lock);
+		OSUnloadModule(fslocate);
+		return result;
+	} else {
+		return FALSE;
+	}
 }
 
 BOOL DSIsFB(DS* ds)
@@ -166,7 +109,7 @@ size_t DSGetPhysicalRecLen(DS* ds)
 	}
 }
 
-BOOL DSOpen(DS* ds, const char* dsn)
+BOOL DSiOpen(DS* ds, const char* dsn)
 {
 #ifdef DEBUG
 	OSLog(NUC_FILE_OPEN, "OPENING DATASET WITH DSN %s", dsn);
@@ -186,12 +129,12 @@ BOOL DSOpen(DS* ds, const char* dsn)
 	return result;
 }
 
-void DSGetInfo(DS* ds, DSInfo* info)
+void DSiGetInfo(DS* ds, DSInfo* info)
 {
 	*info = ds->info;
 }
 
-size_t DSRead(DS* ds, void* dst, size_t size)
+size_t DSiRead(DS* ds, void* dst, size_t size)
 {
 	MONLock(&lock);
 	size_t read = 0;
@@ -249,7 +192,7 @@ size_t DSRead(DS* ds, void* dst, size_t size)
 	return read;
 }
 
-void DSSeek(DS* ds, size_t pos)
+void DSiSeek(DS* ds, size_t pos)
 {
 	MONLock(&lock);
 	size_t blocks = pos / 512;

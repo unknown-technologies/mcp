@@ -1,6 +1,7 @@
 #ifndef __VOL_H__
 #define __VOL_H__
 
+#define	ROMVOL_ID	1
 #define	MAX_VOLUMES	2
 
 typedef struct {

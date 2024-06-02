@@ -30,6 +30,10 @@ modules:
 	@$(MAKE) -C lsi-ldadump all --no-print-directory
 	@$(MAKE) -C mon all --no-print-directory
 	@$(MAKE) -C nucleus all --no-print-directory
+	@$(MAKE) -C modules/loadlib all --no-print-directory
+	@$(MAKE) -C modules/fsinit all --no-print-directory
+	@$(MAKE) -C modules/fslocate all --no-print-directory
+	@$(MAKE) -C modules/fslist all --no-print-directory
 	@$(MAKE) -C syslib all --no-print-directory
 	@$(MAKE) -C programs/startup all --no-print-directory
 	@$(MAKE) -C programs/logon all --no-print-directory
@@ -46,6 +50,10 @@ clean:
 	@$(MAKE) -C lsi-ldadump clean --no-print-directory
 	@$(MAKE) -C mon clean --no-print-directory
 	@$(MAKE) -C nucleus clean --no-print-directory
+	@$(MAKE) -C modules/loadlib clean --no-print-directory
+	@$(MAKE) -C modules/fsinit clean --no-print-directory
+	@$(MAKE) -C modules/fslocate clean --no-print-directory
+	@$(MAKE) -C modules/fslist clean --no-print-directory
 	@$(MAKE) -C syslib clean --no-print-directory
 	@$(MAKE) -C programs/startup clean --no-print-directory
 	@$(MAKE) -C programs/logon clean --no-print-directory
