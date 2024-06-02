@@ -40,8 +40,7 @@ static inline BOOL DSIsFB(DS* ds)
 static inline int DSOpen(const char* dsn)
 {
 	register unsigned int r0 asm("r0") = (unsigned int) dsn;
-	asm volatile ("emt " __SC(SYS_DSOPEN) : "=r"(r0) : "r"(r0) : "r1",
-			"memory");
+	asm volatile ("emt " __SC(SYS_DSOPEN) : "=r"(r0) : "r"(r0) : "memory");
 	return (int) r0;
 }
 

@@ -93,9 +93,11 @@ EMT_OSTerminate:
 	rti
 
 EMT_DSOpen:
+	mov	r1,	-(sp)			# save R1 due to GCC clobbering
 	mov	r0,	-(sp)
 	jsr	pc,	_DSOpen
 	tst	(sp)+
+	mov	(sp)+,	r1			# it in OSGetCurrentTask
 	rti
 
 EMT_DSGetInfo:
@@ -129,9 +131,11 @@ EMT_DSSeek:
 	rti
 
 EMT_DSClose:
+	mov	r1,	-(sp)			# save R1 due to GCC clobbering
 	mov	r0,	-(sp)
 	jsr	pc,	_DSClose
 	tst	(sp)+
+	mov	(sp)+,	r1			# it in OSGetCurrentTask
 	rti
 
 EMT_FSList:
