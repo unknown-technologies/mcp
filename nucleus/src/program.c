@@ -59,6 +59,7 @@ void* OSCreateLibrary(const char* name)
 	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
 		OSLibrary* lib = &libraries[i];
 		if(lib->library == NULL) {
+			bzero(lib, sizeof(OSLibrary));
 			RAD50EncodeString(lib->name, name, 3);
 			return lib;
 		}
