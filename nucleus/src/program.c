@@ -21,8 +21,8 @@ typedef struct {
 } NUCSymbol;
 
 static NUCSymbol nucleus_symbols[] = {
-	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
 	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
+	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
 	{ .name = "_MEMAlloc",		.value = MEMAlloc },
 	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_OSCreateLibrary",	.value = OSCreateLibrary },
@@ -36,17 +36,17 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_R7Decode",		.value = R7Decode },
 	{ .name = "_R7Encode",		.value = R7Encode },
 	{ .name = "_RAD50Decode",	.value = RAD50Decode },
-	{ .name = "_RAD50Encode",	.value = RAD50Encode },
 	{ .name = "_RAD50DecodeString",	.value = RAD50DecodeString },
+	{ .name = "_RAD50Encode",	.value = RAD50Encode },
 	{ .name = "_RAD50EncodeString",	.value = RAD50EncodeString },
 	{ .name = "_VOLGetVolume",	.value = VOLGetVolume },
 	{ .name = "_bzero",		.value = bzero },
 	{ .name = "_csprintf",		.value = csprintf },
-	{ .name = "_memcpy",		.value = memcpy },
 	{ .name = "_memcmp",		.value = memcmp },
+	{ .name = "_memcpy",		.value = memcpy },
 	{ .name = "_sprintf",		.value = sprintf },
-	{ .name = "_strlen",		.value = strlen },
 	{ .name = "_strcmp",		.value = strcmp },
+	{ .name = "_strlen",		.value = strlen },
 	{ .name = "_vcsprintf",		.value = vcsprintf },
 	{ .name = "_vsprintf",		.value = vsprintf },
 	{ .name = NULL,			.value = NULL }
