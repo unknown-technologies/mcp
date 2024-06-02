@@ -84,10 +84,10 @@ void ISPFMenuHandler(SPF* spf, int action)
 			break;
 		}
 		case UI_ACTION_CLOCK:
-			ISPFLoadProgram(spf, "SYS1.PROG.CLOCK");
+			ISPFLoadProgram(spf, "SYS1.ISPF.CLOCK");
 			break;
 		case UI_ACTION_CLOCKCFG:
-			ISPFLoadProgram(spf, "SYS1.PROG.CLOCKCFG");
+			ISPFLoadProgram(spf, "SYS1.ISPF.CLOCKCFG");
 			break;
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel > 0) {

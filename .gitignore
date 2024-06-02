@@ -4,5 +4,6 @@
 *.tdb
 */build
 modules/*/build
+lib/*/build
 programs/*/build
 disk.rx2

@@ -29,8 +29,6 @@ void init(void)
 	OSInitLibrary();
 	OSInitCalendar();
 
-	OSLoadLibrary("SYSLIB", "SYS1.SYSLIB");
-
 	OSLog(NUC_MEM, "%u BYTES AVAILABLE", MEMAvailable());
 }
 

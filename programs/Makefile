@@ -13,7 +13,7 @@ INCLUDES	:=	include ../../common/include
 SOURCES		:=	src
 BUILD		:=	build
 
-ARCHFLAGS	:=	-m40 -msoft-float -mno-split -Wa,-mkd11f -Wa,-meis -fPIC
+ARCHFLAGS	:=	-m40 -msoft-float -mno-split -Wa,-mkd11f -Wa,-meis
 OPTFLAGS	:=	-Os
 
 CFLAGS		:=	$(OPTFLAGS) -Wall -std=c99 \
@@ -77,14 +77,6 @@ all: $(TARGET)
 %.o: %.s
 	@echo "[AS]    $(notdir $@)"
 	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@
-
-$(TARGET).aout: $(OFILES)
-	@echo "[LD]    $(notdir $@)"
-	@$(LD) $(LDFLAGS) $(OFILES) -o $@ -Wl,-Map=$(@:.aout=.map) -lgcc
-
-#$(TARGET): $(TARGET).aout
-#	@echo "[LDA]   $(notdir $@)"
-#	@aout2lda --aout $< --lda $@ --data-align 2 --text 0x800
 
 $(TARGET): $(OFILES)
 	@echo "[LD]    $(notdir $@)"

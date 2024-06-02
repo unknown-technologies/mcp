@@ -27,6 +27,8 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_OSCreateLibrary",	.value = OSCreateLibrary },
 	{ .name = "_OSFreeLibrary",	.value = OSFreeLibrary },
+	{ .name = "_OSGetLibrary",	.value = OSGetLibrary },
+	{ .name = "_OSLoadLibrary",	.value = OSLoadLibrary },
 	{ .name = "_OSLog",		.value = OSLog },
 	{ .name = "_OSResolveImports",	.value = OSResolveImports },
 	{ .name = "_R4DecodeString",	.value = R4DecodeString },
@@ -54,7 +56,7 @@ static NUCSymbol nucleus_symbols[] = {
 
 static const char* loaderror_program = "FAILED TO LOAD PROGRAM";
 
-void* OSCreateLibrary(const char* name)
+OSLibrary* OSCreateLibrary(const char* name)
 {
 	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
 		OSLibrary* lib = &libraries[i];
@@ -70,9 +72,27 @@ void* OSCreateLibrary(const char* name)
 
 void OSFreeLibrary(OSLibrary* lib)
 {
+	char name[10];
+	RAD50DecodeString(name, lib->name, 3);
+	name[9] = 0;
+	OSLog(NUC_UNLOAD_LIBRARY, "UNLOADING LIBRARY %s", name);
+
 	MEMFree(lib->library);
 	lib->library = NULL;
 	lib->symbols = NULL;
+}
+
+OSLibrary* OSGetLibrary(const char* name)
+{
+	u16 name50[3];
+	RAD50EncodeString(name50, name, 3);
+	for(unsigned int i = 0; i < MAX_LIBRARIES; i++) {
+		OSLibrary* lib = &libraries[i];
+		if(lib->library != NULL && !memcmp(lib->name, name50, 6)) {
+			return lib;
+		}
+	}
+	return NULL;
 }
 
 void OSInitLibrary(void)
@@ -206,7 +226,21 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 
 void* OSLoadProgram(const char* dsn)
 {
-	return OSiLoadProgram(dsn, FALSE);
+	void* loader = OSLoadModule("AUTOLIB");
+	OSLibrary* lib = NULL;
+	if(loader) {
+		BOOL (*OSAutoLoadLibrary)(const char*, OSLibrary**)
+			= (BOOL (*)(const char*, OSLibrary**)) loader;
+		BOOL result = OSAutoLoadLibrary(dsn, &lib);
+		OSUnloadModule(loader);
+		if(!result) {
+			return NULL;
+		}
+	} else {
+		return NULL;
+	}
+
+	return OSiLoadProgram(dsn, lib, FALSE);
 }
 
 static char dsnbuf[24];
@@ -214,7 +248,7 @@ static char dsnbuf[24];
 void* OSLoadModule(const char* name)
 {
 	sprintf(dsnbuf, "SYS1.MOD.%s", name);
-	return OSiLoadProgram(dsnbuf, TRUE);
+	return OSiLoadProgram(dsnbuf, NULL, TRUE);
 }
 
 void OSUnloadModule(void* module)
@@ -222,7 +256,7 @@ void OSUnloadModule(void* module)
 	MEMFreeBottom(module);
 }
 
-void* OSiLoadProgram(const char* dsn, BOOL bottom)
+void* OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom)
 {
 	void (*free)(void*) = bottom ? MEMFreeBottom : MEMFree;
 
@@ -244,16 +278,31 @@ void* OSiLoadProgram(const char* dsn, BOOL bottom)
 	}
 
 	unsigned int size = header.image_size;
+	unsigned int sz = size;
+	if(!bottom) {
+		sz += sizeof(OSLibrary*);
+	}
 
-	void* prog = bottom ? MEMAllocBottom(size) : MEMAlloc(size);
-	if(!prog) {
+	void* mem = bottom ? MEMAllocBottom(sz) : MEMAlloc(sz);
+	if(!mem) {
 		OSLog(NUC_PROGRAM_NOMEM, "%s: NO MEMORY", loaderror_program);
 		return NULL;
 	}
 
+	void* prog = mem;
+
+	if(!bottom) {
+		OSLibrary** ptr = (OSLibrary**) prog;
+		*ptr = lib;
+		if(lib) {
+			lib->refcnt++;
+		}
+		prog = (void*) &ptr[1];
+	}
+
 	/* load code */
 	if(DSRead(ds, prog, size) != size) {
-		free(prog);
+		free(mem);
 		DSClose(ds);
 		READ_ERROR();
 		return NULL;
@@ -264,7 +313,7 @@ void* OSiLoadProgram(const char* dsn, BOOL bottom)
 
 	unsigned int relocs;
 	if(DSRead(ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
-		free(prog);
+		free(mem);
 		DSClose(ds);
 		READ_ERROR();
 		return NULL;
@@ -278,7 +327,7 @@ void* OSiLoadProgram(const char* dsn, BOOL bottom)
 		unsigned int reloc;
 
 		if(DSRead(ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
-			free(prog);
+			free(mem);
 			DSClose(ds);
 			READ_ERROR();
 			return NULL;
@@ -295,7 +344,7 @@ void* OSiLoadProgram(const char* dsn, BOOL bottom)
 
 	/* load import symbols and apply them */
 	if(!OSResolveImports(ds, prog, base)) {
-		free(prog);
+		free(mem);
 		DSClose(ds);
 		return FALSE;
 	}
@@ -312,5 +361,20 @@ void* OSiLoadProgram(const char* dsn, BOOL bottom)
 
 void OSUnloadProgram(void* program)
 {
-	MEMFree(program);
+	OSLibrary** prog = (OSLibrary**) program;
+	OSLibrary** ptr = &prog[-1];
+	OSLibrary* oslib = NULL;
+
+	if(*ptr) {
+		oslib = *ptr;
+	}
+
+	MEMFree(ptr);
+
+	if(oslib) {
+		oslib->refcnt--;
+		if(!oslib->refcnt) {
+			OSFreeLibrary(oslib);
+		}
+	}
 }

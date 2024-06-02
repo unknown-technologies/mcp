@@ -6,15 +6,6 @@ MKDISK		:=	mkdisk/build/mkdisk
 
 MON		:=	mon/build/mon.lda
 BOOT		:=	mon/build/boot.lda
-NOBOOT		:=	mon/build/noboot.bin
-NUCLEUS		:=	nucleus/build/nucleus
-SYSLIB		:=	syslib/build/syslib
-STARTUP		:=	programs/startup/build/startup
-LOGON		:=	programs/logon/build/logon
-TSO		:=	programs/tso/build/tso
-ISPF		:=	programs/ispf/build/ispf
-CLOCK		:=	programs/clock/build/clock
-CLOCKCFG	:=	programs/clockcfg/build/clockcfg
 
 .PHONY:	all clean modules
 
@@ -31,10 +22,12 @@ modules:
 	@$(MAKE) -C mon all --no-print-directory
 	@$(MAKE) -C nucleus all --no-print-directory
 	@$(MAKE) -C modules/loadlib all --no-print-directory
+	@$(MAKE) -C modules/autolib all --no-print-directory
 	@$(MAKE) -C modules/fsinit all --no-print-directory
 	@$(MAKE) -C modules/fslocate all --no-print-directory
 	@$(MAKE) -C modules/fslist all --no-print-directory
-	@$(MAKE) -C syslib all --no-print-directory
+	@$(MAKE) -C lib/syslib all --no-print-directory
+	@$(MAKE) -C lib/ispf all --no-print-directory
 	@$(MAKE) -C programs/startup all --no-print-directory
 	@$(MAKE) -C programs/logon all --no-print-directory
 	@$(MAKE) -C programs/tso all --no-print-directory
@@ -51,10 +44,12 @@ clean:
 	@$(MAKE) -C mon clean --no-print-directory
 	@$(MAKE) -C nucleus clean --no-print-directory
 	@$(MAKE) -C modules/loadlib clean --no-print-directory
+	@$(MAKE) -C modules/autolib clean --no-print-directory
 	@$(MAKE) -C modules/fsinit clean --no-print-directory
 	@$(MAKE) -C modules/fslocate clean --no-print-directory
 	@$(MAKE) -C modules/fslist clean --no-print-directory
-	@$(MAKE) -C syslib clean --no-print-directory
+	@$(MAKE) -C lib/syslib clean --no-print-directory
+	@$(MAKE) -C lib/ispf clean --no-print-directory
 	@$(MAKE) -C programs/startup clean --no-print-directory
 	@$(MAKE) -C programs/logon clean --no-print-directory
 	@$(MAKE) -C programs/tso clean --no-print-directory

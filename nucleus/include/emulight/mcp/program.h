@@ -26,20 +26,23 @@ typedef struct {
 
 typedef struct {
 	u16		name[3];
+	u16		refcnt;
 	OSProgram*	library;
 	OSSymbol*	symbols;
 } OSLibrary;
 
 void	OSInitLibrary(void);
 BOOL	OSLoadLibrary(const char* name, const char* dsn);
+void	OSFreeLibrary(OSLibrary* lib);
 void*	OSLoadProgram(const char* dsn);
 void	OSUnloadProgram(void* program);
 void*	OSLoadModule(const char* name);
 void	OSUnloadModule(void* module);
 
-void*	OSCreateLibrary(const char* name);
+OSLibrary* OSGetLibrary(const char* name);
+OSLibrary* OSCreateLibrary(const char* name);
 void	OSFreeLibrary(OSLibrary* lib);
 BOOL	OSResolveImports(int ds, void* prog, void* base);
-void*	OSiLoadProgram(const char* dsn, BOOL bottom);
+void*	OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom);
 
 #endif

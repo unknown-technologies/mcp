@@ -172,7 +172,7 @@ BOOL handle_enter(void)
 
 	/* parse command */
 	if(!strcmp(command, "ISPF")) {
-		logon_ds = "SYS1.ISPF";
+		logon_ds = "SYS1.ISPF.CORE";
 		return TRUE;
 	}
 

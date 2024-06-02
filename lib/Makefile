@@ -9,9 +9,8 @@ export	SIZE	:=	$(PREFIX)size
 #-------------------------------------------------------------------------------
 .SUFFIXES:
 #-------------------------------------------------------------------------------
-TARGET		:=	syslib
-INCLUDES	:=	include ../common/include
-SOURCES		:=	src src/libgcc ../common/src
+INCLUDES	:=	include ../../common/include
+SOURCES		:=	src src/libgcc ../../common/src
 BUILD		:=	build
 
 ARCHFLAGS	:=	-m40 -msoft-float -mno-split -Wa,-mkd11f -Wa,-meis
@@ -36,7 +35,8 @@ SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
 
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #-------------------------------------------------------------------------------
-export	LD	:=	$(CURDIR)/../lsi-ld/build/lsi-ld
+export	LD	:=	$(CURDIR)/../../lsi-ld/build/lsi-ld
+export	TARGET	:=	$(notdir $(CURDIR))
 export	DEPSDIR	:=	$(CURDIR)/$(BUILD)
 export	OFILES	:=	$(SFILES:.s=.o) $(CFILES:.c=.o)
 export	VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) $(CURDIR)
@@ -77,14 +77,6 @@ all: $(TARGET)
 %.o: %.s
 	@echo "[AS]    $(notdir $@)"
 	@$(CC) -MMD -MP -MF $(DEPSDIR)/$*.d $(CFLAGS) -c $< -o $@
-
-$(TARGET).aout: $(OFILES)
-	@echo "[LD]    $(notdir $@)"
-	@$(LD) $(LDFLAGS) $(OFILES) -o $@ -Wl,-Map=$(@:.aout=.map) -lgcc
-
-#$(TARGET): $(TARGET).aout
-#	@echo "[LDA]   $(notdir $@)"
-#	@aout2lda --aout $< --lda $@ --data-align 2 --text 0x800
 
 $(TARGET): $(OFILES)
 	@echo "[LD]    $(notdir $@)"

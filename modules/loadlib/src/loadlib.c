@@ -37,9 +37,7 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 		return FALSE;
 	}
 
-#ifdef DEBUG
 	OSLog(NUC_LOAD_LIBRARY, "LOADING LIBRARY %s FROM DSN %s", name, dsn);
-#endif
 
 	if(DSRead(ds, &header, sizeof(OSProgram)) != sizeof(OSProgram)) {
 		OSLog(NUC_LIBRARY_READERR, "%s %s: READ ERROR",
