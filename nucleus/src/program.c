@@ -28,12 +28,12 @@ extern void __udivhi3(void);
 extern void __umodhi3(void);
 
 static NUCSymbol nucleus_symbols[] = {
-	{ .name = "___udivmodsi4",	.value = __udivmodsi4 },
 	{ .name = "___udivmodhi4",	.value = __udivmodhi4 },
-	{ .name = "___udivsi3",		.value = __udivsi3 },
-	{ .name = "___umodsi3",		.value = __umodsi3 },
+	{ .name = "___udivmodsi4",	.value = __udivmodsi4 },
 	{ .name = "___udivhi3",		.value = __udivhi3 },
+	{ .name = "___udivsi3",		.value = __udivsi3 },
 	{ .name = "___umodhi3",		.value = __umodhi3 },
+	{ .name = "___umodsi3",		.value = __umodsi3 },
 	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
 	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
 	{ .name = "_MEMAlloc",		.value = MEMAlloc },
@@ -228,12 +228,23 @@ BOOL OSLoadLibrary(const char* name, const char* dsn)
 {
 	void* loader = OSLoadModule("LOADLIB");
 	if(loader) {
-		BOOL (*OSiLoadLibrary)(const char*, const char*) = (BOOL (*)(const char*, const char*)) loader;
+		BOOL (*OSiLoadLibrary)(const char*, const char*)
+			= (BOOL (*)(const char*, const char*)) loader;
 		BOOL result = OSiLoadLibrary(name, dsn);
 		OSUnloadModule(loader);
 		return result;
 	} else {
 		return FALSE;
+	}
+}
+
+void OSRemoveLibraryReference(OSLibrary* oslib)
+{
+	if(oslib) {
+		oslib->refcnt--;
+		if(!oslib->refcnt) {
+			OSFreeLibrary(oslib);
+		}
 	}
 }
 
@@ -316,6 +327,7 @@ void* OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom)
 	/* load code */
 	if(DSRead(ds, prog, size) != size) {
 		free(mem);
+		OSRemoveLibraryReference(lib);
 		DSClose(ds);
 		READ_ERROR();
 		return NULL;
@@ -327,6 +339,7 @@ void* OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom)
 	unsigned int relocs;
 	if(DSRead(ds, &relocs, sizeof(unsigned int)) != sizeof(unsigned int)) {
 		free(mem);
+		OSRemoveLibraryReference(lib);
 		DSClose(ds);
 		READ_ERROR();
 		return NULL;
@@ -341,6 +354,7 @@ void* OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom)
 
 		if(DSRead(ds, &reloc, sizeof(unsigned int)) != sizeof(unsigned int)) {
 			free(mem);
+			OSRemoveLibraryReference(lib);
 			DSClose(ds);
 			READ_ERROR();
 			return NULL;
@@ -358,6 +372,7 @@ void* OSiLoadProgram(const char* dsn, OSLibrary* lib, BOOL bottom)
 	/* load import symbols and apply them */
 	if(!OSResolveImports(ds, prog, base)) {
 		free(mem);
+		OSRemoveLibraryReference(lib);
 		DSClose(ds);
 		return FALSE;
 	}
@@ -384,10 +399,5 @@ void OSUnloadProgram(void* program)
 
 	MEMFree(ptr);
 
-	if(oslib) {
-		oslib->refcnt--;
-		if(!oslib->refcnt) {
-			OSFreeLibrary(oslib);
-		}
-	}
+	OSRemoveLibraryReference(oslib);
 }
