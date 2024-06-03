@@ -20,7 +20,20 @@ typedef struct {
 	void*		value;
 } NUCSymbol;
 
+extern void __udivmodsi4(void);
+extern void __udivmodhi4(void);
+extern void __udivsi3(void);
+extern void __umodsi3(void);
+extern void __udivhi3(void);
+extern void __umodhi3(void);
+
 static NUCSymbol nucleus_symbols[] = {
+	{ .name = "___udivmodsi4",	.value = __udivmodsi4 },
+	{ .name = "___udivmodhi4",	.value = __udivmodhi4 },
+	{ .name = "___udivsi3",		.value = __udivsi3 },
+	{ .name = "___umodsi3",		.value = __umodsi3 },
+	{ .name = "___udivhi3",		.value = __udivhi3 },
+	{ .name = "___umodhi3",		.value = __umodhi3 },
 	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
 	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
 	{ .name = "_MEMAlloc",		.value = MEMAlloc },
