@@ -784,6 +784,11 @@ void* LDLinkBinary(LINKER* linker, size_t* size)
 		return NULL;
 	}
 
+	if(last_module == NULL) {
+		printf("No modules to link\n");
+		return NULL;
+	}
+
 	printf("text: %06lo, data: %06lo, bss: %06lo, total: %06lo; relocs: %d\n",
 			text_size, data_size, bss_size, total, relocs);
 
