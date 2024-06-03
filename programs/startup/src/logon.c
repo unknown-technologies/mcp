@@ -10,7 +10,7 @@ BOOL run_logon(void)
 {
 	void* program = OSLoadProgram("SYS1.LOGON");
 	if(!program) {
-		OSLog(MSG_NOT_FOUND, "LOGON PROGRAM NOT FOUND");
+		OSLog(MSG_NOT_FOUND, "FAILED TO LOAD LOGON PROGRAM");
 		return FALSE;
 	}
 
@@ -39,14 +39,7 @@ BOOL logon(void)
 			void (*main)(void) = (void (*)(void)) program;
 			main();
 			OSUnloadProgram(program);
-#if 0
-			return TRUE;
-		} else {
-			return FALSE;
-		}
-#else
 		}
 		return TRUE;
-#endif
 	}
 }
