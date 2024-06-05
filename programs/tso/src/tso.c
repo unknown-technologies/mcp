@@ -1,8 +1,7 @@
 #include <emulight/string.h>
-#include <emulight/vt.h>
+#include <emulight/tso.h>
 
 #include "tso.h"
-#include "screen.h"
 
 #define	STATE_SPACE		0
 #define	STATE_ARG		1
@@ -10,12 +9,11 @@
 #define	STATE_KWARG		3
 #define	STATE_RPAR		4
 
-VT vt;
-
-static BOOL exit_tso = FALSE;
 static char cmdbuf[CMD_MAXLEN];
 
 static TSOArgument cmd_args[CMD_MAXARGS];
+
+static TSO tso;
 
 char toupper(char c)
 {
@@ -26,9 +24,10 @@ char toupper(char c)
 	}
 }
 
-void tso_prompt(void)
+void tso_prompt(TSO* tso)
 {
-	screen_print("READY\n");
+	(void) tso;
+	TPrint("READY");
 }
 
 int tso_logoff(unsigned int argc, TSOArgument* argv)
@@ -36,11 +35,11 @@ int tso_logoff(unsigned int argc, TSOArgument* argv)
 	(void) argc;
 
 	if(argc != 1) {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
-	exit_tso = TRUE;
+	TSOExit(&tso);
 
 	return 0;
 }
@@ -48,18 +47,19 @@ int tso_logoff(unsigned int argc, TSOArgument* argv)
 void tso_execute(void)
 {
 	size_t len = 0;
-	char* cmd = screen_get_command(&len);
+	char* cmd = TGetCommand(&len);
 
 	if(cmd) {
 		if(len >= CMD_MAXLEN) {
-			screen_nl();
-			screen_print("COMMAND TOO LONG\n");
-			tso_prompt();
+			TPrint("\nCOMMAND TOO LONG\n");
 			return;
 		}
 
 		memcpy(cmdbuf, cmd, len);
 		cmd = cmdbuf;
+
+		TSetOutput();
+		TPutc('\n');
 
 		/* parse arguments */
 		unsigned int slot = 0;
@@ -76,15 +76,11 @@ void tso_execute(void)
 			switch(state) {
 				case STATE_SPACE:
 					if(c == '(') {
-						screen_nl();
-						screen_print("SYNTAX ERROR\n");
-						tso_prompt();
+						TPrint("SYNTAX ERROR\n");
 						return;
 					} else if(c > 0x20 && c < 0x7F) {
 						if(slot >= CMD_MAXARGS) {
-							screen_nl();
-							screen_print("TOO MANY ARGUMENTS\n");
-							tso_prompt();
+							TPrint("TOO MANY ARGUMENTS\n");
 							return;
 						}
 						arg = &cmd_args[slot++];
@@ -140,9 +136,7 @@ void tso_execute(void)
 					if(c == ' ' || c == 0) {
 						state = STATE_SPACE;
 					} else {
-						screen_nl();
-						screen_print("SYNTAX ERROR\n");
-						tso_prompt();
+						TPrint("SYNTAX ERROR\n");
 						return;
 					}
 					break;
@@ -151,13 +145,9 @@ void tso_execute(void)
 
 		if(state != STATE_SPACE || cmd_args[0].index != 0
 				|| cmd_args[0].name != NULL) {
-			screen_nl();
-			screen_print("SYNTAX ERROR\n");
-			tso_prompt();
+			TPrint("SYNTAX ERROR\n");
 			return;
 		}
-
-		screen_nl();
 
 		if(slot > 0) {
 			for(char* c = (char*) cmd_args[0].value; *c; c++) {
@@ -166,76 +156,30 @@ void tso_execute(void)
 		}
 
 		tso_execute_command(slot, cmd_args);
-	} else {
-		screen_nl();
 	}
-
-	tso_prompt();
 }
 
-void tso_enter(void)
+void tso_enter(TSO* tso)
 {
-	if(screen_line_cont()) {
-		screen_nl();
+	if(TLineCont()) {
+		TPutc('\n');
 	} else {
 		tso_execute();
+		TPrompt(tso);
+		TSetInput();
 	}
 }
 
-void tso(void)
+void tso_main(void)
 {
-	VTInit(&vt);
+	TSOInit(&tso);
 
-	VTClearScreen();
-	VTHome();
-	VTShowCursor();
+	TSOSetPrompt(&tso, tso_prompt);
+	TSOSetEnter(&tso, tso_enter);
 
-	tso_prompt();
+	TSOStart(&tso);
 
-	while(!exit_tso) {
-		u16 key = VTReceive(&vt, NULL, NULL);
-		switch(key) {
-			case VT_KEY_NONE:
-				break;
-			case VTGetCTRL('L'):
-				screen_repaint();
-				break;
-			case VT_KEY_F10:
-				screen_clear();
-				tso_prompt();
-				break;
-			case VT_KEY_UP:
-				screen_cursor_up();
-				break;
-			case VT_KEY_DOWN:
-				screen_cursor_down();
-				break;
-			case VT_KEY_LEFT:
-				screen_cursor_left();
-				break;
-			case VT_KEY_RIGHT:
-				screen_cursor_right();
-				break;
-			case VTGetCTRL('A'):
-			case VT_KEY_FIND:
-				screen_cursor_pos1();
-				break;
-			case VTGetCTRL('E'):
-			case VT_KEY_SELECT:
-				screen_cursor_end();
-				break;
-			case VT_KEY_BS:
-			case VT_KEY_DEL:
-				screen_bs();
-				break;
-			case VT_KEY_ENTER:
-				tso_enter();
-				break;
-			default:
-				if(key >= 0x20 && key < 0x7F) {
-					screen_input((char) key);
-				}
-				break;
-		}
+	while(!TSOIsExit(&tso)) {
+		TSOProcess(&tso);
 	}
 }

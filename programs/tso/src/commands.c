@@ -1,9 +1,9 @@
 #include <emulight/string.h>
 #include <emulight/os.h>
 #include <emulight/ds.h>
+#include <emulight/tso.h>
 
 #include "tso.h"
-#include "screen.h"
 
 #define	SOFTWARE_VERSION	"r" REVISION "~" COMMIT
 
@@ -62,7 +62,7 @@ void tso_execute_command(unsigned int argc, TSOArgument* argv)
 		if(startswith(cmd->name, name)) {
 			if(found) {
 				last_status = -1;
-				screen_print("AMBIGUOUS COMMAND\n");
+				TPrint("AMBIGUOUS COMMAND\n");
 				return;
 			}
 			found = cmd;
@@ -75,7 +75,7 @@ void tso_execute_command(unsigned int argc, TSOArgument* argv)
 	}
 
 	last_status = -1;
-	screen_print("NOT FOUND\n");
+	TPrint("NOT FOUND\n");
 }
 
 int tso_showmem(unsigned int argc, TSOArgument* argv)
@@ -83,13 +83,13 @@ int tso_showmem(unsigned int argc, TSOArgument* argv)
 	(void) argv;
 
 	if(argc != 1) {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
 	char buf[24];
 	sprintf(buf, "MEM=%u\n", MEMAvailable());
-	screen_print(buf);
+	TPrint(buf);
 
 	return 0;
 }
@@ -99,11 +99,11 @@ int tso_showver(unsigned int argc, TSOArgument* argv)
 	(void) argv;
 
 	if(argc != 1) {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
-	screen_print("MCP VERSION " SOFTWARE_VERSION "\n");
+	TPrint("MCP VERSION " SOFTWARE_VERSION "\n");
 
 	return 0;
 }
@@ -113,21 +113,21 @@ int tso_write(unsigned int argc, TSOArgument* argv)
 	BOOL space = FALSE;
 	for(unsigned int i = 1; i < argc; i++) {
 		if(space) {
-			screen_putc(' ');
+			TPutc(' ');
 		} else {
 			space = TRUE;
 		}
 		if(argv[i].name != NULL) {
-			screen_print(argv[i].name);
-			screen_print("(");
-			screen_print(argv[i].value);
-			screen_print(")");
+			TPrint(argv[i].name);
+			TPrint("(");
+			TPrint(argv[i].value);
+			TPrint(")");
 		} else {
-			screen_print(argv[i].value);
+			TPrint(argv[i].value);
 		}
 	}
 
-	screen_nl();
+	TPutc('\n');
 
 	return 0;
 }
@@ -136,8 +136,8 @@ static void tso_logmsg(const char* msg, void* user)
 {
 	(void) user;
 
-	screen_print(msg);
-	screen_nl();
+	TPrint(msg);
+	TPutc('\n');
 }
 
 int tso_showlog(unsigned int argc, TSOArgument* argv)
@@ -145,7 +145,7 @@ int tso_showlog(unsigned int argc, TSOArgument* argv)
 	(void) argv;
 
 	if(argc != 1) {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
@@ -158,16 +158,26 @@ static void tso_listcat_cb(const char* dsn, void* user)
 {
 	(void) user;
 
-	screen_print(dsn);
-	screen_nl();
+	TPrint(dsn);
+	TPutc('\n');
 }
 
 int tso_listcat(unsigned int argc, TSOArgument* argv)
 {
 	if(argc == 1) {
 		FSList(NULL, tso_listcat_cb, NULL);
+	} else if(argc == 2) {
+		char* prefix = (char*) argv[1].value; /* evil, but anyway */
+		for(char* c = prefix; *c; c++) {
+			*c = toupper(*c);
+			if(*c == '*') {
+				*c = 0;
+				break;
+			}
+		}
+		FSList(prefix, tso_listcat_cb, NULL);
 	} else {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
@@ -183,24 +193,24 @@ int tso_listds(unsigned int argc, TSOArgument* argv)
 			*c = toupper(*c);
 		}
 
-		screen_print(dsn);
-		screen_nl();
+		TPrint(dsn);
+		TPutc('\n');
 
 		DS info;
 		int ds = DSOpen(argv[1].value);
 		if(ds < 0) {
-			screen_print("FAILED TO OPEN DS\n");
+			TPrint("FAILED TO OPEN DS\n");
+			return 1;
 		} else {
 			DSGetInfo(ds, &info);
 			DSClose(ds);
 
-			screen_print("--RECFM-LRECL-BLKSIZE-DSORG");
-			screen_nl();
-			screen_print("  ");
+			TPrint("--RECFM-LRECL-BLKSIZE-DSORG\n");
+			TPrint("  ");
 			if(DSIsFB(&info)) {
-				screen_print("FB    ");
+				TPrint("FB    ");
 			} else {
-				screen_print("U     ");
+				TPrint("U     ");
 			}
 
 			size_t len;
@@ -216,28 +226,26 @@ int tso_listds(unsigned int argc, TSOArgument* argv)
 				buf[i] = ' ';
 			}
 			buf[6] = 0;
-			screen_print(buf);
+			TPrint(buf);
 
 			len = sprintf(buf, "%u ", info.size);
 			for(size_t i = len; i < 8; i++) {
 				buf[i] = ' ';
 			}
 			buf[8] = 0;
-			screen_print(buf);
+			TPrint(buf);
 
-			screen_print("PS");
-			screen_nl();
-			screen_print("--VOLUMES--");
-			screen_nl();
-			screen_print("  ");
+			TPrint("PS\n");
+			TPrint("--VOLUMES--\n");
+			TPrint("  ");
 
 			bzero(buf, sizeof(buf));
 			VOLGetLabel(info.volume, buf);
-			screen_print(buf);
-			screen_nl();
+			TPrint(buf);
+			TPutc('\n');
 		}
 	} else {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 
@@ -252,13 +260,13 @@ int tso_printds(unsigned int argc, TSOArgument* argv)
 			*c = toupper(*c);
 		}
 
-		screen_print(dsn);
-		screen_nl();
+		TPrint(dsn);
+		TPutc('\n');
 
 		DS info;
 		int ds = DSOpen(argv[1].value);
 		if(ds < 0) {
-			screen_print("FAILED TO OPEN DS\n");
+			TPrint("FAILED TO OPEN DS\n");
 		} else {
 			DSGetInfo(ds, &info);
 			if(DSIsFB(&info)) {
@@ -267,19 +275,19 @@ int tso_printds(unsigned int argc, TSOArgument* argv)
 				unsigned int lrecl = DSGetRecLen(&info);
 				while(DSRead(ds, recbuf, 1) == 1) {
 					sprintf(buf, "%05d ", i++);
-					screen_print(buf);
+					TPrint(buf);
 					recbuf[lrecl] = 0;
-					screen_print(recbuf);
-					screen_nl();
+					TPrint(recbuf);
+					TPutc('\n');
 				}
-				screen_print("*** EOF ***\n");
+				TPrint("*** EOF ***\n");
 			} else {
-				screen_print("NOT A FB DATA SET\n");
+				TPrint("NOT A FB DATA SET\n");
 			}
 			DSClose(ds);
 		}
 	} else {
-		screen_print("SYNTAX ERROR\n");
+		TPrint("SYNTAX ERROR\n");
 		return -1;
 	}
 

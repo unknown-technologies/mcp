@@ -1,7 +1,6 @@
 #include <emulight/string.h>
 #include <emulight/vt.h>
-
-#include "tso.h"
+#include <emulight/tso/screen.h>
 
 #define	MODE_OUTPUT	0
 #define	MODE_INPUT	1
@@ -14,8 +13,12 @@ static unsigned int cursor_y;
 
 static char mode = 0;
 
-void screen_init(void)
+static VT vt;
+
+void TInit(void)
 {
+	VTInit(&vt);
+
 	bzero(screen, sizeof(screen));
 	bzero(input_lines, sizeof(input_lines));
 
@@ -23,7 +26,14 @@ void screen_init(void)
 	cursor_y = 0;
 }
 
-void scroll_up(void)
+void TStart(void)
+{
+	VTClearScreen();
+	VTHome();
+	VTShowCursor();
+}
+
+void TScrollUp(void)
 {
 	VTIndex();
 	unsigned int cols = VTGetWidth(&vt);
@@ -38,7 +48,7 @@ void scroll_up(void)
 	VTEL2();
 }
 
-static inline void screen_sync_cursor(void)
+static void TSyncCursor(void)
 {
 	VTGoto(cursor_y + 1, cursor_x + 1);
 	if(input_lines[cursor_y]) {
@@ -48,27 +58,33 @@ static inline void screen_sync_cursor(void)
 	}
 }
 
-void screen_nl(void)
+void TGetCursor(unsigned int* line, unsigned int* col)
+{
+	*line = cursor_y;
+	*col = cursor_x;
+}
+
+void TNL(void)
 {
 	cursor_y++;
 	cursor_x = 0;
 	if(cursor_y >= VTGetHeight(&vt)) {
 		/* scroll */
 		cursor_y = VTGetHeight(&vt) - 1;
-		scroll_up();
-		screen_sync_cursor();
+		TScrollUp();
+		TSyncCursor();
 	} else {
-		screen_sync_cursor();
+		TSyncCursor();
 		VTEL2();
 		bzero(screen[cursor_y], VTGetWidth(&vt));
 	}
 	input_lines[cursor_y] = mode;
 }
 
-static void screen_putchar(char c)
+static void TPutChar(char c)
 {
 	if(c == '\n') {
-		screen_nl();
+		TNL();
 	} else {
 		if(c == 0) {
 			VTPutc(' ');
@@ -82,39 +98,51 @@ static void screen_putchar(char c)
 		input_lines[cursor_y] = mode;
 		cursor_x++;
 		if(cursor_x >= VTGetWidth(&vt)) {
-			screen_nl();
+			TNL();
 		}
 	}
 }
 
-void screen_putc(char c)
+void TPutc(char c)
 {
 	mode = MODE_OUTPUT;
 	VTSGR(0);
-	screen_putchar(c);
+	TPutChar(c);
 }
 
-void screen_print(const char* text)
+void TPrint(const char* text)
 {
-	screen_sync_cursor();
+	TSyncCursor();
 	mode = MODE_OUTPUT;
 	VTSGR(0);
-	if(cursor_x == 0) {
-		screen_putchar(0);
-	}
+	BOOL was_nl = TRUE;
 	for(const char* s = text; *s; s++) {
-		screen_putchar(*s);
+		if(was_nl && cursor_x == 0) {
+			TPutChar(0);
+		}
+		was_nl = *s == '\n';
+		TPutChar(*s);
 	}
 }
 
-void screen_input(char c)
+void TSetOutput(void)
+{
+	mode = MODE_OUTPUT;
+}
+
+void TSetInput(void)
+{
+	mode = MODE_INPUT;
+}
+
+void TInput(char c)
 {
 	mode = MODE_INPUT;
 	VTSGR(1);
-	screen_putchar(c);
+	TPutChar(c);
 }
 
-void screen_clear(void)
+void TClear(void)
 {
 	VTClearScreen();
 	VTHome();
@@ -126,7 +154,7 @@ void screen_clear(void)
 	bzero(input_lines, sizeof(input_lines));
 }
 
-void screen_repaint(void)
+void TSync(void)
 {
 	VTClearScreen();
 	VTHome();
@@ -138,7 +166,18 @@ void screen_repaint(void)
 		} else {
 			VTSGR(0);
 		}
-		for(unsigned int x = 0; x < VTGetWidth(&vt); x++) {
+
+		/* optimization: skip space after last character on the line */
+		unsigned int end = VTGetWidth(&vt);
+		for(unsigned int x = VTGetWidth(&vt) - 1; x > 0; x--) {
+			char c = screen[y][x];
+			if(c != ' ' && c != 0) {
+				end = x + 1;
+				break;
+			}
+		}
+
+		for(unsigned int x = 0; x < end; x++) {
 			char c = screen[y][x];
 			if(!c) {
 				VTPutc(' ');
@@ -148,48 +187,49 @@ void screen_repaint(void)
 		}
 	}
 
-	screen_sync_cursor();
+	TSyncCursor();
+	VTShowCursor();
 }
 
-void screen_cursor_up(void)
+static void TCursorUp(void)
 {
 	if(cursor_y > 0) {
 		cursor_y--;
-		screen_sync_cursor();
+		TSyncCursor();
 	}
 }
 
-void screen_cursor_down(void)
+static void TCursorDown(void)
 {
 	if(cursor_y < VTGetHeight(&vt) - 1) {
 		cursor_y++;
-		screen_sync_cursor();
+		TSyncCursor();
 	}
 }
 
-void screen_cursor_left(void)
+static void TCursorLeft(void)
 {
 	if(cursor_x > 0) {
 		cursor_x--;
-		screen_sync_cursor();
+		TSyncCursor();
 	}
 }
 
-void screen_cursor_right(void)
+static void TCursorRight(void)
 {
 	if(cursor_x < VTGetWidth(&vt) - 1) {
 		cursor_x++;
-		screen_sync_cursor();
+		TSyncCursor();
 	}
 }
 
-void screen_cursor_pos1(void)
+static void TCursorPos1(void)
 {
 	cursor_x = 0;
-	screen_sync_cursor();
+	TSyncCursor();
 }
 
-void screen_cursor_end(void)
+static void TCursorEnd(void)
 {
 	cursor_x = 0;
 	unsigned int cols = VTGetWidth(&vt);
@@ -201,10 +241,10 @@ void screen_cursor_end(void)
 			}
 		}
 	}
-	screen_sync_cursor();
+	TSyncCursor();
 }
 
-void screen_bs(void)
+static void TBS(void)
 {
 	if(cursor_x > 0) {
 		/* same line */
@@ -217,13 +257,13 @@ void screen_bs(void)
 		cursor_y--;
 		screen[cursor_y][cursor_x] = 0;
 		input_lines[cursor_y] = MODE_INPUT;
-		screen_sync_cursor();
+		TSyncCursor();
 		VTPutc(' ');
-		screen_sync_cursor();
+		TSyncCursor();
 	}
 }
 
-BOOL screen_line_cont_internal(unsigned int line)
+static BOOL screen_line_cont_internal(unsigned int line)
 {
 	/* check if the last character is a "+" */
 	for(int x = VTGetWidth(&vt) - 1; x >= 0; x--) {
@@ -241,12 +281,12 @@ BOOL screen_line_cont_internal(unsigned int line)
 	return FALSE;
 }
 
-BOOL screen_line_cont(void)
+BOOL TLineCont(void)
 {
 	return screen_line_cont_internal(cursor_y);
 }
 
-char* screen_get_command(size_t* len)
+char* TGetCommand(size_t* len)
 {
 	unsigned int lines = 1;
 
@@ -280,4 +320,67 @@ char* screen_get_command(size_t* len)
 
 	*len = lines * VTGetWidth(&vt);
 	return command;
+}
+
+void TPrompt(TSO* tso)
+{
+	if(tso->prompt) {
+		TSetOutput();
+		if(cursor_x > 1) {
+			TNL();
+		}
+		tso->prompt(tso);
+		TNL();
+		TSetInput();
+	}
+}
+
+void TProcess(TSO* tso)
+{
+	u16 key = VTReceive(&vt, NULL, NULL);
+	switch(key) {
+		case VT_KEY_NONE:
+			break;
+		case VTGetCTRL('L'):
+			TSync();
+			break;
+		case VT_KEY_F10:
+			TClear();
+			TPrompt(tso);
+			break;
+		case VT_KEY_UP:
+			TCursorUp();
+			break;
+		case VT_KEY_DOWN:
+			TCursorDown();
+			break;
+		case VT_KEY_LEFT:
+			TCursorLeft();
+			break;
+		case VT_KEY_RIGHT:
+			TCursorRight();
+			break;
+		case VTGetCTRL('A'):
+		case VT_KEY_FIND:
+			TCursorPos1();
+			break;
+		case VTGetCTRL('E'):
+		case VT_KEY_SELECT:
+			TCursorEnd();
+			break;
+		case VT_KEY_BS:
+		case VT_KEY_DEL:
+			TBS();
+			break;
+		case VT_KEY_ENTER:
+			if(tso->enter) {
+				tso->enter(tso);
+			}
+			break;
+		default:
+			if(key >= 0x20 && key < 0x7F) {
+				TInput((char) key);
+			}
+			break;
+	}
 }

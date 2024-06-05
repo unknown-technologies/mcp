@@ -1,23 +1,14 @@
-#ifndef __TSO_H__
-#define __TSO_H__
+#ifndef __TSO_PRIVATE_H__
+#define __TSO_PRIVATE_H__
 
-#include <emulight/vt.h>
+#include <emulight/tso.h>
 
 #define	CMD_MAXLEN		(80 * 16)
 #define	CMD_MAXARGS		16
 
-typedef struct {
-	const char*	name;
-	const char*	value;
-	int		index;
-} TSOArgument;
-
-extern VT vt;
-
 char toupper(char c);
 
-void tso(void);
-void tso_exit(void);
+void tso_main(void);
 void tso_execute_command(unsigned int argc, TSOArgument* argv);
 
 /* commands */

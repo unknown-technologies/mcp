@@ -7,6 +7,7 @@ X ** SYS1.MOD.FSLIST		modules/fslist/build/fslist
 X ** SYS1.MOD.FSLOCATE		modules/fslocate/build/fslocate
 B ** SYS1.LIB.SYSLIB		lib/syslib/build/syslib
 B ** SYS1.LIB.ISPF		lib/ispf/build/ispf
+B ** SYS1.LIB.TSO		lib/tso/build/tso
 X ** SYS1.STARTUP		programs/startup/build/startup
 X ** SYS1.LOGON			programs/logon/build/logon
 X ** SYS1.TSO			programs/tso/build/tso

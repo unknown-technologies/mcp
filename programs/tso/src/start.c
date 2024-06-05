@@ -2,5 +2,5 @@
 
 void start(void)
 {
-	tso();
+	tso_main();
 }

@@ -28,6 +28,7 @@ modules:
 	@$(MAKE) -C modules/fslist all --no-print-directory
 	@$(MAKE) -C lib/syslib all --no-print-directory
 	@$(MAKE) -C lib/ispf all --no-print-directory
+	@$(MAKE) -C lib/tso all --no-print-directory
 	@$(MAKE) -C programs/startup all --no-print-directory
 	@$(MAKE) -C programs/logon all --no-print-directory
 	@$(MAKE) -C programs/tso all --no-print-directory
@@ -50,6 +51,7 @@ clean:
 	@$(MAKE) -C modules/fslist clean --no-print-directory
 	@$(MAKE) -C lib/syslib clean --no-print-directory
 	@$(MAKE) -C lib/ispf clean --no-print-directory
+	@$(MAKE) -C lib/tso clean --no-print-directory
 	@$(MAKE) -C programs/startup clean --no-print-directory
 	@$(MAKE) -C programs/logon clean --no-print-directory
 	@$(MAKE) -C programs/tso clean --no-print-directory
