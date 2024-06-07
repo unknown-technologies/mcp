@@ -38,8 +38,14 @@ _OSSyscallInit:
 	.globl	_VOLWriteBlock
 	.globl	_OSGetLog
 
+sei:	mfps	r0
+	bic	$0300,	r0
+	mtps
+	rts	pc
+
 EMT_OSGetDate:
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_OSGetDate
 	tst	(sp)+
 	rti
@@ -55,12 +61,14 @@ EMT_OSLog:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_OSLog
 	add	$8,	sp
 	rti
 
 EMT_OSLoadProgram:
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_OSLoadProgram
 	tst	(sp)+
 	rti
@@ -95,6 +103,7 @@ EMT_OSTerminate:
 EMT_DSOpen:
 	mov	r1,	-(sp)			# save R1 due to GCC clobbering
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSOpen
 	tst	(sp)+
 	mov	(sp)+,	r1			# it in OSGetCurrentTask
@@ -103,6 +112,7 @@ EMT_DSOpen:
 EMT_DSGetInfo:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSGetInfo
 	add	$4,	sp
 	rti
@@ -111,6 +121,7 @@ EMT_DSRead:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSRead
 	add	$6,	sp
 	rti
@@ -119,6 +130,7 @@ EMT_DSWrite:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSWrite
 	add	$6,	sp
 	rti
@@ -126,6 +138,7 @@ EMT_DSWrite:
 EMT_DSSeek:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSSeek
 	add	$4,	sp
 	rti
@@ -133,6 +146,7 @@ EMT_DSSeek:
 EMT_DSClose:
 	mov	r1,	-(sp)			# save R1 due to GCC clobbering
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_DSClose
 	tst	(sp)+
 	mov	(sp)+,	r1			# it in OSGetCurrentTask
@@ -142,6 +156,7 @@ EMT_FSList:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_FSList
 	add	$6,	sp
 	rti
@@ -149,6 +164,7 @@ EMT_FSList:
 EMT_VOLGetLabel:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_VOLGetLabel
 	add	$4,	sp
 	rti
@@ -157,6 +173,7 @@ EMT_VOLReadBlock:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_VOLReadBlock
 	add	$6,	sp
 	rti
@@ -165,12 +182,14 @@ EMT_VOLWriteBlock:
 	mov	r2,	-(sp)
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_VOLWriteBlock
 	add	$6,	sp
 	rti
 
 EMT_VOLIsActive:
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_VOLIsActive
 	tst	(sp)+
 	rti
@@ -178,6 +197,7 @@ EMT_VOLIsActive:
 EMT_OSGetLog:
 	mov	r1,	-(sp)
 	mov	r0,	-(sp)
+	jsr	pc,	sei
 	jsr	pc,	_OSGetLog
 	add	$4,	sp
 	rti
