@@ -58,6 +58,7 @@ void tso_execute(void)
 		if(dsn) {
 			void* cmdprog = OSLoadProgram(dsnbuf);
 			if(cmdprog) {
+				TSetOutput();
 				int (*main)(TENV*) = (int (*)(TENV*)) cmdprog;
 				result = main(&tso_env);
 				OSUnloadProgram(cmdprog);

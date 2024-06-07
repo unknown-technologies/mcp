@@ -10,6 +10,7 @@ static char input_lines[24];
 
 static unsigned int cursor_x;
 static unsigned int cursor_y;
+static unsigned int output_lines;
 
 static char mode = 0;
 
@@ -24,6 +25,8 @@ void TInit(void)
 
 	cursor_x = 0;
 	cursor_y = 0;
+
+	output_lines = 0;
 }
 
 void TStart(void)
@@ -93,6 +96,33 @@ void TNL(void)
 		bzero(screen[cursor_y], VTGetWidth(&vt));
 	}
 	input_lines[cursor_y] = mode;
+
+	if(mode == MODE_OUTPUT) {
+		output_lines++;
+		if(output_lines >= VTGetHeight(&vt) - 1) {
+			output_lines = 0;
+			VTPrint("***");
+			while(1) {
+				u16 key = VTReceive(&vt, NULL, NULL);
+				switch(key) {
+					case VT_KEY_NONE:
+						break;
+					case VTGetCTRL('L'):
+						TSync();
+						VTPrint("***");
+						break;
+					case VT_KEY_F10:
+						TClear();
+						return;
+					case VT_KEY_ENTER:
+						output_lines = 0;
+						VTEL2();
+						VTPutc('\r');
+						return;
+				}
+			}
+		}
+	}
 }
 
 static void TPutChar(char c)
@@ -142,6 +172,7 @@ void TPrint(const char* text)
 void TSetOutput(void)
 {
 	mode = MODE_OUTPUT;
+	output_lines = 0;
 }
 
 void TSetInput(void)
@@ -161,6 +192,7 @@ void TClear(void)
 	VTClearScreen();
 	VTHome();
 
+	output_lines = 0;
 	cursor_x = 0;
 	cursor_y = 0;
 
