@@ -36,6 +36,14 @@ modules:
 	@$(MAKE) -C programs/clock all --no-print-directory
 	@$(MAKE) -C programs/clockcfg all --no-print-directory
 	@$(MAKE) -C programs/sim all --no-print-directory
+	@$(MAKE) -C commands/shell all --no-print-directory
+	@$(MAKE) -C commands/logoff all --no-print-directory
+	@$(MAKE) -C commands/system all --no-print-directory
+	@$(MAKE) -C commands/showlog all --no-print-directory
+	@$(MAKE) -C commands/listcat all --no-print-directory
+	@$(MAKE) -C commands/listds all --no-print-directory
+	@$(MAKE) -C commands/printds all --no-print-directory
+	@$(MAKE) -C commands/write all --no-print-directory
 
 clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
@@ -59,4 +67,12 @@ clean:
 	@$(MAKE) -C programs/clock clean --no-print-directory
 	@$(MAKE) -C programs/clockcfg clean --no-print-directory
 	@$(MAKE) -C programs/sim clean --no-print-directory
+	@$(MAKE) -C commands/shell clean --no-print-directory
+	@$(MAKE) -C commands/logoff clean --no-print-directory
+	@$(MAKE) -C commands/system clean --no-print-directory
+	@$(MAKE) -C commands/showlog clean --no-print-directory
+	@$(MAKE) -C commands/listcat clean --no-print-directory
+	@$(MAKE) -C commands/listds clean --no-print-directory
+	@$(MAKE) -C commands/printds clean --no-print-directory
+	@$(MAKE) -C commands/write clean --no-print-directory
 	@rm -f $(DISK)

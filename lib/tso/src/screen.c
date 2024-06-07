@@ -33,6 +33,20 @@ void TStart(void)
 	VTShowCursor();
 }
 
+char* TGetScreen(unsigned int* lines, unsigned int* cols, char** input)
+{
+	if(lines) {
+		*lines = VTGetHeight(&vt);
+	}
+	if(cols) {
+		*cols = VTGetWidth(&vt);
+	}
+	if(input) {
+		*input = input_lines;
+	}
+	return &screen[0][0];
+}
+
 void TScrollUp(void)
 {
 	VTIndex();
@@ -263,65 +277,6 @@ static void TBS(void)
 	}
 }
 
-static BOOL screen_line_cont_internal(unsigned int line)
-{
-	/* check if the last character is a "+" */
-	for(int x = VTGetWidth(&vt) - 1; x >= 0; x--) {
-		char c = screen[line][x];
-		if(c == ' ' || c == 0) {
-			continue;
-		} else if(c == '+') {
-			/* continuation found */
-			return TRUE;
-		} else {
-			return FALSE;
-		}
-	}
-
-	return FALSE;
-}
-
-BOOL TLineCont(void)
-{
-	return screen_line_cont_internal(cursor_y);
-}
-
-char* TGetCommand(size_t* len)
-{
-	unsigned int lines = 1;
-
-	char* command = screen[cursor_y];
-
-	/* check if current line ends with "+" continuation */
-	for(unsigned int i = cursor_y; i < VTGetHeight(&vt); i++) {
-		if(screen_line_cont_internal(i)) {
-			lines++;
-		} else {
-			break;
-		}
-	}
-
-	if(cursor_y > 0) {
-		/* check if previous line ended with a "+" continuation */
-		for(int y = cursor_y - 1; y >= 0; y--) {
-			if(!input_lines[y]) {
-				/* this is not an input line */
-				break;
-			}
-
-			if(screen_line_cont_internal(y)) {
-				lines++;
-				command = screen[y];
-			} else {
-				break;
-			}
-		}
-	}
-
-	*len = lines * VTGetWidth(&vt);
-	return command;
-}
-
 void TPrompt(TSO* tso)
 {
 	if(tso->prompt) {
@@ -374,7 +329,7 @@ void TProcess(TSO* tso)
 			break;
 		case VT_KEY_ENTER:
 			if(tso->enter) {
-				tso->enter(tso);
+				tso->enter(tso, cursor_y, cursor_x);
 			}
 			break;
 		default:

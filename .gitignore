@@ -6,4 +6,5 @@
 modules/*/build
 lib/*/build
 programs/*/build
+commands/*/build
 disk.rx2

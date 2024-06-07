@@ -3,9 +3,6 @@
 
 #include <emulight/tso.h>
 
-#define	CMD_MAXLEN		(80 * 16)
-#define	CMD_MAXARGS		16
-
 char toupper(char c);
 
 void tso_main(void);

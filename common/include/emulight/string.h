@@ -36,4 +36,6 @@ int	vsprintf(char* buf, const char* fmt, va_list args);
 int	csprintf(void (*cb)(char), const char* fmt, ...);
 int	vcsprintf(void (*cb)(char), const char* fmt, va_list args);
 
+char	toupper(char c);
+
 #endif

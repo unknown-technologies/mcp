@@ -22,7 +22,7 @@ void FSInit(unsigned int id, VOLUME* vol)
 }
 
 void FSList(const char* prefix,
-		void (*callback)(const char* dsn, void* userdata),
+		BOOL (*callback)(const char* dsn, void* userdata),
 		void* userdata)
 {
 	if(!callback) {
@@ -32,10 +32,10 @@ void FSList(const char* prefix,
 	void* fslist = OSLoadModule("FSLIST");
 	if(fslist) {
 		void (*FSiList)(const char* prefix,
-				void (*callback)(const char* dsn,
+				BOOL (*callback)(const char* dsn,
 					void* userdata), void* userdata,
 				void* __sector_buffer, void* lock)
-			= (void (*)(const char*, void (*)(const char*, void*),
+			= (void (*)(const char*, BOOL (*)(const char*, void*),
 						void*, void*, void*)) fslist;
 		FSiList(prefix, callback, userdata, __sector_buffer, &lock);
 		OSUnloadModule(fslist);

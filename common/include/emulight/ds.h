@@ -88,7 +88,7 @@ static inline void DSClose(int ds)
 }
 
 static inline int FSList(const char* prefix,
-		void (*callback)(const char* dsn, void* user), void* user)
+		BOOL (*callback)(const char* dsn, void* user), void* user)
 {
 	register unsigned int r0 asm("r0") = (unsigned int) prefix;
 	register unsigned int r1 asm("r1") = (unsigned int) callback;

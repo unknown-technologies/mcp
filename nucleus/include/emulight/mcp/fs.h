@@ -63,7 +63,7 @@ typedef struct {
 
 void	FSInit(unsigned int id, VOLUME* vol);
 void	FSList(const char* prefix,
-		void (*callback)(const char* dsn, void* userdata),
+		BOOL (*callback)(const char* dsn, void* userdata),
 		void* userdata);
 
 BOOL	DSIsFB(DS* ds);

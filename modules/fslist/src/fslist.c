@@ -21,7 +21,7 @@ static BOOL startswith(const char* a, const char* b)
 }
 
 void FSiList(const char* prefix,
-		void (*callback)(const char* dsn, void* userdata),
+		BOOL (*callback)(const char* dsn, void* userdata),
 		void* userdata, void* __sector_buffer, void* lock)
 {
 	if(!callback) {
@@ -50,9 +50,14 @@ void FSiList(const char* prefix,
 				if(prefix && !startswith(dsnbuf, prefix)) {
 					continue;
 				}
-				callback(dsnbuf, userdata);
+
+				if(!callback(dsnbuf, userdata)) {
+					goto end;
+				}
 			}
 		}
 	}
+
+end:
 	OSUnlock(lock);
 }
