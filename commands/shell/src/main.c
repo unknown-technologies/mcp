@@ -67,7 +67,7 @@ char* TGetCommand(size_t* len)
 
 			if(screen_line_cont_internal(y)) {
 				lines++;
-				command = &screen[y * height];
+				command = &screen[y * width];
 			} else {
 				break;
 			}
@@ -106,6 +106,29 @@ char* TExec(TENV* env, char* cmdbuf)
 		TSOArgument* arg = NULL;
 
 		bzero(cmd_args, sizeof(cmd_args));
+
+		/* throw away continuation character */
+		unsigned int height;
+		unsigned int width;
+		TGetScreen(&height, &width, NULL);
+		for(unsigned int y = 0; y < height - 1; y++) {
+			for(int x = width - 1; x >= 0; x--) {
+				unsigned int off = y * width + x;
+				if(off >= len) {
+					break;
+				}
+
+				char c = cmdbuf[off];
+				if(c == ' ' || c == 0) {
+					continue;
+				} else if(c == '+') {
+					/* continuation found */
+					cmdbuf[off] = 0;
+				} else {
+					break;
+				}
+			}
+		}
 
 		/* TODO: filter continuation character */
 		for(size_t i = 0; i < len; i++) {
