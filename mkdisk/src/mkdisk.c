@@ -134,6 +134,8 @@ int main(int argc, char** argv)
 	const char* layout_path = NULL;
 	const char* disk_label = "ROMVOL";
 
+	unsigned int vtoc_blocks = 2;
+
 	EFS efs;
 
 	for(; argc; argc--, argv++) {
@@ -161,6 +163,10 @@ int main(int argc, char** argv)
 			disk_label = argv[1];
 			argc--;
 			argv++;
+		} else if(!strcmp("-v", *argv) && argc > 1) {
+			vtoc_blocks = atoi(argv[1]);
+			argc--;
+			argv++;
 		} else if(!strcmp("-h", *argv) || !strcmp("--help", *argv)) {
 			printf("Usage: %s [OPTIONS]\n"
 				"\n"
@@ -171,6 +177,7 @@ int main(int argc, char** argv)
 				"  -d diskroot     Use diskroot as content for the disk\n"
 				"  -c content.lst  Use content file for the disk content\n"
 				"  -l label        Disk label\n"
+				"  -v blocks       Blocks reserved for VTOC (1 blcok = 16 entries)\n"
 				"  -h, --help      Show this help message\n", self);
 			return 0;
 		} else {
@@ -291,7 +298,7 @@ int main(int argc, char** argv)
 	}
 
 	EFSInit(&efs, disk, disk_read, disk_write);
-	EFSInitDisk(&efs, disk_label, 512512 / 512, 2, efs_block);
+	EFSInitDisk(&efs, disk_label, 512512 / 512, vtoc_blocks, efs_block);
 
 	if(diskroot_path) {
 		/* copy everything from diskroot onto the disk */
