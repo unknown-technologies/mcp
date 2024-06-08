@@ -81,6 +81,19 @@ void tso_enter(TSO* tso, unsigned int line, unsigned int col)
 	}
 }
 
+void tso_logon(void)
+{
+	void* prog = OSLoadProgram("SYS1.TSO.TSOLOGON");
+	bzero(cmd_args, sizeof(cmd_args));
+	tso_env.argv = 0;
+	if(prog) {
+		TSetOutput();
+		int (*main)(TENV*) = (int (*)(TENV*)) prog;
+		main(&tso_env);
+		OSUnloadProgram(prog);
+	}
+}
+
 void tso_main(void)
 {
 	TSOInit(&tso);
@@ -90,6 +103,8 @@ void tso_main(void)
 
 	tso_env.tso = &tso;
 	tso_env.argv = cmd_args;
+
+	tso_logon();
 
 	TSOStart(&tso);
 

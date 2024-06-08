@@ -37,6 +37,7 @@ modules:
 	@$(MAKE) -C programs/clockcfg all --no-print-directory
 	@$(MAKE) -C programs/sim all --no-print-directory
 	@$(MAKE) -C commands/shell all --no-print-directory
+	@$(MAKE) -C commands/tsologon all --no-print-directory
 	@$(MAKE) -C commands/logoff all --no-print-directory
 	@$(MAKE) -C commands/system all --no-print-directory
 	@$(MAKE) -C commands/showlog all --no-print-directory
@@ -68,6 +69,7 @@ clean:
 	@$(MAKE) -C programs/clockcfg clean --no-print-directory
 	@$(MAKE) -C programs/sim clean --no-print-directory
 	@$(MAKE) -C commands/shell clean --no-print-directory
+	@$(MAKE) -C commands/tsologon clean --no-print-directory
 	@$(MAKE) -C commands/logoff clean --no-print-directory
 	@$(MAKE) -C commands/system clean --no-print-directory
 	@$(MAKE) -C commands/showlog clean --no-print-directory
