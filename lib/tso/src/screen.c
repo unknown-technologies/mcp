@@ -101,7 +101,7 @@ void TNL(void)
 		output_lines++;
 		if(output_lines >= VTGetHeight(&vt) - 1) {
 			output_lines = 0;
-			VTPrint("***");
+			VTPrint(" *** ");
 			while(1) {
 				u16 key = VTReceive(&vt, NULL, NULL);
 				switch(key) {
@@ -109,7 +109,7 @@ void TNL(void)
 						break;
 					case VTGetCTRL('L'):
 						TSync();
-						VTPrint("***");
+						VTPrint(" *** ");
 						break;
 					case VT_KEY_F10:
 						TClear();
