@@ -1,0 +1,146 @@
+.TITLE	LANDING_SITE	"Landing Site"
+.TITLE	GUNSHIP		"Gunship"
+.TITLE	CAVE_ENTRANCE	"Cave Entrance"
+.TITLE	CAVE		"Cave"
+.TITLE	SMALL_PASSAGE	"Small passage"
+.TITLE	MAGMA_ROOM	"Magma room"
+.TITLE	RED_DOOR	"Red Door"
+.TITLE	SAVE_ROOM	"Save Room"
+.TITLE	EGG_ROOM	"Egg Room"
+.TITLE	ANCIENT_TEMPLE	"Ancient Temple"
+.TITLE	TEMPLE_ROOF	"Temple Roof"
+.TITLE	BREEDING_GND	"Breeding Grounds"
+.TITLE	SANDY_DOME	"Sandy Dome"
+.TITLE	EASTERN_BLDNG	"Eastern Building"
+.TITLE	WESTERN_BLDNG	"Western Building"
+.TITLE	UNDERGND_LAKE	"Underground Lake"
+.TITLE	UNDERGND_FACIL	"Underground Facility"
+.TITLE	UNDERGND_BRDGE	"Underground Bridge"
+.TITLE	DARK_CAVES	"Dark Caves"
+.TITLE	TOWER_ROOF	"Tower Roof"
+.TITLE	TOWER_CAVE	"Tower Cave"
+.TITLE	THE_TOWER	"The Tower"
+.TITLE	BUBBLE_CAVE	"Bubble Cave"
+.TITLE	WATERFALLS	"The Waterfalls"
+.TITLE	FINAL_AREA	"Abandoned Laboratory"
+.TITLE	SURFACE		"The Surface"
+
+************************************************************************
+.SCREEN	1	Landing Site
+
+.MSG
+You stand at the top of a mountain, your gunship is next to you. Towards
+the east, you can see a cave entrance.
+.ENDMSG
+
+.BTN	2	Examine the Ship
+.BTN	3	Enter the Cave
+
+************************************************************************
+.SCREEN	2	Gunship
+
+.MSG
+You enter your gunship. You find some of your equipment. You wonder why
+you can't remember where the rest of your weapons are.
+
+- You equip Morph Module.
+- You equip Missile Launcher (30).
+- You equip Power Beam.
+
+You head towards the cave entrance.
+.ENDMSG
+
+.BTN	3	Enter the Cave
+
+************************************************************************
+.SCREEN	3	Cave Entrance
+
+.MSG
+You stand at the entrance of a cave. The sunlight pours through numerous
+holes in the walls.
+
+There is a small frog-like creature hopping in a corner.
+.ENDMSG
+
+.BTN	4	Attack the creature
+.BTN	5	Avoid the creature
+
+************************************************************************
+.SCREEN	4	Cave Entrance
+
+.MSG
+You attack the frog-like creature using your beam, as it hops
+aggressively around the cave.
+
+Finally, a well placed shot evaporates it, without leaving any trace.
+.ENDMSG
+
+.BTN	6	Continue
+
+************************************************************************
+.SCREEN	5	Cave Entrance
+
+.MSG
+You avoid the creature.
+
+It doesn't seem to feel your presence.
+.ENDMSG
+
+.BTN	6	Continue
+
+************************************************************************
+.SCREEN	6	Cave
+
+.MSG
+You stand at a dead end.
+
+There's a small hole in one of the cave walls, about 1 meter of
+diameter.
+
+What do you do?
+.ENDMSG
+
+.BTN	7	Try to enlarge the hole with missiles
+.BTN	8	Use the morph module to go through
+
+************************************************************************
+.SCREEN	7	Small passage
+
+.MSG
+You shoot a missile, and part of the wall collapses.
+
+Once the dust settles, you advance through the debris safely.
+.ENDMSG
+
+.BTN	9	Continue
+
+************************************************************************
+.SCREEN	8	Small passage
+
+.MSG
+You activate your morph module, and enter the small passage. At first,
+you're amazed by how conveniently shaped the passage is.
+
+Before you can react, a loose boulder falls, impeding your pass. As you
+try to hastily backtrack, the passage collapses. Maybe spelunking in
+such a small place was a bad idea after all.
+
+You feel the energy from you armor suit slowly draining.
+.ENDMSG
+
+.BTN	OVER	Continue
+
+************************************************************************
+.SCREEN	9	Magma room
+
+.MSG
+As you progress through the cave system, you see a pool of bright orange
+liquid that looks like magma. Scans indicate that it's a very dangerous
+substance.
+
+For some reason, you feel this place will be important later.
+
+- You will remember this place.
+.ENDMSG
+
+.BTN	15	Continue
