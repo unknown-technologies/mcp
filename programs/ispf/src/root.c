@@ -5,7 +5,6 @@
 
 void ISPFRootInit(SPFPanel* self)
 {
-	SPFSetPanelTitle(self, "Desktop");
 	SPFHideCursor(self);
 }
 
