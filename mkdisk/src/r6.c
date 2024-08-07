@@ -21,7 +21,8 @@ void R6Encode(u8* out, const char* in, unsigned int len)
 	unsigned int accumulator = 0;
 
 	unsigned int cnt = 0;
-	for(unsigned int i = 0; i < len && *in; i++, in++) {
+	unsigned int j = 0;
+	for(unsigned int i = 0; j < len && *in; i++, in++) {
 		unsigned int c = encode(*in);
 		switch(cnt) {
 			case 0:
@@ -31,18 +32,21 @@ void R6Encode(u8* out, const char* in, unsigned int len)
 			case 1:
 				/* WR = 00000011 */
 				*(out++) = accumulator | (c >> 4);
+				j++;
 				/* A = 1111____ */
 				accumulator = c << 4;
 				break;
 			case 2:
 				/* WR = 11112222 */
 				*(out++) = accumulator | (c >> 2);
+				j++;
 				/* A = 22______ */
 				accumulator = c << 6;
 				break;
 			case 3:
 				/* WR = 22333333 */
 				*(out++) = accumulator | c;
+				j++;
 				break;
 
 		}
@@ -53,7 +57,7 @@ void R6Encode(u8* out, const char* in, unsigned int len)
 		}
 	}
 
-	if(len && cnt) {
+	if(j < len && cnt) {
 		*(out++) = accumulator;
 	}
 }
