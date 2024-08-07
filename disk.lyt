@@ -14,6 +14,7 @@ X ** SYS1.TSO.CORE		programs/tso/build/tso
 X ** SYS1.TSO.EXEC		commands/shell/build/shell
 X ** SYS1.TSO.TSOLOGON		commands/tsologon/build/tsologon
 7 80 SYS1.TSO.WELCOME		diskroot/SYS1.TSO.WELCOME
+6 72 SYS1.TSO.HELP		diskroot/SYS1.TSO.HELP
 X ** SYS1.SIM			programs/sim/build/sim
 X ** SYS1.ISPF.CORE		programs/ispf/build/ispf
 X ** SYS1.ISPF.CLOCK		programs/clock/build/clock
@@ -25,5 +26,6 @@ X ** SYS1.COMMAND.LISTCAT	commands/listcat/build/listcat
 X ** SYS1.COMMAND.LISTDS	commands/listds/build/listds
 X ** SYS1.COMMAND.PRINTDS	commands/printds/build/printds
 X ** SYS1.COMMAND.WRITE		commands/write/build/write
+X ** SYS1.COMMAND.HELP		commands/help/build/help
 6 72 SYS1.APPLID		diskroot/SYS1.APPLID
 B ** SYS1.NOBOOT		mon/build/noboot.bin

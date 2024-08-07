@@ -1,0 +1,31 @@
+.TOC
+DATA MANAGEMENT COMMANDS:
+
+LISTCAT    List catalog.
+LISTDS     List dataset properties.
+PRINTDS    Print contents of a dataset.
+
+SYSTEM COMMANDS:
+
+SHOWLOG    Print system log.
+
+SESSION COMMANDS:
+
+HELP       Invoke the help system.
+LOGOFF     Log off current TSO session.
+SYSTEM     Print system information.
+
+For more information enter HELP COMMANDNAME or HELP HELP
+.END
+
+.CMD HELP
+The help command.
+.END
+
+.CMD SYSTEM
+.FUNCTION
+The system command prints the system software version and available
+memory.
+.SYNTAX
+SYSTEM
+.END

@@ -45,6 +45,7 @@ modules:
 	@$(MAKE) -C commands/listds all --no-print-directory
 	@$(MAKE) -C commands/printds all --no-print-directory
 	@$(MAKE) -C commands/write all --no-print-directory
+	@$(MAKE) -C commands/help all --no-print-directory
 
 clean:
 	@$(MAKE) -C mkdisk clean --no-print-directory
@@ -77,4 +78,5 @@ clean:
 	@$(MAKE) -C commands/listds clean --no-print-directory
 	@$(MAKE) -C commands/printds clean --no-print-directory
 	@$(MAKE) -C commands/write clean --no-print-directory
+	@$(MAKE) -C commands/help clean --no-print-directory
 	@rm -f $(DISK)
