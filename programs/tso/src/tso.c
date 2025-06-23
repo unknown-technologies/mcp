@@ -85,7 +85,7 @@ void tso_logon(void)
 {
 	void* prog = OSLoadProgram("SYS1.TSO.TSOLOGON");
 	bzero(cmd_args, sizeof(cmd_args));
-	tso_env.argv = 0;
+	tso_env.argv = cmd_args;
 	if(prog) {
 		TSetOutput();
 		int (*main)(TENV*) = (int (*)(TENV*)) prog;
