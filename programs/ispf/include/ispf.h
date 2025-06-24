@@ -8,6 +8,7 @@ extern volatile BOOL exit_ispf;
 
 void ISPFInit(void);
 void ISPFProcess(void);
+void ISPFDestroy(void);
 void ISPFInitRoot(SPF* spf);
 
 #endif

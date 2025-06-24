@@ -172,3 +172,11 @@ void ISPFProcess(void)
 {
 	SPFProcess(&ispf);
 }
+
+void ISPFDestroy(void)
+{
+	while(ispf.current_panel >= 0) {
+		SPFDestroyPanel(SPFCurrentPanel(&ispf));
+		SPFCleanupPanels(&ispf);
+	}
+}
