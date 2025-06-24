@@ -19,7 +19,10 @@ For more information enter HELP COMMANDNAME or HELP HELP
 .END
 
 .CMD HELP
+.FUNCTION
 The help command.
+.SYNTAX
+HELP [COMMAND]
 .END
 
 .CMD SYSTEM
