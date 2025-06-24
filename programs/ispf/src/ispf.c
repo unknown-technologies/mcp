@@ -12,17 +12,18 @@
 #define	UI_ACTION_SYSINFO		0
 #define	UI_ACTION_CLOCK			1
 #define	UI_ACTION_CLOCKCFG		2
-#define	UI_ACTION_PANEL_LIST		3
-#define	UI_ACTION_CLOSE_PANEL		4
-#define	UI_ACTION_CLOSE_ALL_PANELS	5
-#define	UI_ACTION_ABOUT			6
-#define	UI_ACTION_VERSION		7
+#define	UI_ACTION_WORKSPC		3
+#define	UI_ACTION_PANEL_LIST		4
+#define	UI_ACTION_CLOSE_PANEL		5
+#define	UI_ACTION_CLOSE_ALL_PANELS	6
+#define	UI_ACTION_ABOUT			7
 #define	UI_ACTION_HELP			8
 #define	UI_ACTION_LOGOFF		9
 
 static const SPFMenuItem system_menu[] = {
 	{ .name = "System Information",	.action = UI_ACTION_SYSINFO },
 	{ .name = "Fullscreen Clock",	.action = UI_ACTION_CLOCK },
+	{ .name = "Workplace",		.action = UI_ACTION_WORKSPC },
 	{ .name = "-",			.action = 0 },
 	{ .name = "Configure Clock",	.action = UI_ACTION_CLOCKCFG },
 	{ .name = "-",			.action = 0 },
@@ -41,7 +42,6 @@ static const SPFMenuItem panel_menu[] = {
 static const SPFMenuItem help_menu[] = {
 	{ .name = "Online Help",	.action = UI_ACTION_HELP },
 	{ .name = "-",			.action = 0 },
-	{ .name = "Software Version",	.action = UI_ACTION_VERSION },
 	{ .name = "About...",		.action = UI_ACTION_ABOUT },
 	{ .name = NULL,			.action = 0 }
 };
@@ -89,6 +89,9 @@ void ISPFMenuHandler(SPF* spf, int action)
 		case UI_ACTION_CLOCKCFG:
 			ISPFLoadProgram(spf, "SYS1.ISPF.CLOCKCFG");
 			break;
+		case UI_ACTION_WORKSPC:
+			ISPFLoadProgram(spf, "SYS1.ISPF.WORKSPC");
+			break;
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel > 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
@@ -101,9 +104,9 @@ void ISPFMenuHandler(SPF* spf, int action)
 				SPFCleanupPanels(spf);
 			}
 			break;
-		case UI_ACTION_VERSION:
-			SPFShowMessage(spf, "Software Version",
-					"This is software version "
+		case UI_ACTION_ABOUT:
+			SPFShowMessage(spf, "About",
+					"Emulight MCP version "
 					SOFTWARE_VERSION);
 			break;
 		case UI_ACTION_LOGOFF:

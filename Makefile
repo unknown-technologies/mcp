@@ -35,6 +35,7 @@ modules:
 	@$(MAKE) -C programs/ispf all --no-print-directory
 	@$(MAKE) -C programs/clock all --no-print-directory
 	@$(MAKE) -C programs/clockcfg all --no-print-directory
+	@$(MAKE) -C programs/workspace all --no-print-directory
 	@$(MAKE) -C programs/sim all --no-print-directory
 	@$(MAKE) -C commands/shell all --no-print-directory
 	@$(MAKE) -C commands/tsologon all --no-print-directory
@@ -68,6 +69,7 @@ clean:
 	@$(MAKE) -C programs/ispf clean --no-print-directory
 	@$(MAKE) -C programs/clock clean --no-print-directory
 	@$(MAKE) -C programs/clockcfg clean --no-print-directory
+	@$(MAKE) -C programs/workspace clean --no-print-directory
 	@$(MAKE) -C programs/sim clean --no-print-directory
 	@$(MAKE) -C commands/shell clean --no-print-directory
 	@$(MAKE) -C commands/tsologon clean --no-print-directory
