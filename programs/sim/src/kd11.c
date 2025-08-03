@@ -1554,7 +1554,7 @@ void KD11CPUStep()
 					PSW_EQ(PSW_C, (tmps32 >= 0x7FFF) || (tmps32 < -0x8000));
 					break;
 				case 0071: /* DIV */
-					tmps32 = (kd11->r[insnjsr->r] << 16)
+					tmps32 = (((u32) kd11->r[insnjsr->r]) << 16)
 						| kd11->r[insnjsr->r | 1];
 					src = CPUREADW(insnjsr->rn, insnjsr->mode);
 					if(src == 0) {
@@ -1614,7 +1614,7 @@ void KD11CPUStep()
 					break;
 				case 0073: /* ASHC */
 					dst = kd11->r[insnjsr->r];
-					tmps32 = (kd11->r[insnjsr->r] << 16)
+					tmps32 = (((u32) kd11->r[insnjsr->r]) << 16)
 						| kd11->r[insnjsr->r | 1];
 					src = CPUREADW(insnjsr->rn, insnjsr->mode);
 					if((src & 0x3F) == 0x20) { /* negative; 32 right */
