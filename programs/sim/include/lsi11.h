@@ -84,6 +84,8 @@ struct LSI11 {
 
 extern LSI11 lsi;
 
+BOOL	menu(void* vt, u8* input_buf);
+
 /* peripheral subroutines */
 
 void	MSV11DInit(void);
