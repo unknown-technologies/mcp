@@ -13,7 +13,8 @@ INCLUDES	:=	include ../../common/include
 SOURCES		:=	src
 BUILD		:=	build
 
-ARCHFLAGS	:=	-m40 -msoft-float -mno-split -Wa,-mkd11f -Wa,-meis
+ARCHFLAGS	:=	-m40 -msoft-float -mno-split -Wa,-mkd11f -Wa,-meis \
+			-Wa,-mfis
 OPTFLAGS	:=	-Os
 
 CFLAGS		:=	$(OPTFLAGS) -Wall -std=c99 \

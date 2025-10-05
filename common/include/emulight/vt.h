@@ -151,9 +151,11 @@ void	VTEL2(void);
 void	VTED(int x);
 void	VTED2(void);
 void	VTDCH(int n);
+void	VTICH(int n);
 void	VTECH(int n);
 void	VTIndex(void);
 void	VTReverseIndex(void);
+void	VTNextLine(void);
 void	VTSGR(int x);
 void	VTSetDblHt(void);
 void	VTSetDblHb(void);
@@ -171,6 +173,15 @@ void	VTSixelEnd(void);
 void	VTSixel(u8 bits);
 void	VTSixelCR(void);
 void	VTSixelLF(void);
+
+static inline void VTDecOM(BOOL enable)
+{
+	if(enable) {
+		VTDecEn(6);
+	} else {
+		VTDecDis(6);
+	}
+}
 
 static inline void VTPutc(const char c)
 {

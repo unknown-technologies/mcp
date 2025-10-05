@@ -352,16 +352,36 @@ void VTED2(void)
 
 void VTDCH(int n)
 {
-	char buf[8];
-	int len = sprintf(buf, CSI "%dP", n);
-	VTWrite(buf, len);
+	if(n == 1) {
+		VTWrite(CSI "1P", CSILEN + 2);
+	} else {
+		char buf[8];
+		int len = sprintf(buf, CSI "%dP", n);
+		VTWrite(buf, len);
+	}
 }
+
+void VTICH(int n)
+{
+	if(n == 1) {
+		VTWrite(CSI "1@", CSILEN + 2);
+	} else {
+		char buf[8];
+		int len = sprintf(buf, CSI "%d@", n);
+		VTWrite(buf, len);
+	}
+}
+
 
 void VTECH(int n)
 {
-	char buf[8];
-	int len = sprintf(buf, CSI "%dX", n);
-	VTWrite(buf, len);
+	if(n == 1) {
+		VTWrite(CSI "1X", CSILEN + 2);
+	} else {
+		char buf[8];
+		int len = sprintf(buf, CSI "%dX", n);
+		VTWrite(buf, len);
+	}
 }
 
 void VTIndex(void)
@@ -379,6 +399,15 @@ void VTReverseIndex(void)
 	VTWrite("\x8D", 1);
 #else
 	VTWrite("\x1bM", 2);
+#endif
+}
+
+void VTNextLine(void)
+{
+#ifdef USE_8BIT
+	VTWrite("\x85", 1);
+#else
+	VTWrite("\x1b" "E", 2);
 #endif
 }
 
