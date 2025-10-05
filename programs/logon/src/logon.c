@@ -55,22 +55,19 @@ static void VTDrawCenter(int line, const char* s)
 
 void update_time(void)
 {
-	char buf[16];
 	OSDateTime now;
 
 	OSGetDateTime(&now);
 
 	/* print date */
-	sprintf(buf, "%02d.%02d.%04d", now.date.day, now.date.month,
-			now.date.year);
 	VTGoto(2, 2);
-	VTPrint(buf);
+	VTPrintf("%02d.%02d.%04d", now.date.day, now.date.month,
+			now.date.year);
 
 	/* print time */
-	sprintf(buf, "%02d:%02d:%02d", now.time.hour, now.time.minute,
-			now.time.second);
 	VTGoto(2, 72);
-	VTPrint(buf);
+	VTPrintf("%02d:%02d:%02d", now.time.hour, now.time.minute,
+			now.time.second);
 }
 
 void draw_mcp(void)
