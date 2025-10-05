@@ -19,8 +19,8 @@ void init(void)
 	OSLog(NUC_START, "THIS IS NUCLEUS R" REVISION " (COMMIT " COMMIT
 			") BUILT ON " BUILDDATE " " BUILDTIME);
 
-	/* memory is from 01000 (initial SP) to __relbase */
-	MEMInit((void*) 01000, __relbase);
+	/* memory is from 02000 (initial SP) to __relbase */
+	MEMInit((void*) 02000, __relbase);
 	OSLogToMemory(TRUE);
 
 	OSSchedInit();
