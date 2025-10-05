@@ -304,6 +304,10 @@ BOOL CALCParseProd(CALC* calc, FLOAT* out)
 					return FALSE;
 				}
 
+				if(FIsZero(&temp)) {
+					return FALSE;
+				}
+
 				FDiv(out, &temp);
 				break;
 		}

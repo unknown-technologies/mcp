@@ -63,6 +63,7 @@ void	FDiv(FLOAT* a, FLOAT* b);
 void	I2F(FLOAT* out, long in);
 void	F2I(long* out, FLOAT* in);
 void	F2A(char* out, FLOAT* f);
+BOOL	FIsZero(FLOAT* f);
 void	IMul10(long* x);
 void	IAdd(long* a, unsigned int b);
 

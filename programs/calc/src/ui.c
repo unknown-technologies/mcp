@@ -76,9 +76,6 @@ void CALCPrompt(SPFPanel* self)
 
 void CALCDraw(SPFPanel* self)
 {
-#if 0
-	u16 width = VTGetWidth(&self->spf->vt);
-#endif
 	u16 height = VTGetHeight(&self->spf->vt);
 
 	/* status line */

@@ -160,3 +160,10 @@ void F2A(char* out, FLOAT* f)
 	*(c++) = 0;
 #endif
 }
+
+BOOL FIsZero(FLOAT* f)
+{
+	int bias = (f->bits[0] >> 7) & 0xFF;
+
+	return bias == 0;
+}
