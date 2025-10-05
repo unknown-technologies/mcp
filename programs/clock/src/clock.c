@@ -6,6 +6,7 @@
 #include "clock.h"
 
 static Clock clock;
+static char buf[12];
 
 /**************************************************************************/
 /* Fullscreen clock                                                       */
@@ -61,7 +62,6 @@ BOOL CLKUpdate(SPFPanel* self)
 	u16 startX = (width - (6 * 8)) / 2 + 1;
 	u16 startY = (height - 7) / 2 + 1;
 
-	char buf[12];
 	BOOL updated = FALSE;
 
 	sprintf(buf, "%02d:%02d:%02d", time->hour, time->minute, time->second);
