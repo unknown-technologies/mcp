@@ -11,12 +11,11 @@
 
 #define	UI_ACTION_SYSINFO		0
 #define	UI_ACTION_CLOCKCFG		1
-#define	UI_ACTION_PANEL_LIST		2
-#define	UI_ACTION_CLOSE_PANEL		3
-#define	UI_ACTION_CLOSE_ALL_PANELS	4
-#define	UI_ACTION_ABOUT			5
-#define	UI_ACTION_HELP			6
-#define	UI_ACTION_LOGOFF		7
+#define	UI_ACTION_CLOSE_PANEL		2
+#define	UI_ACTION_CLOSE_ALL_PANELS	3
+#define	UI_ACTION_ABOUT			4
+#define	UI_ACTION_HELP			5
+#define	UI_ACTION_LOGOFF		6
 
 static const SPFMenuItem system_menu[] = {
 	{ .name = "System Information",	.action = UI_ACTION_SYSINFO },
@@ -28,7 +27,6 @@ static const SPFMenuItem system_menu[] = {
 };
 
 static const SPFMenuItem panel_menu[] = {
-	{ .name = "Panel List",		.action = UI_ACTION_PANEL_LIST },
 	{ .name = "Close Panel",	.action = UI_ACTION_CLOSE_PANEL,
 					.key = VTGetCTRL('W') },
 	{ .name = "Close All Panels",	.action = UI_ACTION_CLOSE_ALL_PANELS },
