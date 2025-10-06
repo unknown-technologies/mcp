@@ -353,7 +353,7 @@ void VTED2(void)
 void VTDCH(int n)
 {
 	if(n == 1) {
-		VTWrite(CSI "1P", CSILEN + 2);
+		VTWrite(CSI "P", CSILEN + 1);
 	} else {
 		char buf[8];
 		int len = sprintf(buf, CSI "%dP", n);
@@ -364,7 +364,7 @@ void VTDCH(int n)
 void VTICH(int n)
 {
 	if(n == 1) {
-		VTWrite(CSI "1@", CSILEN + 2);
+		VTWrite(CSI "@", CSILEN + 1);
 	} else {
 		char buf[8];
 		int len = sprintf(buf, CSI "%d@", n);
@@ -376,7 +376,7 @@ void VTICH(int n)
 void VTECH(int n)
 {
 	if(n == 1) {
-		VTWrite(CSI "1X", CSILEN + 2);
+		VTWrite(CSI "X", CSILEN + 1);
 	} else {
 		char buf[8];
 		int len = sprintf(buf, CSI "%dX", n);
