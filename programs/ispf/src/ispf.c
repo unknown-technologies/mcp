@@ -10,20 +10,16 @@
 #define	SOFTWARE_VERSION		"r" REVISION "~" COMMIT
 
 #define	UI_ACTION_SYSINFO		0
-#define	UI_ACTION_CLOCK			1
-#define	UI_ACTION_CLOCKCFG		2
-#define	UI_ACTION_WORKSPC		3
-#define	UI_ACTION_PANEL_LIST		4
-#define	UI_ACTION_CLOSE_PANEL		5
-#define	UI_ACTION_CLOSE_ALL_PANELS	6
-#define	UI_ACTION_ABOUT			7
-#define	UI_ACTION_HELP			8
-#define	UI_ACTION_LOGOFF		9
+#define	UI_ACTION_CLOCKCFG		1
+#define	UI_ACTION_PANEL_LIST		2
+#define	UI_ACTION_CLOSE_PANEL		3
+#define	UI_ACTION_CLOSE_ALL_PANELS	4
+#define	UI_ACTION_ABOUT			5
+#define	UI_ACTION_HELP			6
+#define	UI_ACTION_LOGOFF		7
 
 static const SPFMenuItem system_menu[] = {
 	{ .name = "System Information",	.action = UI_ACTION_SYSINFO },
-	{ .name = "Fullscreen Clock",	.action = UI_ACTION_CLOCK },
-	{ .name = "Workplace",		.action = UI_ACTION_WORKSPC },
 	{ .name = "-",			.action = 0 },
 	{ .name = "Configure Clock",	.action = UI_ACTION_CLOCKCFG },
 	{ .name = "-",			.action = 0 },
@@ -53,24 +49,9 @@ static const SPFMenuData menus[] = {
 	{ .name = NULL,			.items = NULL }
 };
 
+static const char* main_program = "SYS1.ISPF.WORKSPC";
+
 static SPF ispf;
-
-void ISPFLoadProgram(SPF* spf, const char* dsn)
-{
-	void* program = OSLoadProgram(dsn);
-	if(!program) {
-		SPFShowError(spf, "Failed to load program");
-		return;
-	}
-
-	SPFPanelDefinition* def = (SPFPanelDefinition*) program;
-	SPFPanel* panel = SPFCreatePanel(spf, def);
-	if(panel) {
-		SPFSetPanelProgram(panel, program);
-	} else {
-		OSUnloadProgram(program);
-	}
-}
 
 /******************************************************************************/
 void ISPFMenuHandler(SPF* spf, int action)
@@ -83,23 +64,17 @@ void ISPFMenuHandler(SPF* spf, int action)
 			SPFShowMessage(spf, "Memory", buf);
 			break;
 		}
-		case UI_ACTION_CLOCK:
-			ISPFLoadProgram(spf, "SYS1.ISPF.CLOCK");
-			break;
 		case UI_ACTION_CLOCKCFG:
-			ISPFLoadProgram(spf, "SYS1.ISPF.CLOCKCFG");
-			break;
-		case UI_ACTION_WORKSPC:
-			ISPFLoadProgram(spf, "SYS1.ISPF.WORKSPC");
+			SPFLoadProgram(spf, "SYS1.ISPF.CLOCKCFG");
 			break;
 		case UI_ACTION_CLOSE_PANEL:
-			if(spf->current_panel > 0) {
+			if(spf->current_panel >= 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
 				SPFCleanupPanels(spf);
 			}
 			break;
 		case UI_ACTION_CLOSE_ALL_PANELS:
-			while(spf->current_panel > 0) {
+			while(spf->current_panel >= 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
 				SPFCleanupPanels(spf);
 			}
@@ -110,12 +85,7 @@ void ISPFMenuHandler(SPF* spf, int action)
 					SOFTWARE_VERSION);
 			break;
 		case UI_ACTION_LOGOFF:
-			if(spf->current_panel > 0) {
-				SPFShowError(spf, "Cannot logoff while panels "
-						"are still active");
-			} else {
-				exit_ispf = TRUE;
-			}
+			SPFTerminate(spf);
 			break;
 		default:
 			SPFShowError(spf, "Function not implemented");
@@ -163,14 +133,24 @@ void ISPFInit(void)
 	SPFInit(&ispf);
 	SPFSetMenuBar(&ispf, menus, ISPFMenuHandler);
 	SPFSetDeleteHandler(&ispf, ISPFDeleteHandler);
-	ISPFInitRoot(&ispf);
+	if(!SPFLoadProgram(&ispf, main_program)) {
+		SPFCreatePanel(&ispf, &root_panel);
+	}
 	SPFSetStatusBarDrawCallback(&ispf, ISPFStatusDrawHandler);
 	SPFSetStatusBarUpdateCallback(&ispf, ISPFStatusUpdateHandler);
 }
 
-void ISPFProcess(void)
+BOOL ISPFProcess(void)
 {
 	SPFProcess(&ispf);
+
+	if(ispf.current_panel == -1) {
+		if(!SPFLoadProgram(&ispf, main_program)) {
+			SPFCreatePanel(&ispf, &root_panel);
+		}
+	}
+
+	return !ispf.exit_request;
 }
 
 void ISPFDestroy(void)

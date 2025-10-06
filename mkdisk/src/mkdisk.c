@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 	const char* layout_path = NULL;
 	const char* disk_label = "ROMVOL";
 
-	unsigned int vtoc_blocks = 2;
+	unsigned int vtoc_blocks = 4;
 
 	EFS efs;
 

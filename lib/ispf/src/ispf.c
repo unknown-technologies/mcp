@@ -113,3 +113,22 @@ void SPFProcess(SPF* spf)
 		SPFUpdateStatusBar(spf);
 	}
 }
+
+BOOL SPFLoadProgram(SPF* spf, const char* dsn)
+{
+	void* program = OSLoadProgram(dsn);
+	if(!program) {
+		SPFShowError(spf, "Failed to load program");
+		return FALSE;
+	}
+
+	SPFPanelDefinition* def = (SPFPanelDefinition*) program;
+	SPFPanel* panel = SPFCreatePanel(spf, def);
+	if(panel) {
+		SPFSetPanelProgram(panel, program);
+		return TRUE;
+	} else {
+		OSUnloadProgram(program);
+		return FALSE;
+	}
+}

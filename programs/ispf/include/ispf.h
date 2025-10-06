@@ -4,11 +4,10 @@
 #include <emulight/types.h>
 #include <emulight/ispf.h>
 
-extern volatile BOOL exit_ispf;
+extern SPFPanelDefinition root_panel;
 
 void ISPFInit(void);
-void ISPFProcess(void);
+BOOL ISPFProcess(void);
 void ISPFDestroy(void);
-void ISPFInitRoot(SPF* spf);
 
 #endif

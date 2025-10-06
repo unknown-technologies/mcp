@@ -14,6 +14,13 @@ void	SPFUpdate(SPF* spf);
 void	SPFProcess(SPF* spf);
 void	SPFRepaint(SPF* spf);
 
+BOOL	SPFLoadProgram(SPF* spf, const char* dsn);
+void	SPFExecProgram(SPFPanel* self, const char* dsn);
+
+static inline void SPFTerminate(SPF* spf)
+{
+	spf->exit_request = TRUE;
+}
 
 /******************************************************************************/
 /* Message box routines                                                       */

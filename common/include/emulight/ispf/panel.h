@@ -10,6 +10,7 @@
 #define	SPF_FLAG_ACTIVE		_BV(0)
 #define	SPF_FLAG_CURSOR		_BV(1)
 #define	SPF_FLAG_DESTROY	_BV(2)
+#define	SPF_FLAG_EXEC		_BV(4)
 
 struct SPF;
 struct SPFPanel;
@@ -76,6 +77,7 @@ struct SPF {
 	BOOL			error_active;
 	BOOL			dirty;
 	BOOL			delete_pending;
+	volatile BOOL		exit_request;
 	OSDateTime		clock;
 };
 

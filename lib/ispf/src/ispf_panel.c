@@ -3,6 +3,10 @@
 #include <emulight/vt.h>
 #include <emulight/ispf.h>
 
+#define	DSN_MAXLEN	30
+
+static char exec_buf[DSN_MAXLEN + 1];
+
 SPFPanel* SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 {
 	/* hack to avoid miscompilation on GCC 13 */
@@ -155,11 +159,17 @@ void SPFCleanupPanels(SPF* spf)
 		return;
 	}
 
+	BOOL exec = FALSE;
+
 	/* delete programs if necessary */
 	for(int i = 0; i <= spf->current_panel; i++) {
 		SPFPanel* panel = &spf->panels[i];
 
 		if((panel->flags & SPF_FLAGS_DESTROY) == SPF_FLAGS_DESTROY) {
+			if(panel->flags & SPF_FLAG_EXEC) {
+				exec = TRUE;
+			}
+
 			SPFDeleteProgram(panel);
 			panel->flags = 0;
 		}
@@ -180,5 +190,22 @@ void SPFCleanupPanels(SPF* spf)
 	spf->current_panel = top;
 	spf->delete_pending = FALSE;
 
-	SPFRepaint(spf);
+	if(exec) {
+		SPFLoadProgram(spf, exec_buf);
+		bzero(exec_buf, sizeof(exec_buf));
+	} else {
+		SPFRepaint(spf);
+	}
+}
+
+void SPFExecProgram(SPFPanel* panel, const char* dsn)
+{
+	SPFDestroyPanel(panel);
+	panel->flags |= SPF_FLAG_EXEC;
+	size_t len = strlen(dsn);
+	if(len > DSN_MAXLEN) {
+		len = DSN_MAXLEN;
+	}
+	memcpy(exec_buf, dsn, len);
+	exec_buf[len] = 0;
 }
