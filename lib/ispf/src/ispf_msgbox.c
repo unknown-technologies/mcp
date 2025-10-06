@@ -17,6 +17,9 @@ static void SPFiShowMessage(SPF* spf, const char* title, const char* message,
 	unsigned int start_x = (width - maxlen) / 2;
 	unsigned int start_y = (height - 3) / 2 + 1;
 
+	/* always disable the cursor, it will be reset by next repaint */
+	VTDecDis(DECTCEM);
+
 	if(sgr) {
 		VTPrint(sgr);
 	}
