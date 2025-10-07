@@ -10,8 +10,8 @@ typedef struct {
 	const char*	program;
 } MENU;
 
-extern const MENU main_menu[];
-extern int main_menu_max;
+extern MENU* main_menu;
+extern int main_menu_cnt;
 
 void	WSInit(SPFPanel* self);
 void	WSDraw(SPFPanel* self);

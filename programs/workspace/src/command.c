@@ -34,7 +34,7 @@ BOOL WSExecuteCommand(SPFPanel* self, const char* cmd)
 		}
 
 		/* now search the menu item */
-		if(num > main_menu_max) {
+		if(num >= main_menu_cnt) {
 			SPFShowError(spf, "Invalid option");
 			return FALSE;
 		}

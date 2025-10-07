@@ -1,0 +1,10 @@
+-			Settings	Terminal and user parameters
+-			View		Display source data or listings
+-			Edit		Create or change source data
+-			Utilities	Perform utility functions
+-			Calendar	Process calendars
+-			Notes		Process notes and messages
+-			Documents	Process documents
+SYS1.ISPF.CALC		Calculator	Perform floating point processing
+SYS1.ISPF.CLOCK		Clock		Full screen clock
+SYS1.ISPF.CLOCKCFG	Time Settings	Configure date and time

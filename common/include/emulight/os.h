@@ -151,6 +151,8 @@ static inline void OSGetLog(void (*callback)(const char* msg, void* user),
 			: "memory");
 }
 
-size_t MEMAvailable(void);
+size_t	MEMAvailable(void);
+void*	MEMAlloc(size_t size);
+void	MEMFree(void* ptr);
 
 #endif

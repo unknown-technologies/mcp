@@ -37,6 +37,7 @@ static NUCSymbol nucleus_symbols[] = {
 	{ .name = "_CALGetDaysOfMonth",	.value = CALGetDaysOfMonth },
 	{ .name = "_CALIsLeapYear",	.value = CALIsLeapYear },
 	{ .name = "_MEMAlloc",		.value = MEMAlloc },
+	{ .name = "_MEMFree",		.value = MEMFree },
 	{ .name = "_MEMAvailable",	.value = MEMAvailable },
 	{ .name = "_OSCreateLibrary",	.value = OSCreateLibrary },
 	{ .name = "_OSFreeLibrary",	.value = OSFreeLibrary },

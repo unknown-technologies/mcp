@@ -1,6 +1,7 @@
 #include <emulight/types.h>
 #include <emulight/ispf.h>
 #include <emulight/os.h>
+#include <emulight/ds.h>
 #include <emulight/cal.h>
 #include <emulight/string.h>
 
@@ -14,56 +15,124 @@ static const char* month_names[12] = {
 	"August", "September", "October", "November", "December"
 };
 
-const MENU main_menu[] = {
-	{
-		.name = "Settings",
-		.description = "Terminal and user parameters",
-		.program = NULL
-	}, {
-		.name = "View",
-		.description = "Display source data or listings",
-		.program = NULL,
-	}, {
-		.name = "Edit",
-		.description = "Create or change source data",
-		.program = NULL,
-	}, {
-		.name = "Utilities",
-		.description = "Perform utility functions",
-		.program = NULL,
-	}, {
-		.name = "Notes",
-		.description = "Process notes and messages",
-		.program = NULL,
-	}, {
-		.name = "Calculator",
-		.description = "Perform floating point processing",
-		.program = "SYS1.ISPF.CALC"
-	}, {
-		.name = "Clock",
-		.description = "Full screen clock",
-		.program = "SYS1.ISPF.CLOCK"
-	}, {
-		.name = NULL,
-		.description = NULL,
-		.program = NULL
-	}
-};
+static const char* menu_dsn = "SYS1.ISPF.MENU";
 
-int main_menu_max;
+static void* memory = NULL;
+MENU* main_menu = NULL;
+int main_menu_cnt;
 
 static char input_buf[INPUT_MAX + 1];
 static int input_pos;
 static int input_len;
+
+static char rec_buf[96];
+
+static int get_len(char* s, int len)
+{
+	for(int i = len - 1; i > 0; i--) {
+		if(s[i - 1] != 0 && s[i - 1] != ' ') {
+			s[i] = 0;
+			return i;
+		}
+	}
+
+	return 0;
+}
 
 void WSInit(SPFPanel* self)
 {
 	SPFShowCursor(self);
 	SPFSetPanelTitle(self, "Workplace");
 
-	for(unsigned int i = 0; main_menu[i].name; i++) {
-		main_menu_max = i;
+	int ds = DSOpen(menu_dsn);
+	if(ds < 0) {
+		SPFDestroyPanel(self);
+		SPFTerminate(self->spf);
+		return;
 	}
+
+	DS info;
+	DSGetInfo(ds, &info);
+	size_t lrecl = DSGetRecLen(&info);
+	if(lrecl > sizeof(rec_buf)) {
+		DSClose(ds);
+		SPFDestroyPanel(self);
+		SPFTerminate(self->spf);
+		return;
+	}
+
+	size_t string_size = 0;
+	while(DSRead(ds, rec_buf, 1) == 1) {
+		rec_buf[sizeof(rec_buf) - 1] = 0;
+		if(!rec_buf[0] || rec_buf[0] == ' ') {
+			break;
+		} else {
+			char* dsn = &rec_buf[0];
+			char* name = &rec_buf[24];
+			char* description = &rec_buf[40];
+			string_size += get_len(dsn, 24);
+			string_size += get_len(name, 16);
+			string_size += get_len(description, lrecl - 40);
+			string_size += 3; /* NUL characters */
+			main_menu_cnt++;
+		}
+	}
+
+	/* allocate memory */
+	size_t memory_size = string_size + main_menu_cnt * sizeof(MENU);
+	memory = MEMAlloc(memory_size);
+	if(!memory) {
+		DSClose(ds);
+		SPFDestroyPanel(self);
+		SPFTerminate(self->spf);
+		return;
+	}
+
+	bzero(memory, memory_size);
+
+	char* str_ptr = memory + main_menu_cnt * sizeof(MENU);
+	MENU* menu = (MENU*) memory;
+	main_menu = menu;
+
+	/* rewind and load menu data */
+	DSSeek(ds, 0);
+	while(DSRead(ds, rec_buf, 1) == 1) {
+		rec_buf[sizeof(rec_buf) - 1] = 0;
+		if(!rec_buf[0] || rec_buf[0] == ' ') {
+			break;
+		} else {
+			char* dsn = &rec_buf[0];
+			char* name = &rec_buf[24];
+			char* description = &rec_buf[40];
+			dsn[23] = 0;
+			name[15] = 0;
+			size_t dsn_len = get_len(dsn, 24);
+			size_t name_len = get_len(name, 16);
+			size_t description_len = get_len(description,
+					lrecl - 40);
+
+			menu->name = str_ptr;
+			memcpy(str_ptr, name, name_len + 1);
+			str_ptr += name_len + 1;
+
+			menu->description = str_ptr;
+			memcpy(str_ptr, description, description_len + 1);
+			str_ptr += description_len + 1;
+
+			menu->program = str_ptr;
+			memcpy(str_ptr, dsn, dsn_len + 1);
+			str_ptr += dsn_len + 1;
+
+			/* '-' is the "no program associated" magic value */
+			if(*dsn == '-') {
+				menu->program = NULL;
+			}
+
+			menu++;
+		}
+	}
+
+	DSClose(ds);
 
 	bzero(input_buf, sizeof(input_buf));
 	input_pos = 0;
@@ -93,7 +162,8 @@ void WSDraw(SPFPanel* self)
 		VTPutc(' ');
 	}
 	VTSGR(0);
-	for(unsigned int i = 0; main_menu[i].name; i++) {
+
+	for(int i = 0; i < main_menu_cnt; i++) {
 		const MENU* menu = &main_menu[i];
 		VTGoto(6 + i, 2);
 		VTSGR(1);
@@ -272,6 +342,8 @@ void WSProcess(SPFPanel* self, u16 key)
 
 void WSDestroy(SPFPanel* self)
 {
-	(void) self;
-	/* nothing for now */
+	if(memory) {
+		MEMFree(memory);
+		memory = NULL;
+	}
 }

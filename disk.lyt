@@ -17,9 +17,10 @@ X ** SYS1.TSO.TSOLOGON		commands/tsologon/build/tsologon
 6 72 SYS1.TSO.HELP		diskroot/SYS1.TSO.HELP
 X ** SYS1.SIM			programs/sim/build/sim
 X ** SYS1.ISPF.CORE		programs/ispf/build/ispf
+X ** SYS1.ISPF.WORKSPC		programs/workspace/build/workspace
+7 80 SYS1.ISPF.MENU		diskroot/SYS1.ISPF.MENU
 X ** SYS1.ISPF.CLOCK		programs/clock/build/clock
 X ** SYS1.ISPF.CLOCKCFG		programs/clockcfg/build/clockcfg
-X ** SYS1.ISPF.WORKSPC		programs/workspace/build/workspace
 X ** SYS1.ISPF.CALC		programs/calc/build/calc
 X ** SYS1.COMMAND.LOGOFF	commands/logoff/build/logoff
 X ** SYS1.COMMAND.SYSTEM	commands/system/build/system
