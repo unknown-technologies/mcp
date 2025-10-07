@@ -42,6 +42,13 @@ int TMain(unsigned int argc, TSOArgument* argv)
 			sprintf(buf, "%05d ", i++);
 			TPrint(buf);
 			recbuf[lrecl] = 0;
+			for(int i = lrecl - 1; i > 0; i--) {
+				if(recbuf[i] == ' ') {
+					recbuf[i] = 0;
+				} else {
+					break;
+				}
+			}
 			TPrint(recbuf);
 			TPutc('\n');
 		}
