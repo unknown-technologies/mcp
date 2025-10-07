@@ -10,17 +10,14 @@
 #define	SOFTWARE_VERSION		"r" REVISION "~" COMMIT
 
 #define	UI_ACTION_SYSINFO		0
-#define	UI_ACTION_CLOCKCFG		1
-#define	UI_ACTION_CLOSE_PANEL		2
-#define	UI_ACTION_CLOSE_ALL_PANELS	3
-#define	UI_ACTION_ABOUT			4
-#define	UI_ACTION_HELP			5
-#define	UI_ACTION_LOGOFF		6
+#define	UI_ACTION_CLOSE_PANEL		1
+#define	UI_ACTION_CLOSE_ALL_PANELS	2
+#define	UI_ACTION_ABOUT			3
+#define	UI_ACTION_HELP			4
+#define	UI_ACTION_LOGOFF		5
 
 static const SPFMenuItem system_menu[] = {
 	{ .name = "System Information",	.action = UI_ACTION_SYSINFO },
-	{ .name = "-",			.action = 0 },
-	{ .name = "Configure Clock",	.action = UI_ACTION_CLOCKCFG },
 	{ .name = "-",			.action = 0 },
 	{ .name = "Logoff",		.action = UI_ACTION_LOGOFF },
 	{ .name = NULL,			.action = 0 }
@@ -62,9 +59,6 @@ void ISPFMenuHandler(SPF* spf, int action)
 			SPFShowMessage(spf, "Memory", buf);
 			break;
 		}
-		case UI_ACTION_CLOCKCFG:
-			SPFLoadProgram(spf, "SYS1.ISPF.CLOCKCFG");
-			break;
 		case UI_ACTION_CLOSE_PANEL:
 			if(spf->current_panel >= 0) {
 				SPFDestroyPanel(SPFCurrentPanel(spf));
