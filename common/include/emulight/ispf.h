@@ -11,7 +11,7 @@
 void	SPFInit(SPF* spf);
 void	SPFDraw(SPF* spf);
 void	SPFUpdate(SPF* spf);
-void	SPFProcess(SPF* spf);
+BOOL	SPFProcess(SPF* spf);
 void	SPFRepaint(SPF* spf);
 
 BOOL	SPFLoadProgram(SPF* spf, const char* dsn);

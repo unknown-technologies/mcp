@@ -134,7 +134,7 @@ void ISPFInit(void)
 
 BOOL ISPFProcess(void)
 {
-	SPFProcess(&ispf);
+	while(SPFProcess(&ispf));
 
 	if(ispf.current_panel == -1) {
 		if(!SPFLoadProgram(&ispf, main_program)) {

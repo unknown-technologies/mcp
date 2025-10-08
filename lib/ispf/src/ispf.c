@@ -63,7 +63,7 @@ void SPFRepaint(SPF* spf)
 	spf->dirty = TRUE;
 }
 
-void SPFProcess(SPF* spf)
+BOOL SPFProcess(SPF* spf)
 {
 	SPFCleanupPanels(spf);
 
@@ -73,8 +73,9 @@ void SPFProcess(SPF* spf)
 		if(key != VT_KEY_NONE) {
 			spf->error_active = FALSE;
 			SPFRepaint(spf);
+			return TRUE;
 		}
-		return;
+		return FALSE;
 	}
 
 	switch(key) {
@@ -112,6 +113,8 @@ void SPFProcess(SPF* spf)
 	} else {
 		SPFUpdateStatusBar(spf);
 	}
+
+	return key != VT_KEY_NONE;
 }
 
 BOOL SPFLoadProgram(SPF* spf, const char* dsn)
