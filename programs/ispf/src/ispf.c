@@ -126,6 +126,8 @@ void ISPFInit(void)
 	SPFSetMenuBar(&ispf, menus, ISPFMenuHandler);
 	SPFSetDeleteHandler(&ispf, ISPFDeleteHandler);
 	if(!SPFLoadProgram(&ispf, main_program)) {
+		OSLog(ISPF_FACILITY, ISPF_MSG_ROOT, LOG_ERR,
+				"FAILED TO LOAD ROOT PANEL");
 		SPFCreatePanel(&ispf, &root_panel);
 	}
 	SPFSetStatusBarDrawCallback(&ispf, ISPFStatusDrawHandler);
@@ -138,6 +140,8 @@ BOOL ISPFProcess(void)
 
 	if(ispf.current_panel == -1) {
 		if(!SPFLoadProgram(&ispf, main_program)) {
+			OSLog(ISPF_FACILITY, ISPF_MSG_ROOT, LOG_ERR,
+					"FAILED TO LOAD ROOT PANEL");
 			SPFCreatePanel(&ispf, &root_panel);
 		}
 	}

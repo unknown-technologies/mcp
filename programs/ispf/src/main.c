@@ -11,7 +11,7 @@ void start(void)
 {
 	ISPFInit();
 
-	OSLog(ISPF_FACILITY, 100, LOG_INFO, "ISPF STARTED");
+	OSLog(ISPF_FACILITY, ISPF_MSG_START, LOG_INFO, "ISPF STARTED");
 
 	while(ISPFProcess()) {
 		OSYield();
@@ -19,7 +19,7 @@ void start(void)
 
 	ISPFDestroy();
 
-	OSLog(ISPF_FACILITY, 101, LOG_INFO, "ISPF EXITED");
+	OSLog(ISPF_FACILITY, ISPF_MSG_EXIT, LOG_INFO, "ISPF EXITED");
 
 	VTSGR(0);
 }

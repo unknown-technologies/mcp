@@ -131,6 +131,8 @@ BOOL SPFLoadProgram(SPF* spf, const char* dsn)
 		SPFSetPanelProgram(panel, program);
 		return TRUE;
 	} else {
+		OSLog(ISPF_FACILITY, ISPF_MSG_LOAD, LOG_WARN,
+				"PROGRAM FAILED TO CREATE PANEL");
 		OSUnloadProgram(program);
 		return FALSE;
 	}
