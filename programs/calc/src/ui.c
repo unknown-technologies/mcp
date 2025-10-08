@@ -125,19 +125,8 @@ void CALCProcess(SPFPanel* self, u16 key)
 			} else {
 				FLOAT result;
 				CALCGetResult(&result);
-#if 0
-				for(unsigned int w = 0; w < 2; w++) {
-					s16 bits = result.bits[w];
-					for(unsigned int i = 0; i < 16; i++) {
-						BOOL bit = bits < 0;
-						VTPutc(bit ? '1' : '0');
-						bits <<= 1;
-					}
-				}
-#else
 				F2A(outbuf, &result);
 				VTPrint(outbuf);
-#endif
 				VTNextLine();
 			}
 
