@@ -7,4 +7,4 @@
 -			Documents	Process documents
 SYS1.ISPF.CALC		Calculator	Perform floating point processing
 SYS1.ISPF.CLOCK		Clock		Full screen clock
-SYS1.ISPF.CLOCKCFG	Time Settings	Configure date and time
+SYS1.ISPF.SYSTEM	System		System management functions
