@@ -48,6 +48,7 @@ static void CLKDrawChar(int x, int y, int c)
 void CLKInit(SPFPanel* self)
 {
 	SPFSetPanelTitle(self, "Clock");
+	SPFHideActions(self);
 	OSGetTime(&clock.time);
 	bzero(clock.timebuf, 12);
 }

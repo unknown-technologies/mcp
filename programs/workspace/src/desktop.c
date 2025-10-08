@@ -142,17 +142,12 @@ void WSInit(SPFPanel* self)
 void WSDraw(SPFPanel* self)
 {
 	u16 width = VTGetWidth(&self->spf->vt);
-	u16 height = VTGetHeight(&self->spf->vt);
 
 	/* title line */
 	const char* title = "MCP Primary Option Menu";
 	u16 center = (width - strlen(title)) / 2;
 	VTGoto(3, center + 1);
 	VTPrint(title);
-
-	/* status line */
-	VTGoto(height - 1, 2);
-	VTPrint("F10=Menu   CTRL-L=Refresh");
 
 	/* main menu */
 	VTGoto(4, 2);

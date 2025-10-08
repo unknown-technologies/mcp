@@ -78,10 +78,7 @@ void CALCDraw(SPFPanel* self)
 {
 	u16 height = VTGetHeight(&self->spf->vt);
 
-	/* status line */
-	VTGoto(height - 1, 2);
-	VTPrint("F10=Menu   CTRL-L=Refresh");
-	VTSTBM(2, 22);
+	VTSTBM(2, height - 2);
 
 	CALCPrompt(self);
 }

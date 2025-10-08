@@ -55,17 +55,12 @@ void SYSInit(SPFPanel* self)
 void SYSDraw(SPFPanel* self)
 {
 	u16 width = VTGetWidth(&self->spf->vt);
-	u16 height = VTGetHeight(&self->spf->vt);
 
 	/* title line */
 	const char* title = "System Management";
 	u16 center = (width - strlen(title)) / 2;
 	VTGoto(3, center + 1);
 	VTPrint(title);
-
-	/* status line */
-	VTGoto(height - 1, 2);
-	VTPrint("F10=Menu   CTRL-L=Refresh   CTRL-W=Back");
 
 	/* system info widget */
 	size_t ram_free = MEMAvailable();

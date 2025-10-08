@@ -78,31 +78,30 @@ BOOL SPFProcess(SPF* spf)
 		return FALSE;
 	}
 
-	switch(key) {
-		/* menu key */
-		case VT_KEY_F10:
-			if(spf->menu_active) {
-				SPFHideMenu(spf);
-			} else {
-				SPFShowMenu(spf);
+	BOOL handled = FALSE;
+	if(key != VT_KEY_NONE && spf->default_actions) {
+		for(const SPFAction* action = spf->default_actions;
+				action->name; action++) {
+			if(action->key == key && action->action) {
+				action->action(spf, action);
+				handled = TRUE;
+				break;
 			}
-			break;
-		/* screen refresh key */
-		case VTGetCTRL('L'):
-			SPFRepaint(spf);
-			break;
+		}
+	}
+
+	if(!handled) {
 		/* any other key is forwarded to the current panel */
-		default:
-			if(spf->menu_active) {
-				SPFProcessMenu(spf, key);
-			} else if(key != VT_KEY_NONE) {
-				if(!SPFProcessMenuHotkeys(spf, key)) {
-					SPFPanel* panel = SPFCurrentPanel(spf);
-					SPFProcessPanel(panel, key);
-				}
-			} else {
-				SPFProcessPanel(SPFCurrentPanel(spf), key);
+		if(spf->menu_active) {
+			SPFProcessMenu(spf, key);
+		} else if(key != VT_KEY_NONE) {
+			if(!SPFProcessMenuHotkeys(spf, key)) {
+				SPFPanel* panel = SPFCurrentPanel(spf);
+				SPFProcessPanel(panel, key);
 			}
+		} else {
+			SPFProcessPanel(SPFCurrentPanel(spf), key);
+		}
 	}
 
 	if(spf->dirty) {

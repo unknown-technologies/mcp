@@ -44,9 +44,34 @@ static const SPFMenuData menus[] = {
 	{ .name = NULL,			.items = NULL }
 };
 
+static const SPFAction actions[] = {
+	{ .name = "Menu",   .key = VT_KEY_F10,    .action = ISPFActionHandler },
+	{ .name = "Refresh",.key = VTGetCTRL('L'),.action = ISPFActionHandler },
+	{ .name = "Exit",   .key = VTGetCTRL('W'),.action = NULL },
+	{ .name = NULL,     .key = 0,             .action = NULL }
+};
+
 static const char* main_program = "SYS1.ISPF.WORKSPC";
 
 static SPF ispf;
+
+void ISPFActionHandler(SPF* spf, const SPFAction* action)
+{
+	switch(action->key) {
+		/* menu key */
+		case VT_KEY_F10:
+			if(spf->menu_active) {
+				SPFHideMenu(spf);
+			} else {
+				SPFShowMenu(spf);
+			}
+			break;
+		/* screen refresh key */
+		case VTGetCTRL('L'):
+			SPFRepaint(spf);
+			break;
+	}
+}
 
 /******************************************************************************/
 void ISPFMenuHandler(SPF* spf, int action)
@@ -124,6 +149,7 @@ void ISPFInit(void)
 {
 	SPFInit(&ispf);
 	SPFSetMenuBar(&ispf, menus, ISPFMenuHandler);
+	SPFSetDefaultActions(&ispf, actions);
 	SPFSetDeleteHandler(&ispf, ISPFDeleteHandler);
 	if(!SPFLoadProgram(&ispf, main_program)) {
 		OSLog(ISPF_FACILITY, ISPF_MSG_ROOT, LOG_ERR,

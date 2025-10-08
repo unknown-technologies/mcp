@@ -26,7 +26,7 @@ SPFPanel* SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 	panel->proto = dlg;
 	panel->spf = spf;
 	panel->program = program;
-	panel->flags = SPF_FLAG_ACTIVE;
+	panel->flags = SPF_FLAG_ACTIVE | SPF_FLAG_ACTIONS;
 
 	if(init) {
 		init(panel);
@@ -38,6 +38,25 @@ SPFPanel* SPFCreatePanel(SPF* spf, const SPFPanelDefinition* dlg)
 	return panel;
 }
 
+static void SPFDrawActions(const SPFAction* actions)
+{
+	for(const SPFAction* action = actions; action->name; action++) {
+		if(action->key >= VT_KEY_F1 && action->key <= VT_KEY_F20) {
+			VTPrintf("F%d", action->key - VT_KEY_F1 + 1);
+		} else if(action->key >= VTGetCTRL('A')
+				&& action->key <= VTGetCTRL('Z')) {
+			VTPrintf("CTRL-%c", action->key - VTGetCTRL('A')
+					+ 'A');
+		}
+		VTPutc('=');
+		VTPrint(action->name);
+
+		if(action[1].name) {
+			VTPrint("  ");
+		}
+	}
+}
+
 void SPFDrawPanel(SPFPanel* panel)
 {
 	/* NULL is a valid argument, ignore it */
@@ -45,8 +64,37 @@ void SPFDrawPanel(SPFPanel* panel)
 		return;
 	}
 
+	if((panel->actions || panel->spf->default_actions)
+			&& (panel->flags & SPF_FLAG_ACTIONS)
+			&& !SPFGetOption(panel->spf, SPF_OPTION_NOACTIONS)) {
+		/* draw actions at the bottom of the screen */
+		u16 height = VTGetHeight(&panel->spf->vt);
+		VTGoto(height - 1, 2);
+		BOOL space = FALSE;
+		if(panel->spf->default_actions) {
+			SPFDrawActions(panel->spf->default_actions);
+			space = TRUE;
+		}
+		if(panel->actions) {
+			if(space) {
+				VTPrint("  ");
+			}
+			SPFDrawActions(panel->actions);
+		}
+	}
+
 	if(panel->proto->draw) {
 		panel->proto->draw(panel);
+	}
+
+	if(panel->widgets) {
+		for(SPFWidget** widget = panel->widgets; *widget; widget++) {
+			SPFDrawWidget(*widget);
+		}
+
+		if(panel->focus) {
+			SPFFocusWidget(panel->focus);
+		}
 	}
 }
 
@@ -75,7 +123,19 @@ void SPFProcessPanel(SPFPanel* panel, u16 key)
 		return;
 	}
 
-	if(panel->proto->process) {
+	BOOL done = FALSE;
+	for(const SPFAction* action = panel->actions; action->name; action++) {
+		if(action->key == key && action->action) {
+			action->action(panel->spf, action);
+			done = TRUE;
+		}
+	}
+
+	if(!done && panel->widgets && panel->focus) {
+		done = SPFProcessWidget(panel->focus, key);
+	}
+
+	if(!done && panel->proto->process) {
 		panel->proto->process(panel, key);
 	}
 
@@ -208,4 +268,19 @@ void SPFExecProgram(SPFPanel* panel, const char* dsn)
 	}
 	memcpy(exec_buf, dsn, len);
 	exec_buf[len] = 0;
+}
+
+void SPFSetWidgets(SPFPanel* panel, SPFWidget** widgets)
+{
+	panel->widgets = widgets;
+	panel->focus = NULL;
+
+	if(widgets) {
+		for(SPFWidget** widget = widgets; *widget; widget++) {
+			SPFSetWidgetPanel(*widget, panel);
+			if(!panel->focus && SPFCanFocusWidget(*widget)) {
+				panel->focus = *widget;
+			}
+		}
+	}
 }

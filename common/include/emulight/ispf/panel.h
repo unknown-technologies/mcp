@@ -9,8 +9,12 @@
 
 #define	SPF_FLAG_ACTIVE		_BV(0)
 #define	SPF_FLAG_CURSOR		_BV(1)
-#define	SPF_FLAG_DESTROY	_BV(2)
-#define	SPF_FLAG_EXEC		_BV(4)
+#define	SPF_FLAG_ACTIONS	_BV(2)
+#define	SPF_FLAG_DESTROY	_BV(4)
+#define	SPF_FLAG_EXEC		_BV(8)
+
+#define	SPF_OPTION_REVERSE	_BV(0)
+#define	SPF_OPTION_NOACTIONS	_BV(1)
 
 struct SPF;
 struct SPFPanel;
@@ -56,12 +60,25 @@ typedef struct {
 	const char*		(*update)(SPF* spf);
 } SPFStatusBar;
 
+struct SPFAction;
+typedef struct SPFAction SPFAction;
+struct SPFAction {
+	const char*		name;
+	u16			key;
+	void			(*action)(SPF* spf, const SPFAction* self);
+};
+
+#include <emulight/ispf/widget.h>
+
 struct SPFPanel {
 	const SPFPanelDefinition* proto;
 	const char*		title;
 	SPF*			spf;
 	void*			userdata;
 	void*			program;
+	SPFWidget**		widgets;
+	SPFWidget*		focus;
+	const SPFAction*	actions;
 	u16			flags;
 };
 
@@ -78,6 +95,8 @@ struct SPF {
 	BOOL			dirty;
 	BOOL			delete_pending;
 	volatile BOOL		exit_request;
+	const SPFAction*	default_actions;
+	u16			options;
 	OSDateTime		clock;
 };
 
@@ -143,9 +162,48 @@ static inline BOOL SPFIsCursorVisible(SPFPanel* panel)
 	return panel->flags & SPF_FLAG_CURSOR;
 }
 
+static inline void SPFShowActions(SPFPanel* panel)
+{
+	panel->flags |= SPF_FLAG_ACTIONS;
+}
+
+static inline void SPFHideActions(SPFPanel* panel)
+{
+	panel->flags &= ~SPF_FLAG_ACTIONS;
+}
+
+static inline void SPFSetDefaultActions(SPF* spf, const SPFAction* actions)
+{
+	spf->default_actions = actions;
+}
+
+static inline void SPFSetActions(SPFPanel* panel, const SPFAction* actions)
+{
+	panel->actions = actions;
+}
+
 static inline void SPFSetDeleteHandler(SPF* spf, SPFDeleteHandler handler)
 {
 	spf->delete_handler = handler;
 }
+
+static inline void SPFSetOptions(SPF* spf, u16 options)
+{
+	spf->options |= options;
+}
+
+static inline void SPFClearOptions(SPF* spf, u16 options)
+{
+	spf->options &= ~options;
+}
+
+static inline BOOL SPFGetOptions(SPF* spf, u16 options)
+{
+	return (spf->options &= options) == options;
+}
+
+#define	SPFSetOption(spf, flag)		SPFSetOptions(spf, flag)
+#define	SPFClearOption(spf, flag)	SPFClearOptions(spf, flag)
+#define	SPFGetOption(spf, flag)		SPFGetOptions(spf, flag)
 
 #endif

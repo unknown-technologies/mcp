@@ -10,4 +10,6 @@ void ISPFInit(void);
 BOOL ISPFProcess(void);
 void ISPFDestroy(void);
 
+void ISPFActionHandler(SPF* spf, const SPFAction* action);
+
 #endif
