@@ -32,6 +32,39 @@ void SPFDrawWidget(SPFWidget* widget)
 
 BOOL SPFProcessWidget(SPFWidget* widget, u16 key)
 {
+	switch(key) {
+		case VT_KEY_TAB: {
+			/* find next widget */
+			SPFPanel* panel = widget->panel;
+			BOOL found = FALSE;
+			SPFWidget* first = NULL;
+			SPFWidget* focus = NULL;
+			for(SPFWidget** w = panel->widgets; *w; w++) {
+				if(!first && SPFCanFocusWidget(*w)) {
+					first = *w;
+				}
+
+				if(widget == *w) {
+					found = TRUE;
+				} else if(found && SPFCanFocusWidget(*w)) {
+					focus = *w;
+					break;
+				}
+			}
+
+			if(focus) {
+				SPFSetFocus(panel, focus);
+			} else {
+				SPFSetFocus(panel, first);
+			}
+
+			/* focus can never be NULL here */
+			SPFFocusWidget(panel->focus);
+
+			return TRUE;
+		}
+	}
+
 	switch(widget->type) {
 		case SPF_WIDGET_BUTTON:
 			return FALSE;

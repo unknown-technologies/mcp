@@ -182,6 +182,11 @@ static inline void SPFSetActions(SPFPanel* panel, const SPFAction* actions)
 	panel->actions = actions;
 }
 
+static inline void SPFSetFocus(SPFPanel* panel, SPFWidget* widget)
+{
+	panel->focus = widget;
+}
+
 static inline void SPFSetDeleteHandler(SPF* spf, SPFDeleteHandler handler)
 {
 	spf->delete_handler = handler;
