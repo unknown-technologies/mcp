@@ -37,6 +37,7 @@ modules:
 	@$(MAKE) -C programs/workspace all --no-print-directory
 	@$(MAKE) -C programs/calc all --no-print-directory
 	@$(MAKE) -C programs/system all --no-print-directory
+	@$(MAKE) -C programs/settings all --no-print-directory
 	@$(MAKE) -C programs/sim all --no-print-directory
 	@$(MAKE) -C commands/shell all --no-print-directory
 	@$(MAKE) -C commands/tsologon all --no-print-directory
@@ -72,6 +73,7 @@ clean:
 	@$(MAKE) -C programs/workspace clean --no-print-directory
 	@$(MAKE) -C programs/calc clean --no-print-directory
 	@$(MAKE) -C programs/system clean --no-print-directory
+	@$(MAKE) -C programs/settings clean --no-print-directory
 	@$(MAKE) -C programs/sim clean --no-print-directory
 	@$(MAKE) -C commands/shell clean --no-print-directory
 	@$(MAKE) -C commands/tsologon clean --no-print-directory

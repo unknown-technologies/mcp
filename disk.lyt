@@ -22,6 +22,7 @@ X ** SYS1.ISPF.WORKSPC		programs/workspace/build/workspace
 X ** SYS1.ISPF.CLOCK		programs/clock/build/clock
 X ** SYS1.ISPF.CALC		programs/calc/build/calc
 X ** SYS1.ISPF.SYSTEM		programs/system/build/system
+X ** SYS1.ISPF.PREFS		programs/settings/build/settings
 X ** SYS1.COMMAND.LOGOFF	commands/logoff/build/logoff
 X ** SYS1.COMMAND.SYSTEM	commands/system/build/system
 X ** SYS1.COMMAND.SHOWLOG	commands/showlog/build/showlog
