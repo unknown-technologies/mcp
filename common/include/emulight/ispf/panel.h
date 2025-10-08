@@ -199,7 +199,7 @@ static inline void SPFClearOptions(SPF* spf, u16 options)
 
 static inline BOOL SPFGetOptions(SPF* spf, u16 options)
 {
-	return (spf->options &= options) == options;
+	return (spf->options & options) == options;
 }
 
 #define	SPFSetOption(spf, flag)		SPFSetOptions(spf, flag)
