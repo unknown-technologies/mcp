@@ -20,6 +20,9 @@ static FLOAT f_one = {
 #define	STATE_EXP	2
 #define	STATE_ERR	3
 
+/* We need this because GCC is still broken for the PDP-11 target.
+ * Without this helper function, it will miscompile x >> 4 as x << 4
+ * when operating on bytes. */
 static inline unsigned int HI(unsigned int x)
 {
 	x >>= 4;
