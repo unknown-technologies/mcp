@@ -5,6 +5,7 @@ SYS1.ISPF.PREFS		Settings	Terminal and user parameters
 -			Calendar	Process calendars
 -			Notes		Process notes and messages
 -			Documents	Process documents
-SYS1.ISPF.CALC		Calculator	Perform floating point processing
+SYS1.ISPF.CALC		Calculator	Fast floating point processing
+SYS1.ISPF.XCALC		XCALC		Perform floating point processing
 SYS1.ISPF.CLOCK		Clock		Full screen clock
 SYS1.ISPF.SYSTEM	System		System management functions
