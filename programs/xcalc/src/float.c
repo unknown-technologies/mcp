@@ -941,11 +941,35 @@ void FDiv2(FLOAT* a, FLOAT* b)
 }
 
 /******************************************************************************/
+void FRound(FLOAT* flt)
+{
+	/* nothing to round? */
+	if(flt->bits[BCDFLOAT_LEN - 1] == 0) {
+		return;
+	}
+
+	unsigned int digit = FiGetDigit(flt->bits, 2 * BCDFLOAT_LEN - 2);
+	if(digit >= 5) {
+		flt->bits[BCDFLOAT_LEN - 1] = 0x99;
+		FiInc(flt, FALSE);
+	} else {
+		flt->bits[BCDFLOAT_LEN - 1] = 0x00;
+	}
+}
+
+/******************************************************************************/
 void FPrintSci(FLOAT* flt)
 {
 	if(FIsZero(flt)) {
 		VTPrint("0");
 		return;
+	}
+
+	FLOAT rounded;
+	if(flt->bits[BCDFLOAT_LEN - 1]) {
+		memcpy(&rounded, flt, sizeof(FLOAT));
+		flt = &rounded;
+		FRound(flt);
 	}
 
 	if(flt->sign != BCDFLOAT_POS) {
@@ -981,6 +1005,13 @@ void FPrintEng(FLOAT* flt)
 	if(FIsZero(flt)) {
 		VTPrint("0");
 		return;
+	}
+
+	FLOAT rounded;
+	if(flt->bits[BCDFLOAT_LEN - 1]) {
+		memcpy(&rounded, flt, sizeof(FLOAT));
+		flt = &rounded;
+		FRound(flt);
 	}
 
 	if(flt->sign != BCDFLOAT_POS) {
@@ -1030,6 +1061,13 @@ void FPrintEng(FLOAT* flt)
 
 void FPrintStd(FLOAT* flt)
 {
+	FLOAT rounded;
+	if(flt->bits[BCDFLOAT_LEN - 1]) {
+		memcpy(&rounded, flt, sizeof(FLOAT));
+		flt = &rounded;
+		FRound(flt);
+	}
+
 	if(FIsZero(flt)) {
 		VTPrint("0");
 	} else if(flt->exp >= -3 && flt->exp < BCDFLOAT_DGT) {
