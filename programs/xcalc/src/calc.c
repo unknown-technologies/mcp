@@ -138,6 +138,9 @@ char* CALCNextToken(TOKEN* tok, char* input)
 			if(*c == '.') {
 				c++;
 			}
+			while(*c >= '0' && *c <= '9') {
+				c++;
+			}
 			if(*c == 'e' || *c == 'E') {
 				c++;
 			}
