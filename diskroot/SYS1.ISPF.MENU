@@ -2,7 +2,7 @@ SYS1.ISPF.PREFS		Settings	Terminal and user parameters
 -			View		Display source data or listings
 -			Edit		Create or change source data
 -			Utilities	Perform utility functions
--			Calendar	Process calendars
+SYS1.ISPF.CAL		Calendar	Process calendars
 -			Notes		Process notes and messages
 -			Documents	Process documents
 SYS1.ISPF.CALC		Calculator	Fast floating point processing

@@ -35,6 +35,7 @@ modules:
 	@$(MAKE) -C programs/ispf all --no-print-directory
 	@$(MAKE) -C programs/clock all --no-print-directory
 	@$(MAKE) -C programs/workspace all --no-print-directory
+	@$(MAKE) -C programs/cal all --no-print-directory
 	@$(MAKE) -C programs/calc all --no-print-directory
 	@$(MAKE) -C programs/xcalc all --no-print-directory
 	@$(MAKE) -C programs/system all --no-print-directory
@@ -72,6 +73,7 @@ clean:
 	@$(MAKE) -C programs/ispf clean --no-print-directory
 	@$(MAKE) -C programs/clock clean --no-print-directory
 	@$(MAKE) -C programs/workspace clean --no-print-directory
+	@$(MAKE) -C programs/cal clean --no-print-directory
 	@$(MAKE) -C programs/calc clean --no-print-directory
 	@$(MAKE) -C programs/xcalc clean --no-print-directory
 	@$(MAKE) -C programs/system clean --no-print-directory

@@ -20,6 +20,7 @@ X ** SYS1.ISPF.CORE		programs/ispf/build/ispf
 X ** SYS1.ISPF.WORKSPC		programs/workspace/build/workspace
 7 80 SYS1.ISPF.MENU		diskroot/SYS1.ISPF.MENU
 X ** SYS1.ISPF.CLOCK		programs/clock/build/clock
+X ** SYS1.ISPF.CAL		programs/cal/build/cal
 X ** SYS1.ISPF.CALC		programs/calc/build/calc
 X ** SYS1.ISPF.XCALC		programs/xcalc/build/xcalc
 X ** SYS1.ISPF.SYSTEM		programs/system/build/system
