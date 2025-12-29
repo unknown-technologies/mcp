@@ -24,22 +24,32 @@ void SPFDraw(SPF* spf)
 	VTWrite(CSI "?25l", CSILEN + 4);
 	VTClearScreen();
 
-	SPFDrawMenuBar(spf);
-	SPFDrawStatusBar(spf);
+	SPFPanel* current = SPFCurrentPanel(spf);
+
+	BOOL is_fullscreen = current &&
+			(current->flags & SPF_FLAG_FULLSCREEN);
+	if(!is_fullscreen || spf->menu_active) {
+		SPFDrawMenuBar(spf);
+		SPFDrawStatusBar(spf);
+	}
 
 	VTHome();
-	VTSTBM(2, 23);
+	if(is_fullscreen) {
+		VTSTBM(1, 24);
+	} else {
+		VTSTBM(2, 23);
+	}
 	VTSGR(0);
 
 	if(spf->current_panel != -1) {
-		SPFDrawPanel(SPFCurrentPanel(spf));
+		SPFDrawPanel(current);
 	}
 
 	if(spf->menu_active) {
 		VTWrite(CSI "?25l", CSILEN + 4);
 		SPFDrawMenu(spf);
 	} else if(spf->current_panel != -1) {
-		if(SPFIsCursorVisible(SPFCurrentPanel(spf))) {
+		if(SPFIsCursorVisible(current)) {
 			VTWrite(CSI "?25h", CSILEN + 4);
 		} else {
 			VTWrite(CSI "?25l", CSILEN + 4);
@@ -66,6 +76,7 @@ void SPFRepaint(SPF* spf)
 BOOL SPFProcess(SPF* spf)
 {
 	SPFCleanupPanels(spf);
+	SPFPanel* panel = SPFCurrentPanel(spf);
 
 	u16 key = VTReceive(&spf->vt, NULL, NULL);
 
@@ -96,11 +107,10 @@ BOOL SPFProcess(SPF* spf)
 			SPFProcessMenu(spf, key);
 		} else if(key != VT_KEY_NONE) {
 			if(!SPFProcessMenuHotkeys(spf, key)) {
-				SPFPanel* panel = SPFCurrentPanel(spf);
 				SPFProcessPanel(panel, key);
 			}
 		} else {
-			SPFProcessPanel(SPFCurrentPanel(spf), key);
+			SPFProcessPanel(panel, key);
 		}
 	}
 
@@ -108,7 +118,9 @@ BOOL SPFProcess(SPF* spf)
 		SPFDraw(spf);
 	} else if(!spf->menu_active) {
 		SPFUpdate(spf);
-		SPFUpdateStatusBar(spf);
+		if(!panel || !(panel->flags & SPF_FLAG_FULLSCREEN)) {
+			SPFUpdateStatusBar(spf);
+		}
 	} else {
 		SPFUpdateStatusBar(spf);
 	}

@@ -10,8 +10,9 @@
 #define	SPF_FLAG_ACTIVE		_BV(0)
 #define	SPF_FLAG_CURSOR		_BV(1)
 #define	SPF_FLAG_ACTIONS	_BV(2)
-#define	SPF_FLAG_DESTROY	_BV(4)
-#define	SPF_FLAG_EXEC		_BV(8)
+#define	SPF_FLAG_DESTROY	_BV(3)
+#define	SPF_FLAG_EXEC		_BV(4)
+#define	SPF_FLAG_FULLSCREEN	_BV(5)
 
 #define	SPF_OPTION_REVERSE	_BV(0)
 #define	SPF_OPTION_NOACTIONS	_BV(1)
@@ -170,6 +171,16 @@ static inline void SPFShowActions(SPFPanel* panel)
 static inline void SPFHideActions(SPFPanel* panel)
 {
 	panel->flags &= ~SPF_FLAG_ACTIONS;
+}
+
+static inline void SPFSetFullscreen(SPFPanel* panel)
+{
+	panel->flags |= SPF_FLAG_FULLSCREEN;
+}
+
+static inline void SPFClearFullscreen(SPFPanel* panel)
+{
+	panel->flags &= ~SPF_FLAG_FULLSCREEN;
 }
 
 static inline void SPFSetDefaultActions(SPF* spf, const SPFAction* actions)

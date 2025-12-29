@@ -19,9 +19,18 @@ void SPFSetMenuBar(SPF* spf, const SPFMenuData* data, SPFMenuHandler handler)
 void SPFShowMenu(SPF* spf)
 {
 	spf->menu_active = TRUE;
-	VTWrite(CSI "?25l", CSILEN + 4);
-	SPFSetMenu(spf, 0);
-	SPFDrawMenu(spf);
+
+	SPFPanel* current = SPFCurrentPanel(spf);
+	BOOL is_fullscreen = current &&
+			(current->flags & SPF_FLAG_FULLSCREEN);
+
+	if(is_fullscreen) {
+		SPFRepaint(spf);
+	} else {
+		VTWrite(CSI "?25l", CSILEN + 4);
+		SPFSetMenu(spf, 0);
+		SPFDrawMenu(spf);
+	}
 }
 
 void SPFHideMenu(SPF* spf)
