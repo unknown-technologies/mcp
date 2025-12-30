@@ -26,6 +26,9 @@ void SPFShowMenu(SPF* spf)
 
 	if(is_fullscreen) {
 		SPFRepaint(spf);
+
+		/* this is necessary to initialize the menu geometry */
+		SPFSetMenu(spf, 0);
 	} else {
 		VTWrite(CSI "?25l", CSILEN + 4);
 		SPFSetMenu(spf, 0);
