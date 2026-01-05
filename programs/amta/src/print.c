@@ -1,8 +1,6 @@
-#include <emulight/vt.h>
+#include <emulight/ispf.h>
 
-#include "amta.h"
-
-VT vt;
+#include "game.h"
 
 void print(const char* s)
 {
@@ -28,14 +26,16 @@ void printn(const char* s, unsigned int n)
 	}
 }
 
-void printindent(const char* s, unsigned int border)
+void printindent(SPFPanel* self, const char* s, unsigned int border)
 {
 	const char* start = s;
 	const char* space = s;
 	unsigned int count = 0;
 
+	unsigned int width = VTGetWidth(&self->spf->vt);
+
 	while(*s) {
-		if(count == (VTGetWidth(&vt) - 2 * border)) {
+		if(count == (width - 2 * border)) {
 			/* print indent */
 			for(unsigned int i = 0; i < border; i++) {
 				VTPutc(' ');

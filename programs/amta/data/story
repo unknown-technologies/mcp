@@ -1,36 +1,25 @@
-.TITLE	LANDING_SITE	"Landing Site"
-.TITLE	GUNSHIP		"Gunship"
-.TITLE	CAVE_ENTRANCE	"Cave Entrance"
-.TITLE	CAVE		"Cave"
-.TITLE	SMALL_PASSAGE	"Small passage"
-.TITLE	MAGMA_ROOM	"Magma room"
-.TITLE	RED_DOOR	"Red Door"
-.TITLE	SAVE_ROOM	"Save Room"
-.TITLE	EGG_ROOM	"Egg Room"
-.TITLE	ANCIENT_TEMPLE	"Ancient Temple"
-.TITLE	TEMPLE_ROOF	"Temple Roof"
-.TITLE	BREEDING_GND	"Breeding Grounds"
-.TITLE	SANDY_DOME	"Sandy Dome"
-.TITLE	EASTERN_BLDNG	"Eastern Building"
-.TITLE	WESTERN_BLDNG	"Western Building"
-.TITLE	UNDERGND_LAKE	"Underground Lake"
-.TITLE	UNDERGND_FACIL	"Underground Facility"
-.TITLE	UNDERGND_BRDGE	"Underground Bridge"
-.TITLE	DARK_CAVES	"Dark Caves"
-.TITLE	TOWER_ROOF	"Tower Roof"
-.TITLE	TOWER_CAVE	"Tower Cave"
-.TITLE	THE_TOWER	"The Tower"
-.TITLE	BUBBLE_CAVE	"Bubble Cave"
-.TITLE	WATERFALLS	"The Waterfalls"
-.TITLE	FINAL_AREA	"Abandoned Laboratory"
-.TITLE	SURFACE		"The Surface"
+.GAME		Another Metroid Text Advanture
+
+************************************************************************
+.SCREEN	0	- Title Screen
+.STARTUP
+
+.MARKUP
+.TITLE	6	Another Metroid Text Adventure
+.CENTER	9	By DoctorM64
+.CENTER	11	Programmed by unknown
+.CENTER	19	Press <ENTER> to start the game
+.ENDMARKUP
+
+.BTN	1	- Start Game
 
 ************************************************************************
 .SCREEN	1	Landing Site
 
 .MSG
-You stand at the top of a mountain, your gunship is next to you. Towards
-the east, you can see a cave entrance.
+You stand at the top of a mountain, your gunship is next to you.
+
+Towards the east, you can see a cave entrance.
 .ENDMSG
 
 .BTN	2	Examine the Ship
@@ -44,7 +33,9 @@ You enter your gunship. You find some of your equipment. You wonder why
 you can't remember where the rest of your weapons are.
 
 - You equip Morph Module.
+.br
 - You equip Missile Launcher (30).
+.br
 - You equip Power Beam.
 
 You head towards the cave entrance.
@@ -128,7 +119,7 @@ such a small place was a bad idea after all.
 You feel the energy from you armor suit slowly draining.
 .ENDMSG
 
-.BTN	OVER	Continue
+.BTN	100	Continue
 
 ************************************************************************
 .SCREEN	9	Magma room
@@ -144,3 +135,1106 @@ For some reason, you feel this place will be important later.
 .ENDMSG
 
 .BTN	15	Continue
+
+************************************************************************
+.SCREEN	15	Red Door
+
+.MSG
+You stand near a closed hatch.
+
+The outer shell glows with a pulsating red light.
+
+What do you do?
+.ENDMSG
+
+.BTN	16	Say "Open Sesame!"
+.BTN	17	Shoot it with missiles
+.BTN	18	Knock 3 times
+
+************************************************************************
+.SCREEN	16	Red Door
+
+.MSG
+You close you eyes.
+
+You strike a menacing pose, as you yell the legendary magic words with
+all your strength.
+
+Nothing happens.
+
+You feel like an idiot.
+.ENDMSG
+
+.BTN	15	Continue
+
+************************************************************************
+.SCREEN	17	Red Door
+
+.MSG
+You equip your missiles.
+
+You aim at the center of the hatch and fire.
+
+The projectile bounces and hits you in the chest, knocking you down.
+
+Before you can recover, a swarm of frog-like creatures attack you. They
+rapidly drain your armor suit energy.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	18	Red Door
+
+.MSG
+You knock the door, and it opens.
+
+You imagine how uncivil would be to shoot it.
+.ENDMSG
+
+.BTN	19	Continue
+
+************************************************************************
+.SCREEN	19	Save Room
+
+.MSG
+You stand at a small room with an ancient pillar in the middle.
+
+It has strange symbols and bird heads carved on one side.
+
+You feel the urge to stand on it.
+.ENDMSG
+
+.BTN	20	Stand on the pillar
+.BTN	21	Ignore it and move on
+
+************************************************************************
+.SCREEN	20	Save Room
+
+.MSG
+You jump on top of the mysterious pillar. You see energy emerging from
+it, surrounding you and restoring your armor suit energy.
+
+Feeling the guidance of an ancient alien race fills you with
+determination.
+
+If only the developer wasn't that lazy, you'd be saving your game here.
+
+But no, tough luck.
+.ENDMSG
+
+.BTN	21	Continue
+
+************************************************************************
+.SCREEN	21	Egg Room
+
+.MSG
+You find what appears to be a huge egg.
+
+Its translucent membrane shows a horrible creature inside, struggling to
+get out.
+
+What do you do?
+.ENDMSG
+
+.BTN	22	Shoot it
+.BTN	23	Scan it
+
+************************************************************************
+.SCREEN	22	Egg Room
+
+.MSG
+You shoot a barrage of missiles towards the egg.
+
+It explodes, killing the creature instantly.
+
+You wonder how dangerous that thing would be if you let it hatch.
+.ENDMSG
+
+.BTN	27	Continue
+
+************************************************************************
+.SCREEN	23	Egg Room
+
+.MSG
+You slowly approach the egg, when suddenly, an ugly creature pops out of
+it.
+
+It looks directly at you with 6 red eyes.
+.ENDMSG
+
+.BTN	24	Shoot it
+.BTN	25	Try to befriend it
+.BTN	26	Use a Power Bomb
+
+************************************************************************
+.SCREEN	24	Egg Room
+
+.MSG
+You shoot a barrage of missiles towards the creature.
+
+Some hit its underside, actually damaging it.
+
+But most missiles bounce against the creature's armored shell.
+
+It quickly corners you, draining away your suit energy.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	25	Egg Room
+
+.MSG
+You extend your hand towards the confused creature.
+
+It slowly cuddles against you, thinking you are its mother.
+
+You silently activate your missiles, and shoot into the creature's mouth
+before it can react.
+
+It dies violently.
+.ENDMSG
+
+.BTN	27	Continue
+
+************************************************************************
+.SCREEN	26	Egg Room
+
+.MSG
+You activate your morph ability, and start routing energy to the bomb
+generator.
+
+At the same time, you position yourself in a corner, where the blast
+damage will be much more effective.
+
+Then you remember you don't have power bombs.
+
+You wonder why you keep forgetting your equipment between missions,
+while the creature attacks relentlessly.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	27	Egg Room
+
+.MSG
+As soon as the battle ended, an earthquake starts shaking the whole
+place.
+
+You see a small pool of lava draining in a corner.
+
+Maybe you can access new places now.
+.ENDMSG
+
+.BTN	28	Backtrack to the magma room
+
+************************************************************************
+.SCREEN	28	Magma room
+
+.MSG
+The way is clear.
+
+Most of the magma has drained, opening up a passage into the darkness.
+
+You proceed to explore, until you find an ancient temple.
+
+What do you do?
+.ENDMSG
+
+.BTN	29	Enter the temple and loot it
+.BTN	33	Explore the roof
+
+************************************************************************
+.SCREEN	29	Ancient Temple
+
+.MSG
+You explore the temple.
+
+You find several missile expansions, that surprisingly enough, are
+compatible with your technology.
+
+You enter a room with a circular pillar. In the middle of it, there's a
+blue container with a glowing E.
+
+What do you do?
+.ENDMSG
+
+.BTN	30	Ignore it
+.BTN	31	Take it
+.BTN	32	Shoot it
+
+************************************************************************
+.SCREEN	30	Ancient Temple
+
+.MSG
+The container looks too suspicious, so you simply ignore it.
+
+You continue exploring the temple.
+.ENDMSG
+
+.BTN	36	Continue
+
+************************************************************************
+.SCREEN	31	Ancient Temple
+
+.MSG
+You touch the container.
+
+It integrates with your armor, amplifying its energy levels.
+
+You then hear a feint click, and part of the roof crushes you.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	32	Ancient Temple
+
+.MSG
+You decide to shoot a missile near the container.
+
+The explosion knocks it down into a corner. A couple of seconds later,
+the ceiling above the pillar collapses.
+
+- You pick up the energy tank. (HP +100)
+.ENDMSG
+
+.BTN	36	Continue
+
+************************************************************************
+.SCREEN	33	Temple Roof
+
+.MSG
+You realize your climbing skills aren't what they used to be.
+
+After some struggle, you reach a balcony. An entrance is blocked by a
+differently colored stone.
+
+What do you do?
+.ENDMSG
+
+.BTN	34	Shoot the rock
+.BTN	35	Try to push the rock
+
+************************************************************************
+.SCREEN	34	Temple Roof
+
+.MSG
+You shoot a missile directly into the rock, shattering it into pieces
+and clearing the way.
+
+As you enter the temple, the remaining wall collapses and crushes you.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	35	Temple Roof
+
+.MSG
+You push the rock inside, until there is enough room for you to fit.
+
+You decide to push it back, in case one of those strange creatures is
+following you.
+
+- You find missile upgrades on plain sight. (Missiles +120)
+.ENDMSG
+
+.BTN	36	Continue
+
+************************************************************************
+.SCREEN	36	Breeding Grounds
+
+.MSG
+After exploring the temple, you find a dark and moisty cave.
+
+You descend carefully.
+
+As you observe the green plantlife growing on the floor, you notice 2
+creatures nearby. They have small horns, and their green bellies
+illuminate the nearby walls.
+
+They haven't noticed you.
+
+What do you do?
+.ENDMSG
+
+.BTN	37	Fight them
+.BTN	38	Sneak by them
+.BTN	39	Distract them
+
+************************************************************************
+.SCREEN	37	Breeding Grounds
+
+.MSG
+You are quite sure the equipment you found in the temple will be very
+useful for fighting these enemies.
+
+As soon as you fire the first missile, the creatures split.
+
+They move incredibly fast. You focus your fire on the closest one and
+kill it.
+
+But before you could turn around to aim for the other one, it knocks you
+down against a wall. The impact renders you unconscious.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	38	Breeding Grounds
+
+.MSG
+You decide to avoid the conflict, since the odds look clearly against
+you.
+
+You slowly walk towards a passage, where you'll be out of sight. You
+take your time, always keeping an eye on the creatures.
+
+As you step on a thorny plant, your leg gets stuck. You try to set free,
+but when you raise your head, you don't see the creatures anymore.
+
+You feel a heavy blow on the back, and you lose consciousness.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	39	Breeding Grounds
+
+.MSG
+You look for a rock.
+
+It takes some time to find a loose one with all the plants covering the
+floor.
+
+Once you find it, you throw the rock against a wall, making some noise.
+As soon as the creatures move to inspect the wall, you hide in the
+darkness. A couple seconds later, the creatures leave.
+
+You continue your journey down the cave.
+.ENDMSG
+
+.BTN	40	Continue
+
+************************************************************************
+.SCREEN	40	Sandy Dome
+
+.MSG
+During your exploration, the floor suddenly collapses.
+
+As you fall, you observe the underground dome you just discovered.
+
+Your armor suit absorbs most of the kinetic energy of the fall.
+
+There are 2 buildings on the bottom of the dome, the rest of the floor
+is covered by sand.
+.ENDMSG
+
+.BTN	41	Explore the western building
+.BTN	46	Explore the eastern building
+.BTN	47	Clear out the sand
+
+************************************************************************
+.SCREEN	41	Western Building
+
+.MSG
+You find the doorway on the western building. You noticed the inside is
+a lot smaller than it looked, the place is a simple square room, with a
+strange statue near a wall.
+
+That sitting statue is holding an important looking sphere.
+
+What do you do?
+.ENDMSG
+
+.BTN	42	Shoot the sphere
+.BTN	45	Take the sphere
+.BTN	47	Leave the room
+
+************************************************************************
+.SCREEN	42	Western Building
+
+.MSG
+You shoot the sphere with a missile.
+
+It is propelled out of the statue's hands, bouncing a couple times on
+the floor.
+
+The statue's eyes start to glow.
+
+What do you do?
+.ENDMSG
+
+.BTN	43	Put the sphere back
+.BTN	44	Fight the statue
+
+************************************************************************
+.SCREEN	43	Western Building
+
+.MSG
+You see pieces of stone start to fall from the statue, revealing metal
+parts.
+
+You quickly grab the sphere and place it in the statue's hands.
+
+Its eyes stop glowing, and silence floods the small room.
+
+You decide to leave.
+.ENDMSG
+
+.BTN	47	Continue
+
+************************************************************************
+.SCREEN	44	Western Building
+
+.MSG
+The statue stands up, as pieces of rock begin to fall apart, revealing a
+huge humanoid robot.
+
+You feel the door close behind you.
+
+The robot attacks relentlessly. You fight back bravely, until you run
+out of missiles.
+
+The robot suddenly grabbed you by the neck and crushes you.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	45	Western Building
+
+.MSG
+You take the sphere.
+
+While you try to figure out how to open it, you notice the statue's eyes
+start to glow.
+
+What do you do?
+.ENDMSG
+
+.BTN	43	Put the sphere back
+.BTN	44	Fight the statue
+
+************************************************************************
+.SCREEN	46	Eastern Building
+
+.MSG
+You try to find a way in, but the walls are covered by spikes.
+
+You can't find a door, nor an opening.
+.ENDMSG
+
+.BTN	47	Continue
+
+************************************************************************
+.SCREEN	47	Sandy Dome
+
+.MSG
+You decide the best option is to clear out the sand.
+
+You use your beam to disintegrate it, revealing a passage on the east
+side of the dome.
+
+You continue exploring the caves.
+.ENDMSG
+
+.BTN	48	Continue
+
+************************************************************************
+.SCREEN	48	Underground Lake
+
+.MSG
+You explore the cave for hours until you find an underground lake.
+
+It's located on the bottom of an enormous dome.
+
+There's also a structure in the middle, connected to the cave by
+bridges.
+.ENDMSG
+
+.BTN	49	Explore the lake
+.BTN	51	Explore the structure
+
+************************************************************************
+.SCREEN	49	Underground Lake
+
+.MSG
+You submerge yourself in the lake.
+
+The water is fairly clean, and there's tiny fish-like creatures swimming
+by.
+
+You encounter what appears to be the entrance to a sewer system.
+.ENDMSG
+
+.BTN	50	Ignore the entrance
+.BTN	51	Explore the sewers
+
+************************************************************************
+.SCREEN	50	Underground Lake
+
+.MSG
+You remember how tedious and horrible sewer levels always are, and
+decide to not explore that place.
+
+You don't think you'll be missing useful weapons or invaluable
+treasures.
+
+You exit the lake.
+.ENDMSG
+
+.BTN	52	Continue
+
+************************************************************************
+.SCREEN	51	Underground Facility
+
+.MSG
+You enter the facility.
+
+There's absolute silence.
+
+There's pipes and valves all over the place. Security robots lie on the
+ground, deactivated.
+
+You find another mysterious pillar, but it doesn't seem to work.
+
+You exit the facility towards the west.
+.ENDMSG
+
+.BTN	52	Continue
+
+************************************************************************
+.SCREEN	52	Underground Bridge
+		.WORD	STATE_53	; OPTION 0: TARGET
+		.WORD	STATE_54	; OPTION 1: TARGET
+		.WORD	STATE_55	; OPTION 2: TARGET
+
+.MSG
+You stand at the building entrance.
+
+There's a bridge in front of you, that leads to a passage into the
+caves.
+
+Right in the middle of the bridge, there's a creature similar to the
+ones you saw before, but with longer legs and bigger horns.
+
+What do you do?
+.ENDMSG
+
+.BTN	53	Try to befriend the creature
+.BTN	54	Charge at the creature
+.BTN	55	Find a vantage point and attack from a distance
+
+************************************************************************
+.SCREEN	53	Underground Bridge
+
+.MSG
+You slowly approach the creature, extending your hand in a gentle
+manner.
+
+The creature sees you, and remains still. You extend your arm, and touch
+one of its horns. The creature retreats for a moment, looking directly
+at you. It opens its four arms and hugs you.
+
+A deadly electric shock goes through your body, paralyzing you.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	54	Underground Bridge
+
+.MSG
+You take advantage of the creature not seeing you and run towards it,
+firing missiles.
+
+Some shots land, inflicting damage to it. But some missiles bounce on
+its armor and hit the bridge, making it collapse. You fall into the
+water, and the creature gives chase. Right before hitting the bottom of
+the lake, you quickly aim and fire at the creature's core. It screams in
+agony, and crushes you against the floor. It stopped moving.
+
+You shove the creature to a side, and climb the remains of the bridge.
+.ENDMSG
+
+.BTN	56	Continue
+
+************************************************************************
+.SCREEN	55	Underground Bridge
+
+.MSG
+You find a small alcove right over the entrance.
+
+There's a pipe that can be used to maintain cover and stabilize the
+cannon. You fire a barrage of missiles. The creature can't figure out
+where you are, as it receives most of the shots.
+
+The creature collapses, breaking part of the bridge as it falls.
+
+You cross to the other side.
+.ENDMSG
+
+.BTN	56	Continue
+
+************************************************************************
+.SCREEN	56	Dark Caves
+
+.MSG
+You enter another cave with thorny plants.
+
+As you get deeper, the plants you find are bigger, with huge spikes
+instead of thorns.
+
+You navigate carefully, until you reach a dead end. You see some light
+coming from a crevice. Apparently, a rock is blocking a passage that
+leads to a bigger cave.
+
+What do you do?
+.ENDMSG
+
+.BTN	57	Push the rock
+.BTN	58	Shoot the rock
+
+************************************************************************
+.SCREEN	57	Dark Caves
+
+.MSG
+You try to push the rock, but it's too heavy.
+
+Even after routing more power to the extremities of your armor, the rock
+doesn't move.
+
+Looks like you'll have to try something more aggressive.
+.ENDMSG
+
+.BTN	58	Continue
+
+************************************************************************
+.SCREEN	58	Dark Caves
+
+.MSG
+You step back and shoot a missile.
+
+The rock splits in half, but doesn't move.
+
+The noise caught the attention of a nearby creature. This one is
+bipedal, with huge claws.
+
+The creature starts running towards you.
+
+What do you do?
+.ENDMSG
+
+.BTN	59	Shoot the creature
+.BTN	60	Shoot the rock
+
+************************************************************************
+.SCREEN	59	Dark Caves
+
+.MSG
+You shoot the creature a well aimed missile.
+
+The creature deflects the shot using its claw, as it keeps running
+towards you. You prepare your cannon for another shot and hear a swiping
+sound.
+
+Suddenly, you can't feel your arm anymore. The creature swipes again,
+aiming at your head.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	60	Dark Caves
+
+.MSG
+You start running towards the rock, while shooting repeatedly.
+
+You see some light coming from the cracks. You jump towards the rock as
+you activate your morph module. The impulse pierces a hole on the rock,
+and you fall into unexplored terrain.
+
+The creature tries to fit its head through the hole you just made and
+follow you, but gives up seconds later.
+.ENDMSG
+
+.BTN	61	Continue
+
+************************************************************************
+.SCREEN	61	Tower Roof
+
+.MSG
+You stand on what appears to be the roof of massive underground tower.
+
+You take a look over the edges, and see light coming from the bottom.
+
+There's a cave entrance on the western wall.
+.ENDMSG
+
+.BTN	62	Explore the cave
+.BTN	63	Explore the tower
+
+************************************************************************
+.SCREEN	62	Tower Cave
+
+.MSG
+You find yourself in a cave filled with massive spiky plants. You
+examine the only part of the wall not covered by plants. It's very
+solid, missiles wouldn't make a dent in it.
+
+You return to the tower, hoping to find something useful.
+.ENDMSG
+
+.BTN	63	Continue
+
+************************************************************************
+.SCREEN	63	The Tower
+
+.MSG
+You scan one of the walls and find a weak spot.
+
+Your missiles could open a small entrance into the tower. The place is
+pitch black. There's machinery all over the place, and deactivated
+robots everywhere.
+
+You find 2 expansions that are compatible with your armored suit.
+
+- You equip magnetic boots.
+.br
+- You equip mining laser.
+.ENDMSG
+
+.BTN	64	Continue
+
+************************************************************************
+.SCREEN	64	Tower Cave
+
+.MSG
+You explore much more freely, thanks to the boots upgrade you just
+found. You enter the western cave you saw before, and decide to try out
+the mining laser. It melts the wall very efficiently. You feel like you
+could pierce the heavens with this thing.
+
+You venture yourself deeper into the cave.
+.ENDMSG
+
+.BTN	65	Continue
+
+************************************************************************
+.SCREEN	65	Bubble Cave
+
+.MSG
+You stand on the entrance to a green shaft.
+
+The walls seem to be made of solidified bubbles.
+
+A dark fog floods the air. You have trouble navigating the corridors.
+
+What do you do?
+.ENDMSG
+
+.BTN	66	Shoot your beam to illuminate the place
+.BTN	85	Route power to your infrared visor
+
+************************************************************************
+.SCREEN	66	Bubble Cave
+
+.MSG
+You configure your map system to follow light sources. Then you
+methodically shoot your beam, tracing the contour of the chambers you
+visit. You slowly craft a rough 3D map of each room.
+
+One of the beams you fire disappears into the darkness. Then, a loud
+roar shakes the place.
+
+You see the silhouette of a huge creature.
+.ENDMSG
+
+.BTN	67	Continue
+
+************************************************************************
+.SCREEN	85	Bubble Cave
+
+.MSG
+You reroute power from your weapon system into the infrared sensor. Even
+if you're defenseless, you can now see past the fog.
+
+As you navigate through the corridors, you see a huge creature.
+
+It looks like a potential threat, so you route the power back to your
+weapons before scanning it.
+.ENDMSG
+
+.BTN	67	Continue
+
+************************************************************************
+.SCREEN	67	Bubble Cave
+
+.MSG
+The creature stands in the middle of the corridor.
+
+After scanning it, you discover it has the ability to breathe fire, and
+sharp claws the size of your body.
+
+It has a green glowing membrane in its chest. It hasn't noticed you yet.
+
+You're unsure of how well the creature sees within the thick fog.
+.ENDMSG
+
+.BTN	68	Fight the creature
+.BTN	71	Sneak past the creature
+.BTN	72	Befriend the creature
+
+************************************************************************
+.SCREEN	68	Bubble Cave
+
+.MSG
+You're about to engage the creature in combat.
+
+The fog makes it difficult to aim.
+
+You hope the creature also has a hard time seeing you.
+
+How do you proceed?
+.ENDMSG
+
+.BTN	69	Direct attack, mid range (good visibility)
+.BTN	70	Wait for an opening and make precision shots
+
+************************************************************************
+.SCREEN	69	Bubble Cave
+
+.MSG
+You decide to engage the creature within you visible range. You shoot a
+couple missiles towards its head.
+
+The creature turns, trying to find you and exposing his weak spot.
+
+You fire missiles to its chest. At the same time, the creature breathes
+fire towards you, neutralizing your missiles.
+
+By the time the fire dissipates and you regain your sight, the creature
+is close by.
+
+You feel a strong impact that knocks you down. You can't move. The
+creature steps on your chest, and impales you with its claws.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	70	Bubble Cave
+
+.MSG
+You patiently observe the creature, as it moves around the corridor.
+
+You see its silhouette on your infrared visor. Once you see its eyes,
+and the feint glow of its core, you carefully aim and fire a barrage of
+missiles. They impact the creature, as its screams echoes through the
+caverns, the explosions fill the room with smoke.
+
+You lose sight of the creature. Then, a wall of fire emerges from the
+smoke cloud. You barely avoid it.
+
+The creature charges at you as you recover, swiping its claws towards
+you.
+
+You couldn't react fast enough.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	71	Bubble Cave
+
+.MSG
+The corridor is not very wide.
+
+You wait for the creature to focus its attention on one of the walls,
+and you slowly walk along the opposite wall. The creature turns towards
+you for a second.
+
+You stand completely still. It turns back, and you continue.
+
+You finally reach the end of the corridor.
+
+As you prepare to exit, you notice an orange glow on the floor and
+nearby walls. Flames engulf you. Right before you completely incinerate,
+you see the creature standing next to you, looking right into your eyes.
+.ENDMSG
+
+.BTN	100	Continue
+
+************************************************************************
+.SCREEN	72	Bubble Cave
+
+.MSG
+...
+.ENDMSG
+
+.BTN	73	Continue
+
+************************************************************************
+.SCREEN	73	Bubble Cave
+
+.MSG
+You scan the creature again.
+
+You find it very unlikely to be tame.
+
+You SERIOUSLY consider all your options.
+.ENDMSG
+
+.BTN	74	Seriously, try to befriend it
+.BTN	71	Sneak past the creature
+.BTN	68	Fight the creature
+
+************************************************************************
+.SCREEN	74	Bubble Cave
+
+.MSG
+You raise your hand towards the creature and wait for it to notice you.
+
+It suddenly turns around, and roars.
+
+You stand perfectly still, terrified. The creature looks at you for
+about a minute. You can feel the sweat running on your forehead.
+
+Finally, the creature moves away, and leaves the place through the way
+you came.
+
+That was close.
+.ENDMSG
+
+.BTN	75	Continue
+
+************************************************************************
+.SCREEN	75	The Waterfalls
+
+.MSG
+You reach a new cave system.
+
+The minerals look similar to the ones you scanned near the surface.
+There's waterfalls coming from the ceiling, forming small underground
+rivers.
+
+You start climbing, making your way with your mining laser.
+
+You reach a huge cave, you can see a structure on the ceiling.
+.ENDMSG
+
+.BTN	76	Continue
+
+************************************************************************
+.SCREEN	76	Abandoned Laboratory
+
+.MSG
+You enter the structure. Twisted pipes and strange contraptions decorate
+the stone walls. Suddenly, you hear a screeching noise. You hide.
+
+A mysterious creature appears. As you try to scan it, all the energy
+meters are peaked. All your visors show it as a white blob. Its energy
+levels are impressive. It's something that, as a bio-reseracher, you've
+never seen, nor thought was possible to exist. You record its behavior,
+when a small frog like animal closes by, the creature latched on top of
+it. It instantly killed its prey, turning it into dust.
+
+Maybe THIS is the creature you're looking for...
+.ENDMSG
+
+.BTN	77	Continue
+
+************************************************************************
+.SCREEN	77	Abandoned Laboratory
+
+.MSG
+You carefully explore the facility, making sure none of those incredibly
+dangerous creatures notice you.
+
+Finally, you arrive at what appears to be a nest. Many eggs lie on the
+cave floor. You notice one of them is moving. You approach it, and ready
+your bio-sample capture device. As the tiny creature emerges from the
+egg, you manage to get it inside your sample container. This appears to
+be that dangrous creature you saw before, in its infant stage.
+.ENDMSG
+
+.BTN	78	Continue
+
+************************************************************************
+.SCREEN	78	The Surface
+
+.MSG
+You make your way back to the surface, drilling your way out, and making
+sure your newly captured specimen is intact.
+
+As you enter your ship, you secure the specimen in the storage
+compartment. You don't know how fast the creature grows, so you decide
+the safest way of transport would be to freeze it.
+
+You take off.
+
+Once you exit the orbit of SR388, you start writing your mission report:
+.ENDMSG
+
+.BTN	79	Continue
+
+************************************************************************
+.SCREEN	79	-
+
+.MSG
+MISSION REPORT - FILE 027991
+
+The mission was a success. I was able to evaluate the biology of planet
+SR388. The indigenous lifeforms are mostly harmless. But there's a
+species that might be bio-engineered, possibly by the race that built
+the colonies I found in ruins. It's possible that this is the "Metroid"
+organism the Federation has been looking for months. I already notified
+the rest of the teams deployed on the planet, so they can cancel their
+search. I'm bringing a Metroid specimen in its infant stage to Ceres, I
+can't wait to experiment with its energy manipulation properties.
+Please-
+.ENDMSG
+
+.BTN	80	Continue
+
+************************************************************************
+.SCREEN	80	-
+
+.MSG
+A proximity alarm interrupts you. The radar shows several hostile ships.
+
+Space Pirates.
+
+You enable the weapons system.
+
+If this creature falls in the wrong hands, it could be turned into a
+deadly bio-weapon.
+
+You engage the ships, without knowing that both you and the "Metroid"
+are about to change the fate of the galaxy.
+.ENDMSG
+
+.BTN	81	Continue
+
+************************************************************************
+.SCREEN	81	- Success
+
+.MARKUP
+.BC	12	THE END
+.ENDMARKUP
+
+.BTN	0	Go to title screen
+
+************************************************************************
+.SCREEN	100	- Game Over
+
+.MARKUP
+.CENTER	11	Life support systems failing...
+.BC	13	GAME OVER
+.ENDMARKUP
+
+.BTN	0	Restart
