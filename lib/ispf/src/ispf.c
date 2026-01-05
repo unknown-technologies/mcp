@@ -28,7 +28,10 @@ void SPFDraw(SPF* spf)
 
 	BOOL is_fullscreen = current &&
 			(current->flags & SPF_FLAG_FULLSCREEN);
-	if(!is_fullscreen || spf->menu_active) {
+
+	/* When not in fullscreen mode, we have to draw this part first,
+	 * otherwise the cursor positioning would be wrong. */
+	if(!is_fullscreen) {
 		SPFDrawMenuBar(spf);
 		SPFDrawStatusBar(spf);
 	}
@@ -43,6 +46,14 @@ void SPFDraw(SPF* spf)
 
 	if(spf->current_panel != -1) {
 		SPFDrawPanel(current);
+	}
+
+	/* If we are in fullscreen mode and the menu is active, draw it
+	 * at the end. Otherwise the first/last line of the panel would
+	 * be drawn over the menu or status bar. */
+	if(is_fullscreen && spf->menu_active) {
+		SPFDrawMenuBar(spf);
+		SPFDrawStatusBar(spf);
 	}
 
 	if(spf->menu_active) {
