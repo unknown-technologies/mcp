@@ -64,6 +64,10 @@ void SPFDrawPanel(SPFPanel* panel)
 		return;
 	}
 
+	if(panel->flags & SPF_FLAG_DESTROY) {
+		return;
+	}
+
 	if((panel->actions || panel->spf->default_actions)
 			&& (panel->flags & SPF_FLAG_ACTIONS)
 			&& !SPFGetOption(panel->spf, SPF_OPTION_NOACTIONS)) {
@@ -146,6 +150,11 @@ void SPFDestroyPanel(SPFPanel* panel)
 {
 	/* NULL is a valid argument, ignore it */
 	if(!panel) {
+		return;
+	}
+
+	/* ignore if already marked for deletion */
+	if(panel->flags & SPF_FLAG_DESTROY) {
 		return;
 	}
 

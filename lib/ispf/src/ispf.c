@@ -87,7 +87,6 @@ void SPFRepaint(SPF* spf)
 BOOL SPFProcess(SPF* spf)
 {
 	SPFCleanupPanels(spf);
-	SPFPanel* panel = SPFCurrentPanel(spf);
 
 	u16 key = VTReceive(&spf->vt, NULL, NULL);
 
@@ -118,9 +117,11 @@ BOOL SPFProcess(SPF* spf)
 			SPFProcessMenu(spf, key);
 		} else if(key != VT_KEY_NONE) {
 			if(!SPFProcessMenuHotkeys(spf, key)) {
+				SPFPanel* panel = SPFCurrentPanel(spf);
 				SPFProcessPanel(panel, key);
 			}
 		} else {
+			SPFPanel* panel = SPFCurrentPanel(spf);
 			SPFProcessPanel(panel, key);
 		}
 	}
@@ -129,6 +130,7 @@ BOOL SPFProcess(SPF* spf)
 		SPFDraw(spf);
 	} else if(!spf->menu_active) {
 		SPFUpdate(spf);
+		SPFPanel* panel = SPFCurrentPanel(spf);
 		if(!panel || !(panel->flags & SPF_FLAG_FULLSCREEN)) {
 			SPFUpdateStatusBar(spf);
 		}
