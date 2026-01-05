@@ -72,7 +72,7 @@ size_t	DSGetPhysicalRecLen(DS* ds);
 BOOL	DSiOpen(DS* ds, const char* dsn);
 void	DSiGetInfo(DS* ds, DSInfo* info);
 size_t	DSiRead(DS* ds, void* dst, size_t size);
-void	DSiSeek(DS* ds, size_t pos);
+void	DSiSeek(DS* ds, size_t block, size_t pos);
 #endif
 
 #endif

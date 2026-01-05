@@ -91,15 +91,28 @@ size_t DSWrite(int ds, void* src, size_t size)
 	return 0;
 }
 
+static inline u32 imul32(u16 a, u16 b)
+{
+	register unsigned int r0 asm("r0") = a;
+	register unsigned int r1 asm("r1") = b;
+	asm volatile ("mul r1, r0"
+			: "=r"(r0), "=r"(r1)
+			: "r"(r0), "r"(r1));
+	return (u32) ((u32) r0 << 16LL) | r1;
+}
+
 void DSSeek(int ds, size_t pos)
 {
 	DS* dataset = get_ds(ds);
 	if(dataset) {
 		if(DSIsFB(dataset)) {
-			size_t p = DSGetPhysicalRecLen(dataset) * pos;
-			DSiSeek(dataset, p);
+			size_t reclen = DSGetPhysicalRecLen(dataset);
+			u32 p = imul32(reclen, pos);
+			size_t block = p >> 9;
+			size_t off = p & 0x01FFL;
+			DSiSeek(dataset, block, off);
 		} else {
-			DSiSeek(dataset, pos);
+			DSiSeek(dataset, pos / 512lu, pos % 512lu);
 		}
 	}
 }

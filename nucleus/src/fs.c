@@ -192,14 +192,13 @@ size_t DSiRead(DS* ds, void* dst, size_t size)
 	return read;
 }
 
-void DSiSeek(DS* ds, size_t pos)
+void DSiSeek(DS* ds, size_t block, size_t pos)
 {
 	MONLock(&lock);
-	size_t blocks = pos / 512;
-	if(blocks < ds->info.size) {
-		ds->current_block = ds->info.block + blocks;
-		ds->current_size = ds->info.size - blocks;
-		ds->pos = pos % 512;
+	if(block < ds->info.size) {
+		ds->current_block = ds->info.block + block;
+		ds->current_size = ds->info.size - block;
+		ds->pos = pos;
 
 		if(ds->pos) {
 			VOLReadBlock(ds->info.volume, __sector_buffer,
