@@ -13,6 +13,20 @@ void VTInit(VT* vt)
 	vt->width = 80;
 	vt->height = 24;
 	vt->state = VT_STATE_NORMAL;
+
+	VTInitCharsets();
+}
+
+void VTInitCharsets(void)
+{
+	/* initialize character set mapping */
+	VTClearDRCS();
+	VTWrite(ESC "(B"      /* G0=ASCII */
+	        ESC ")0"      /* G1=DEC Special Graphics */
+	        ESC "*<"      /* G2=DEC Supplemental */
+	        ESC "+ @"     /* G3=DRCS */
+		"\x0F"        /* SI   => GL=G0 (ASCII) */
+		ESC "}", 16); /* LS2R => GR=G2 (DEC Supplemental) */
 }
 
 /******************************************************************************/
@@ -466,12 +480,83 @@ void VTSTBM(int top, int bottom)
 
 void VTGraphics(void)
 {
-	VTWrite("\x1b(0", 3);
+	VTPutc('\x0E'); /* SO */
 }
 
 void VTAscii(void)
 {
-	VTWrite("\x1b(B", 3);
+	VTPutc('\x0F'); /* SI */
+}
+
+void VTDRCS(char c)
+{
+	VTWrite(SS3, SS3LEN);
+	VTPutc(c);
+}
+
+void VTDECDLD(unsigned char pcn, BOOL erase, unsigned int matrix,
+		unsigned int width, BOOL full_cell, u8* bits,
+		unsigned int count)
+{
+	char sixels[20];
+	bzero(sixels, sizeof(sixels));
+	sixels[8] = '/';
+
+	char* sixels_top = sixels;
+	char* sixels_bot = &sixels[9];
+
+	/* start download */
+	VTPrintf(DCS "1;%d;%d;%d;%d;%d{ @", pcn - 0x20, erase ? 0 : 1,
+			matrix, width, full_cell ? 2 : 1);
+
+	for(unsigned int i = 0; i < count; i++) {
+		u8* glyph = &bits[i * 10];
+		bzero(sixels_top, 8);
+		bzero(sixels_bot, 8);
+
+		/* compute sixel patterns */
+		for(int y = 5; y >= 0; y--) {
+			u8 line = glyph[y];
+			for(unsigned int x = 0; x < 8; x++) {
+				BOOL bit = (line << x) & 0x80;
+				sixels_top[x] <<= 1;
+				if(bit) {
+					sixels_top[x] |= 1;
+				}
+			}
+		}
+
+		for(int y = 9; y > 5; y--) {
+			u8 line = glyph[y];
+			for(unsigned int x = 0; x < 8; x++) {
+				BOOL bit = (line << x) & 0x80;
+				sixels_bot[x] <<= 1;
+				if(bit) {
+					sixels_bot[x] |= 1;
+				}
+			}
+		}
+
+		for(unsigned int i = 0; i < 8; i++) {
+			sixels_bot[i] += 077;
+			sixels_top[i] += 077;
+		}
+
+		VTPrint(sixels);
+
+		/* separator between glyphs */
+		if(i + 1 < count) {
+			VTPutc(';');
+		}
+	}
+
+	/* finish download */
+	VTWrite(ST, STLEN);
+}
+
+void VTClearDRCS(void)
+{
+	VTWrite(DCS "1;1;2{ @" ST, DCSLEN + 8 + STLEN);
 }
 
 /******************************************************************************/

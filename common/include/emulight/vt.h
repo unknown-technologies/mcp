@@ -13,16 +13,24 @@
 #define	DCSLEN	1
 #define	ST	"\x9C"
 #define	STLEN	1
+#define	SS2	"\x8E"
+#define	SS2LEN	1
+#define	SS3	"\x8F"
+#define	SS3LEN	1
 #else
-#define	CSI	"\x1b["
+#define	CSI	"\x1B["
 #define	CSILEN	2
-#define	DCS	"\x1bP"
+#define	DCS	"\x1BP"
 #define	DCSLEN	2
-#define	ST	"\x1b\\"
+#define	ST	"\x1B\\"
 #define	STLEN	2
+#define	SS2	"\x1BN"
+#define	SS2LEN	2
+#define	SS3	"\x1BO"
+#define	SS3LEN	2
 #endif
 
-#define ESC	"\x1b"
+#define ESC	"\x1B"
 
 #define	SIXEL_BG_DEFAULT	0
 #define	SIXEL_BG_CURRENT	1
@@ -56,6 +64,13 @@
 #define	VT_STATE_ESC	1
 #define	VT_STATE_CSI	2
 #define	VT_STATE_SS3	3
+
+#define	VT_MATRIX_5X10	2
+#define	VT_MATRIX_6X10	3
+#define	VT_MATRIX_7X10	4
+
+#define	VT_WIDTH_80	1
+#define	VT_WIDTH_132	2
 
 #define	VT_KEY_ENTER	0x0D
 #define	VT_KEY_TAB	'\t'
@@ -134,6 +149,7 @@ typedef struct {
 #define	VTGetCTRL(c)		(((c) & ~0x20) - 'A' + 1)
 
 void	VTInit(VT* vt);
+void	VTInitCharsets(void);
 
 u16	VTReceive(VT* vt, u8* buf, u8* len);
 
@@ -167,6 +183,11 @@ void	VTDecRC(void);
 void	VTSTBM(int top, int bottom);
 void	VTGraphics(void);
 void	VTAscii(void);
+void	VTDRCS(char c);
+void	VTDECDLD(unsigned char pcn, BOOL erase, unsigned int matrix,
+		unsigned int width, BOOL full_cell, u8* bits,
+		unsigned int count);
+void	VTClearDRCS(void);
 
 void	VTSixelBegin(int bg);
 void	VTSixelEnd(void);
