@@ -5,9 +5,9 @@
 .STARTUP
 
 .MARKUP
-.TITLE	6	Another Metroid Text Adventure
-.CENTER	9	By DoctorM64
-.CENTER	11	Programmed by unknown
+.TITLE	7	Another Metroid Text Adventure
+.CENTER	10	By DoctorM64
+.CENTER	12	Programmed by unknown
 .CENTER	19	Press <ENTER> to start the game
 .ENDMARKUP
 
