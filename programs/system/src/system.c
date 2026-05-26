@@ -37,6 +37,31 @@ int main_menu_max;
 static char input_buf[INPUT_MAX + 1];
 static int input_pos;
 static int input_len;
+static const char* terminal_type;
+
+static const char* SYSGetTerminalType(VT* vt)
+{
+	unsigned int type = VTGetType(vt);
+	switch(type) {
+		default:
+		case VT_TYPE_UNKLVL:
+			return "???";
+		case VT_TYPE_VT102:
+			return "VT102";
+		case VT_TYPE_VT52:
+			return "VT52";
+		case VT_TYPE_VT125:
+			return "VT125";
+		case VT_TYPE_SCL1:
+			return "VT100";
+		case VT_TYPE_SCL2:
+			return "VT200";
+		case VT_TYPE_SCL3:
+			return "VT300";
+		case VT_TYPE_SCL4:
+			return "VT400";
+	}
+}
 
 void SYSInit(SPFPanel* self)
 {
@@ -50,6 +75,8 @@ void SYSInit(SPFPanel* self)
 	for(unsigned int i = 0; main_menu[i].name; i++) {
 		main_menu_max = i;
 	}
+
+	terminal_type = SYSGetTerminalType(&self->spf->vt);
 }
 
 void SYSDraw(SPFPanel* self)
@@ -98,6 +125,9 @@ void SYSDraw(SPFPanel* self)
 	VTGoto(12, x);
 	VTPrintf("Time . . . : " CSI "1m%02d:%02d" CSI "0m",
 			now.time.hour, now.time.minute);
+
+	VTGoto(13, x);
+	VTPrintf("Terminal . : " CSI "1m%s" CSI "0m", terminal_type);
 
 	/* content */
 	VTGoto(4, 2);
