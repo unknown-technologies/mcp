@@ -38,6 +38,7 @@ static void SYSLogGetLog(void)
 static void SYSLogInit(SPFPanel* self)
 {
 	SPFHideCursor(self);
+	SPFHideActions(self); /* we want to use all 22 lines for logs */
 	SPFSetPanelTitle(self, "System Log");
 
 	SYSLogGetLog();
