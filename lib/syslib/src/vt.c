@@ -13,8 +13,10 @@ void VTInit(VT* vt)
 	vt->width = 80;
 	vt->height = 24;
 	vt->state = VT_STATE_NORMAL;
+	vt->primary_da = NULL;
 
 	VTInitCharsets();
+	VTPrimaryDA();
 }
 
 void VTInitCharsets(void)
@@ -29,9 +31,119 @@ void VTInitCharsets(void)
 		ESC "}", 16); /* LS2R => GR=G2 (DEC Supplemental) */
 }
 
+void VTPrimaryDA(void)
+{
+	VTWrite(CSI "c", CSILEN + 1);
+}
+
 /******************************************************************************/
 /* VT input routines                                                          */
 /******************************************************************************/
+static void VTiParsePrimaryDA(VT* vt)
+{
+	if(vt->flags == 0) {
+		switch(vt->value) {
+			case 61:
+				vt->flags = VT_TYPE_SCL1;
+				break;
+			case 62:
+				vt->flags = VT_TYPE_SCL2;
+				break;
+			case 63:
+				vt->flags = VT_TYPE_SCL3;
+				break;
+			case 64:
+				vt->flags = VT_TYPE_SCL4;
+				break;
+			case 6:
+				vt->flags = VT_TYPE_VT102;
+				break;
+			case 1:
+				/* technically a VT100/VT101, but we do not have enough bits
+				 * to distinguish them */
+				vt->flags = VT_TYPE_VT102;
+				break;
+			case 12:
+				vt->flags = VT_TYPE_VT125;
+				break;
+		}
+	} else if(VTGetType(vt) >= VT_TYPE_SCL1) {
+		switch(vt->value) {
+			case 1:
+				vt->flags |= VT_FEAT_132COL;
+				break;
+			case 2:
+				vt->flags |= VT_FEAT_PRINT;
+				break;
+			case 3:
+				vt->flags |= VT_FEAT_REGIS;
+				break;
+			case 4:
+				vt->flags |= VT_FEAT_SIXEL;
+				break;
+			case 5: /* Katakana */
+				break;
+			case 6:
+				vt->flags |= VT_FEAT_SEL_ER;
+				break;
+			case 7:
+				vt->flags |= VT_FEAT_DRCS;
+				break;
+			case 8:
+				vt->flags |= VT_FEAT_UDK;
+				break;
+			case 9:
+				vt->flags |= VT_FEAT_NRCS;
+				break;
+			case 10: /* Kanji */
+				break;
+			case 11: /* Status Display */
+				vt->flags |= VT_FEAT_STATUS;
+				break;
+			case 12: /* Serbo-Croation */
+				break;
+			case 13:
+				vt->flags |= VT_FEAT_BLOCK;
+				break;
+			case 14: /* 8-bit Interface Architecture */
+				break;
+			case 15:
+				vt->flags |= VT_FEAT_TCS;
+				break;
+			case 16: /* Locator Port */
+			case 17: /* Terminal State Interrogation */
+				break;
+			case 18:
+				vt->flags |= VT_FEAT_WINDOW;
+				break;
+			case 19: /* Multiple Sessions (TD/SMP) */
+			case 20: /* APL */
+				break;
+			case 21:
+				vt->flags |= VT_FEAT_HSCROLL;
+				break;
+			case 22: /* Color Text */
+			case 23: /* Greek */
+			case 24: /* Turkish */
+			case 25: /* Arabic Bilingual Mode 1 */
+			case 26: /* Arabic Bilingual Mode 2 */
+			case 27: /* Arabic Bilingual Mode 3 */
+			case 28: /* Rectangular Editing */
+			case 29: /* Text Locator */
+			case 30: /* Hanzi */
+			case 31: /* ??? */
+			case 32: /* Text Macros */
+			case 33: /* Hangul and Hanja */
+			case 34: /* ICelandic */
+			case 35: /* Arabic Bilingual with Text Controls */
+			case 36: /* Arabic Bilingual with no Text Controls */
+			case 37: /* Thai */
+			case 38: /* Character Outlining */
+				break;
+		}
+	}
+}
+
 u16 VTiReceive(VT* vt, u8 c)
 {
 	switch(vt->state) {
@@ -153,6 +265,11 @@ u16 VTiReceive(VT* vt, u8 c)
 				case 'D':
 					vt->state = VT_STATE_NORMAL;
 					return VT_KEY_LEFT;
+				case '?':
+					vt->state = VT_STATE_PRIMDA;
+					vt->value = 0;
+					vt->flags = 0;
+					return VT_KEY_NONE;
 				default:
 					vt->state = VT_STATE_NORMAL;
 					return VT_KEY_NONE;
@@ -202,6 +319,48 @@ u16 VTiReceive(VT* vt, u8 c)
 				case 'S':
 					vt->state = VT_STATE_NORMAL;
 					return VT_KEY_KP_PF1 + (c - 'P');
+				default:
+					vt->state = VT_STATE_NORMAL;
+					return VT_KEY_NONE;
+			}
+			break;
+		case VT_STATE_PRIMDA:
+			switch(c) {
+				case 0x1B: /* ESC */
+					vt->state = VT_STATE_ESC;
+					return VT_KEY_NONE;
+				case 0x9B: /* CSI */
+					vt->value = 0;
+					return VT_KEY_NONE;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+					vt->value *= 10;
+					vt->value += c - '0';
+					return VT_KEY_NONE;
+				case ';':
+					VTiParsePrimaryDA(vt);
+
+					vt->value = 0;
+					return VT_KEY_NONE;
+				case 'c':
+					/* Primary DA finished */
+					VTiParsePrimaryDA(vt);
+
+					vt->state = VT_STATE_NORMAL;
+
+					if(vt->primary_da) {
+						vt->primary_da(vt, vt->flags);
+					}
+
+					return VT_KEY_NONE;
 				default:
 					vt->state = VT_STATE_NORMAL;
 					return VT_KEY_NONE;

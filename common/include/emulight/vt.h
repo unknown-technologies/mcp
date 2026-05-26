@@ -64,6 +64,7 @@
 #define	VT_STATE_ESC	1
 #define	VT_STATE_CSI	2
 #define	VT_STATE_SS3	3
+#define	VT_STATE_PRIMDA	4
 
 #define	VT_MATRIX_5X10	2
 #define	VT_MATRIX_6X10	3
@@ -128,18 +129,47 @@
 
 #define	VT_KEY_NONE	0xFFFF
 
-typedef struct {
+#define	VT_TYPE_UNKLVL	0
+#define	VT_TYPE_VT102	1
+#define	VT_TYPE_VT52	2
+#define	VT_TYPE_VT125	3
+#define	VT_TYPE_SCL1	4
+#define	VT_TYPE_SCL2	5
+#define	VT_TYPE_SCL3	6
+#define	VT_TYPE_SCL4	7
+#define	VT_FEAT_132COL	_BV(3)
+#define	VT_FEAT_PRINT	_BV(4)
+#define	VT_FEAT_REGIS	_BV(5)
+#define	VT_FEAT_SIXEL	_BV(6)
+#define	VT_FEAT_SEL_ER	_BV(7)
+#define	VT_FEAT_DRCS	_BV(8)
+#define	VT_FEAT_UDK	_BV(9)
+#define	VT_FEAT_NRCS	_BV(10)
+#define	VT_FEAT_STATUS	_BV(11)
+#define	VT_FEAT_BLOCK	_BV(12)
+#define	VT_FEAT_TCS	_BV(13)
+#define	VT_FEAT_WINDOW	_BV(14)
+#define	VT_FEAT_HSCROLL	_BV(15)
+
+struct VT;
+typedef struct VT VT;
+
+struct VT {
 	u16	width;
 	u16	height;
+	u16	flags;
 	u8	state;
 	u8	value;
-} VT;
+	void	(*primary_da)(VT* self, u16 type);
+};
 
 #define	VTGetWidth(vt)		((vt)->width)
 #define	VTGetHeight(vt)		((vt)->height)
 #define	VTSetWidth(vt, w)	((vt)->width = (w))
 #define	VTSetHeight(vt, h)	((vt)->height = (h))
+#define	VTGetType(vt)		((vt)->flags & 0x07)
 #define	VTWrite(x, n)		SITransmit(x, n)
+
 #define	VTClear			VTED
 #define	VTClearScreen		VTED2
 
@@ -150,6 +180,8 @@ typedef struct {
 
 void	VTInit(VT* vt);
 void	VTInitCharsets(void);
+
+void	VTPrimaryDA(void);
 
 u16	VTReceive(VT* vt, u8* buf, u8* len);
 
