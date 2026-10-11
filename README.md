@@ -50,10 +50,18 @@ Booting the MCP
 ---------------
 
 To boot the generated disk image file, you can either use simh or the
-[lsi-11](https://github.com/hackyourlife/lsi-11) emulator. Using lsi-11, run the following command:
+[lsi-11](https://github.com/hackyourlife/lsi-11) emulator.
+
+Using lsi-11, run the following command:
 
 ```
 lsi-11 -q -x -f disk.rx2
+```
+
+Using simh, run the following command:
+
+```
+./simh.sh
 ```
 
 
